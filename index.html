@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evidence Organizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
+.app-shell{max-width:780px;margin:0 auto;padding:1rem}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 1.5rem}
+.top-bar h1{font-size:18px;font-weight:600;color:#1a1a1a}
+.api-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#666}
+.api-dot{width:8px;height:8px;border-radius:50%;background:#ccc}
+.api-dot.connected{background:#1D9E75}
+.api-key-form{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.api-key-form h2{font-size:15px;font-weight:600;margin-bottom:6px}
+.api-key-form p{font-size:13px;color:#666;margin-bottom:12px;line-height:1.5}
+.api-row{display:flex;gap:8px}
+.api-row input{flex:1;font-size:13px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;transition:background 0.15s}
+.btn:hover{background:#f5f5f0}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-primary:hover{background:#333}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.tabs{display:flex;gap:0;border-bottom:1px solid #e5e5e0;margin-bottom:1.5rem;overflow-x:auto}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.card p{font-size:12px;color:#666;margin-bottom:12px;line-height:1.5}
+.upload-zone{border:1.5px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;transition:background 0.15s}
+.upload-zone:hover{background:#f9f9f7}
+.upload-zone .icon{font-size:28px;margin-bottom:8px}
+.upload-zone p{font-size:14px;color:#555;margin-bottom:4px}
+.upload-zone span{font-size:12px;color:#999}
+.queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #e5e5e0;background:#f9f9f7;font-size:13px;margin-bottom:6px}
+.queue-item .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.queue-item .fsize{font-size:11px;color:#999;flex-shrink:0}
+.rm-btn{background:none;border:none;cursor:pointer;color:#bbb;font-size:16px;padding:2px;flex-shrink:0}
+.rm-btn:hover{color:#666}
+.analyze-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:1rem}
+.progress-wrap{flex:1;min-width:80px;height:4px;background:#e5e5e0;border-radius:2px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:#1a1a1a;border-radius:2px;transition:width 0.3s}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+.stat-card{background:#f9f9f7;border-radius:8px;padding:10px 12px;border:1px solid #e5e5e0}
+.stat-label{font-size:11px;color:#888;margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:600;color:#1a1a1a}
+.stat-value.red{color:#c0392b}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}
+.chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.msg-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
+.msg-card.flagged{border-left:3px solid #c0392b}
+.msg-sender{font-size:13px;font-weight:600;color:#1a1a1a}
+.msg-time{font-size:11px;color:#999;margin-top:2px}
+.msg-viewed{font-size:11px;color:#bbb;margin-top:1px}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.badge{display:inline-flex;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.b-red{background:#fdf0f0;color:#c0392b}
+.b-amber{background:#fdf6e3;color:#b7770d}
+.b-purple{background:#f3f0fd;color:#5b4fcf}
+.b-coral{background:#fdf2ee;color:#c0522b}
+.b-green{background:#f0faf5;color:#1a7a52}
+.b-gray{background:#f5f5f0;color:#666}
+.b-blue{background:#eef4fd;color:#1a5fa8}
+.msg-body{font-size:13px;color:#333;line-height:1.6;margin:8px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd}
+.msg-body.ex{border-left-color:#c0392b}
+.analysis-tabs{display:flex;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0ea}
+.atab{padding:3px 10px;font-size:11px;border-radius:10px;cursor:pointer;border:1px solid #e0e0e0;background:none;color:#888}
+.atab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.analysis-text{font-size:12px;color:#555;line-height:1.6;margin-top:8px}
+.court-text{font-size:13px;color:#1a5a3a;background:#f0faf5;padding:8px 10px;border-radius:6px;border-left:2px solid #1D9E75;line-height:1.6;margin-top:8px}
+.no-response-note{background:#eef4fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#1a5fa8;margin-top:8px;border-left:2px solid #378ADD}
+.log-entry{border:1px solid #e5e5e0;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
+.log-entry.blue-left{border-left:3px solid #378ADD}
+.log-entry.purple-left{border-left:3px solid #7F77DD}
+.log-entry-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.log-date{font-size:12px;font-weight:600;color:#1a1a1a}
+.log-body{font-size:12px;color:#666;line-height:1.5;margin-bottom:6px}
+.log-plain{font-size:12px;color:#3C3489;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.5}
+.reason-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.reason-btn{padding:8px 10px;font-size:12px;border-radius:8px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666;text-align:left;line-height:1.4}
+.reason-btn.sel{border-color:#378ADD;background:#eef4fd;color:#1a5fa8}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label{font-size:12px;color:#666;display:block;margin-bottom:3px}
+input[type=date],input[type=time],input[type=number],select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;width:100%;margin-bottom:8px}
+textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;resize:vertical;min-height:60px;margin-bottom:8px}
+.video-result{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:12px;background:#fff}
+.seg-block{border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;overflow:hidden}
+.seg-hdr{padding:8px 12px;background:#f9f9f7;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.seg-label{font-weight:600;color:#1a1a1a}
+.seg-time{color:#999}
+.seg-body{padding:10px 12px}
+.flag-item{display:flex;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.5;margin-bottom:5px}
+.flag-item.high{background:#fdf0f0;color:#7a1a1a;border-left:2px solid #c0392b}
+.flag-item.medium{background:#fdf6e3;color:#6b4800;border-left:2px solid #e67e22}
+.flag-item.low{background:#eef4fd;color:#1a3a6b;border-left:2px solid #378ADD}
+.flag-item.bg-adult{background:#f3f0fd;color:#2d1f7a;border-left:2px solid #7F77DD}
+.flag-item.distraction{background:#fdf2ee;color:#6b2a10;border-left:2px solid #D85A30}
+.flag-time{font-weight:600;flex-shrink:0;min-width:36px}
+.handoff-note{padding:6px 12px;font-size:11px;color:#6b4800;background:#fdf6e3;border-bottom:1px solid #e5e5e0}
+.ethan-block{padding:10px 12px;background:#fdf0f0;border-radius:6px;border-left:2px solid #c0392b;margin-top:8px;font-size:12px;color:#7a1a1a;line-height:1.6}
+.court-summary-block{margin-top:10px;padding:10px 12px;background:#f0faf5;border-radius:6px;font-size:12px;color:#1a5a3a;line-height:1.6;border-left:2px solid #1D9E75}
+.dur-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dur-label{font-size:12px;color:#666;width:130px;flex-shrink:0}
+.dur-track{flex:1;height:8px;background:#f0f0ea;border-radius:4px;overflow:hidden}
+.dur-fill{height:100%;border-radius:4px}
+.dur-fill.dad{background:#c0392b}
+.dur-fill.mom{background:#1D9E75}
+.dur-fill.ethan{background:#7F77DD}
+.dur-val{font-size:12px;font-weight:600;color:#1a1a1a;width:40px;text-align:right}
+.pattern-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
+.loophole-card{border:1px solid #e0b89a;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fdf8f5}
+.loophole-title{font-size:13px;font-weight:600;color:#7a3010;margin-bottom:6px}
+.loophole-current{font-size:12px;color:#7a3010;margin-bottom:8px;line-height:1.5}
+.loophole-proposed{font-size:12px;color:#2d1f7a;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.6}
+.export-section{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #e5e5e0}
+.export-section h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.export-options{display:flex;gap:8px;flex-wrap:wrap}
+.empty-state{text-align:center;padding:3rem 1rem;color:#bbb;font-size:13px}
+.error-msg{background:#fdf0f0;color:#c0392b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:1rem}
+.info-box{background:#f9f9f7;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;line-height:1.6;margin-bottom:1rem;border-left:2px solid #ccc}
+.info-box strong{color:#1a1a1a}
+.sev-high{background:#fdf0f0;color:#c0392b}
+.sev-medium{background:#fdf6e3;color:#b7770d}
+.sev-low{background:#eef4fd;color:#1a5fa8}
+.sev-neutral{background:#f5f5f0;color:#666}
+.trans-toggle{font-size:12px;color:#888;cursor:pointer;background:none;border:none;padding:6px 0 0;display:flex;align-items:center;gap:4px}
+.trans-text{font-size:12px;color:#555;line-height:1.7;white-space:pre-wrap;background:#f9f9f7;padding:10px;border-radius:6px;margin-top:6px}
+@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.reason-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="top-bar">
+    <h1>🔒 Evidence Organizer</h1>
+    <div class="api-status">
+      <div class="api-dot" id="apiDot"></div>
+      <span id="apiStatusText">No API key</span>
+      <button class="btn btn-sm" onclick="resetKey()">Change key</button>
+    </div>
+  </div>
+
+  <div class="api-key-form" id="apiKeyForm">
+    <h2>Enter your Anthropic API key</h2>
+    <p>Your key is used only in this browser session and is never stored. It will be cleared when you close this tab. You need an API key from <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> to use the AI analysis features.</p>
+    <div class="api-row">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+      <button class="btn btn-primary" onclick="setKey()">Connect</button>
+    </div>
+    <div id="keyError" style="font-size:12px;color:#c0392b;margin-top:6px;display:none;">Please enter a valid API key starting with sk-ant-</div>
+  </div>
+
+  <div id="mainApp" style="display:none">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('messages')">📋 Messages</button>
+      <button class="tab" onclick="switchTab('videos')">🎥 Videos</button>
+      <button class="tab" onclick="switchTab('nonresponse')">🔕 Non-response</button>
+      <button class="tab" onclick="switchTab('reluctance')">😶 Reluctance</button>
+      <button class="tab" onclick="switchTab('duration')">⏱ Duration</button>
+      <button class="tab" onclick="switchTab('patterns')">📊 Patterns</button>
+      <button class="tab" onclick="switchTab('gaps')">⚠️ Order gaps</button>
+    </div>
+
+    <!-- MESSAGES TAB -->
+    <div id="panel-messages" class="panel active">
+      <div class="card">
+        <h3>Upload OFW message screenshots</h3>
+        <p>Upload PNG or JPG screenshots from OFW. AI will extract all messages, identify tactics, and generate plain-language court descriptions automatically.</p>
+        <div class="upload-zone" onclick="document.getElementById('msgInput').click()" id="msgDrop">
+          <div class="icon">📤</div>
+          <p>Drop OFW screenshots here or click to browse</p>
+          <span>PNG or JPG · Multiple files supported</span>
+        </div>
+        <input type="file" id="msgInput" multiple accept="image/*" style="display:none" onchange="handleMsgFiles(this.files)">
+        <div id="msgQueue"></div>
+        <div class="analyze-bar" id="msgAnalyzeBar" style="display:none">
+          <button class="btn btn-primary" onclick="analyzeMsgs()" id="msgAnalyzeBtn">✦ Analyze messages</button>
+          <div class="progress-wrap" id="msgProgress"><div class="progress-fill" id="msgFill" style="width:0%"></div></div>
+          <span style="font-size:12px;color:#999" id="msgProgressLabel"></span>
+        </div>
+        <div id="msgError"></div>
+      </div>
+      <div class="stat-grid" id="msgStats" style="display:none"></div>
+      <div class="filter-bar" id="msgFilters"></div>
+      <div id="msgList"></div>
+      <div class="export-section" id="msgExport" style="display:none">
+        <h3>Export for court</h3>
+        <div class="export-options">
+          <button class="btn btn-sm" onclick="exportMsgs('plain')">📄 Plain-language exhibit</button>
+          <button class="btn btn-sm" onclick="exportMsgs('full')">📄 Full analysis (attorney)</button>
+          <button class="btn btn-sm" onclick="copyMsgSummary()">📋 Copy summary</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEOS TAB -->
+    <div id="panel-videos" class="panel">
+      <div class="card">
+        <h3>Upload OFW call recordings</h3>
+        <p>Upload full MP4 recordings. AI automatically detects speakers, identifies handoffs, flags background adults, distractions, alienation behaviors, and Ethan-specific indicators. No manual marking needed.</p>
+        <div class="info-box"><strong>Before uploading:</strong> Confirm with your attorney that OFW's built-in recording satisfies California two-party consent requirements before using recordings in court filings.</div>
+        <div class="upload-zone" onclick="document.getElementById('vidInput').click()" id="vidDrop">
+          <div class="icon">🎥</div>
+          <p>Drop MP4 call recordings here or click to browse</p>
+          <span>MP4 format · Full recordings as-is</span>
+        </div>
+        <input type="file" id="vidInput" multiple accept="video/*" style="display:none" onchange="handleVidFiles(this.files)">
+        <div id="vidQueue"></div>
+        <div class="analyze-bar" id="vidAnalyzeBar" style="display:none">
+          <button class="btn btn-primary" onclick="analyzeVids()" id="vidAnalyzeBtn">✦ Analyze recordings</button>
+          <div class="progress-wrap" id="vidProgress"><div class="progress-fill" id="vidFill" style="width:0%"></div></div>
+          <span style="font-size:12px;color:#999" id="vidProgressLabel"></span>
+        </div>
+        <div id="vidError"></div>
+      </div>
+      <div class="stat-grid" id="vidStats" style="display:none"></div>
+      <div id="vidList"></div>
+      <div class="export-section" id="vidExport" style="display:none">
+        <h3>Export for court</h3>
+        <div class="export-options">
+          <button class="btn btn-sm" onclick="exportVids('plain')">📄 Plain-language exhibit</button>
+          <button class="btn btn-sm" onclick="exportVids('full')">📄 Full analysis (attorney)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NON-RESPONSE TAB -->
+    <div id="panel-nonresponse" class="panel">
+      <div class="card">
+        <h3>Log a non-response decision</h3>
+        <p>Every time you choose not to respond, log it here. This protects you from being characterized as uncooperative and documents the pattern of messages that require you to disengage. Each entry is automatically converted to plain court language.</p>
+        <div class="form-row">
+          <div><label>Date</label><input type="date" id="nr-date"></div>
+          <div><label>Time</label><input type="time" id="nr-time"></div>
+        </div>
+        <label>Message you chose not to respond to</label>
+        <textarea id="nr-msg" placeholder="Paste or summarize the message..."></textarea>
+        <label>Why you chose not to respond</label>
+        <div class="reason-grid" id="nrReasons">
+          <button class="reason-btn" onclick="toggleReason(this,'boundary')" data-r="boundary">Boundary — responding would reinforce the behavior</button>
+          <button class="reason-btn" onclick="toggleReason(this,'info')" data-r="info">No further child-related information needed</button>
+          <button class="reason-btn" onclick="toggleReason(this,'lastword')" data-r="lastword">Last-word pattern — response invites further contact</button>
+          <button class="reason-btn" onclick="toggleReason(this,'attack')" data-r="attack">Message attacked character or was not child-centered</button>
+        </div>
+        <label>Optional context</label>
+        <textarea id="nr-notes" placeholder="e.g. 4th message that day, I was at work..." style="min-height:45px"></textarea>
+        <button class="btn btn-primary" onclick="addNR()">+ Add to log</button>
+      </div>
+      <div id="nrList"></div>
+      <div class="export-section">
+        <h3>Export non-response log</h3>
+        <div class="export-options">
+          <button class="btn btn-sm" onclick="exportNR()">📄 Export as court exhibit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELUCTANCE TAB -->
+    <div id="panel-reluctance" class="panel">
+      <div class="card">
+        <h3>Log reluctance or self-censorship</h3>
+        <p>Record every instance of coached reluctance, early call endings, or self-censorship — including Ethan stopping himself from saying he missed you. These build a timeline tied to when each child began spending more time with the father.</p>
+        <div class="form-row">
+          <div><label>Date</label><input type="date" id="rl-date"></div>
+          <div><label>Time</label><input type="time" id="rl-time"></div>
+        </div>
+        <label>Child</label>
+        <select id="rl-child"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
+        <label>Exact words or what happened — quote as precisely as possible</label>
+        <textarea id="rl-words" placeholder="e.g. Ethan began to say 'I miss—' then stopped, looked off-camera, changed subject"></textarea>
+        <label>Type of incident</label>
+        <select id="rl-type">
+          <option value="">Select...</option>
+          <option>Child refused to talk</option>
+          <option>Child self-censored expression of affection</option>
+          <option>Child ended call abruptly</option>
+          <option>Child gave only one-word answers</option>
+          <option>Child looked off-screen before responding</option>
+          <option>Adult voice ended call</option>
+          <option>Child seemed flat or emotionally unavailable</option>
+          <option>Other</option>
+        </select>
+        <label>Context — what happened in the 24-48 hours before</label>
+        <textarea id="rl-context" placeholder="e.g. Long call with Dad previous night. Ethan has been at Dad's house for 6 months." style="min-height:45px"></textarea>
+        <button class="btn btn-primary" onclick="addRL()">+ Add to log</button>
+      </div>
+      <div id="rlList"></div>
+      <div class="export-section">
+        <h3>Export reluctance log</h3>
+        <div class="export-options">
+          <button class="btn btn-sm" onclick="exportRL()">📄 Export as court exhibit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DURATION TAB -->
+    <div id="panel-duration" class="panel">
+      <div class="card">
+        <h3>Call duration tracker</h3>
+        <p>The disparity between his call lengths and yours is quantifiable evidence. Log every call — even without a recording — to build the pattern over time.</p>
+        <div class="form-row">
+          <div><label>Date</label><input type="date" id="dur-date"></div>
+          <div><label>Call type</label>
+            <select id="dur-type">
+              <option value="dad">His call with kids at my home</option>
+              <option value="mom">My call with kids</option>
+              <option value="ethan">Ethan goodnight call</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Duration (minutes)</label><input type="number" id="dur-mins" min="1" max="120" placeholder="e.g. 22"></div>
+          <div><label>Who ended call</label>
+            <select id="dur-ender"><option>Dad</option><option>Child</option><option>Me</option><option>Unknown</option></select>
+          </div>
+        </div>
+        <label>Notes (optional)</label>
+        <textarea id="dur-notes" placeholder="e.g. Grandparents audible. Kids eating during my portion." style="min-height:40px"></textarea>
+        <button class="btn btn-primary" onclick="addDur()">+ Add entry</button>
+      </div>
+      <div id="durChart"></div>
+      <div id="durList" style="margin-top:1rem"></div>
+    </div>
+
+    <!-- PATTERNS TAB -->
+    <div id="panel-patterns" class="panel">
+      <div id="patternList"><div class="empty-state">Analyze messages or videos first to see patterns.</div></div>
+    </div>
+
+    <!-- ORDER GAPS TAB -->
+    <div id="panel-gaps" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Based on analyzed messages and documented behaviors, these are likely gaps in your current order being exploited — with proposed plain-language replacement language for your attorney.</p>
+      <div id="gapList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let API_KEY = null;
+const msgQueue=[], vidQueue=[], nrEntries=[], rlEntries=[], durEntries=[];
+let allMsgs=[], allVids=[];
+let activeMsgFilter='all', msgViewMode={}, vidTranscript={};
+const selectedNRReasons=new Set();
+
+const REASON_PLAIN={
+  boundary:'Petitioner did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',
+  info:'No response was required because all necessary child-related information had already been communicated.',
+  lastword:'Petitioner did not respond because Respondent has an established pattern of requiring the final message in every exchange regardless of content.',
+  attack:'Petitioner did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a pattern of using OFW to harass rather than co-parent.'
+};
+const REASON_LABEL={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
+
+function setKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(!k.startsWith('sk-ant-')){document.getElementById('keyError').style.display='block';return;}
+  API_KEY=k;
+  document.getElementById('keyError').style.display='none';
+  document.getElementById('apiKeyForm').style.display='none';
+  document.getElementById('mainApp').style.display='block';
+  document.getElementById('apiDot').classList.add('connected');
+  document.getElementById('apiStatusText').textContent='API connected';
+  renderGaps();
+}
+function resetKey(){
+  API_KEY=null;
+  document.getElementById('apiKeyInput').value='';
+  document.getElementById('apiKeyForm').style.display='block';
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('apiDot').classList.remove('connected');
+  document.getElementById('apiStatusText').textContent='No API key';
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+}
+
+// FILE HELPERS
+async function fileToBase64(file){
+  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
+}
+function makeQueue(queue,containerId,analyzeBarId){
+  document.getElementById(containerId).innerHTML=queue.map((f,i)=>`
+    <div class="queue-item">
+      <span style="font-size:16px">${f.type&&f.type.startsWith('video')?'🎥':'📷'}</span>
+      <span class="fname">${f.name}</span>
+      <span class="fsize">${f.type&&f.type.startsWith('video')?(f.size/1024/1024).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB'}</span>
+      <button class="rm-btn" onclick="removeFromQueue(${i},'${containerId}','${analyzeBarId}')">✕</button>
+    </div>`).join('');
+  document.getElementById(analyzeBarId).style.display=queue.length?'flex':'none';
+}
+function removeFromQueue(i,cid,bid){
+  if(cid==='msgQueue'){msgQueue.splice(i,1);makeQueue(msgQueue,'msgQueue','msgAnalyzeBar');}
+  else{vidQueue.splice(i,1);makeQueue(vidQueue,'vidQueue','vidAnalyzeBar');}
+}
+function setupDrop(zoneId,queue,containerId,analyzeBarId){
+  const z=document.getElementById(zoneId);
+  z.addEventListener('dragover',e=>{e.preventDefault();z.style.background='#f5f5f0';});
+  z.addEventListener('dragleave',()=>z.style.background='');
+  z.addEventListener('drop',e=>{e.preventDefault();z.style.background='';addToQueue(Array.from(e.dataTransfer.files),queue,containerId,analyzeBarId);});
+}
+function addToQueue(files,queue,cid,bid){
+  files.forEach(f=>{if(!queue.find(q=>q.name===f.name))queue.push(f);});
+  makeQueue(queue,cid,bid);
+}
+setupDrop('msgDrop',msgQueue,'msgQueue','msgAnalyzeBar');
+setupDrop('vidDrop',vidQueue,'vidQueue','vidAnalyzeBar');
+function handleMsgFiles(files){addToQueue(Array.from(files),msgQueue,'msgQueue','msgAnalyzeBar');}
+function handleVidFiles(files){addToQueue(Array.from(files),vidQueue,'vidQueue','vidAnalyzeBar');}
+
+// API CALL
+async function callAPI(messages,maxTokens=1500){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages})
+  });
+  const d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  return d.content?.map(c=>c.text||'').join('')||'';
+}
+function parseJSON(text){
+  try{return JSON.parse(text.replace(/```json|```/g,'').trim());}
+  catch(e){console.error('Parse error',text.slice(0,300));return null;}
+}
+
+// MESSAGES
+const MSG_PROMPT=`You are analyzing an OFW (Our Family Wizard) screenshot for a domestic abuse survivor documenting coercive control for family court. The father is Doug Rhodes, the mother is Chelsea Rhodes. Children: Ethan (oldest, now living with father after documented intimidation), Charlotte, Duke.
+
+Extract ALL messages visible. Return a JSON array where each object has:
+- sender, recipient, timestamp_sent, timestamp_viewed (if shown), subject, body (verbatim)
+- tactics_clinical: array from [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
+- tactics_plain: array of plain behavioral descriptions a judge understands without clinical terms
+- court_summary: 2-3 sentences, third person, factual, no clinical labels, starting "On [date], Respondent..."
+- severity: "high"|"medium"|"low"|"neutral"
+- child_mentioned: array of child names mentioned
+- requires_response: true if a response was actually needed for child safety/logistics
+
+Reply ONLY with valid JSON array. No markdown.`;
+
+async function analyzeMsgs(){
+  if(!msgQueue.length)return;
+  const btn=document.getElementById('msgAnalyzeBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analyzing...';
+  document.getElementById('msgProgress').style.display='block';
+  document.getElementById('msgError').innerHTML='';
+  allMsgs=[];
+  for(let i=0;i<msgQueue.length;i++){
+    document.getElementById('msgFill').style.width=Math.round((i/msgQueue.length)*100)+'%';
+    document.getElementById('msgProgressLabel').textContent=`${i+1} of ${msgQueue.length}`;
+    try{
+      const b64=await fileToBase64(msgQueue[i]);
+      const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:msgQueue[i].type||'image/png',data:b64}},{type:'text',text:MSG_PROMPT}]}]);
+      const parsed=parseJSON(text);
+      if(parsed)allMsgs.push(...parsed.map(m=>({...m,source_file:msgQueue[i].name})));
+    }catch(e){console.error(e);}
+  }
+  document.getElementById('msgFill').style.width='100%';
+  document.getElementById('msgProgressLabel').textContent='Done';
+  btn.disabled=false;btn.innerHTML='↺ Re-analyze';
+  if(allMsgs.length){renderMsgs();renderPatterns();renderGaps();document.getElementById('msgExport').style.display='block';}
+  else document.getElementById('msgError').innerHTML='<div class="error-msg">Could not extract messages. Ensure screenshots clearly show OFW message threads.</div>';
+}
+
+function isEx(sender){return sender&&!sender.toLowerCase().includes('chelsea');}
+
+function renderMsgs(){
+  const tactics=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[]))].filter(Boolean);
+  const high=allMsgs.filter(m=>m.severity==='high').length;
+  const flagged=allMsgs.filter(m=>(m.tactics_clinical||[]).some(t=>t!=='Neutral')).length;
+  const children=[...new Set(allMsgs.flatMap(m=>m.child_mentioned||[]))];
+  document.getElementById('msgStats').style.display='grid';
+  document.getElementById('msgStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total messages</div><div class="stat-value">${allMsgs.length}</div></div>
+    <div class="stat-card"><div class="stat-label">High severity</div><div class="stat-value red">${high}</div></div>
+    <div class="stat-card"><div class="stat-label">Tactics flagged</div><div class="stat-value">${flagged}</div></div>
+    <div class="stat-card"><div class="stat-label">Children referenced</div><div class="stat-value">${children.length||'—'}</div></div>`;
+  document.getElementById('msgFilters').innerHTML=tactics.map(t=>`<button class="chip ${t===activeMsgFilter?'active':''}" onclick="filterMsgs('${t}')">${t==='all'?'All':t}</button>`).join('');
+  renderMsgList();
+}
+
+function filterMsgs(t){
+  activeMsgFilter=t;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(t==='all'?'All':t)));
+  renderMsgList();
+}
+
+const TC={DARVO:'b-red','Blame-shifting':'b-amber','False accusation':'b-red','Control attempt':'b-purple','Gaslighting':'b-coral','Minimizing':'b-gray','Monitoring':'b-purple','Baiting':'b-red','Neutral':'b-gray','Excessive contact':'b-purple'};
+
+function renderMsgList(){
+  const filtered=activeMsgFilter==='all'?allMsgs:allMsgs.filter(m=>(m.tactics_clinical||[]).includes(activeMsgFilter));
+  document.getElementById('msgList').innerHTML=filtered.length?filtered.map((m,i)=>{
+    const mode=msgViewMode[i]||'court';
+    const ex=isEx(m.sender);
+    const tacts=m.tactics_clinical||['Neutral'];
+    return`<div class="msg-card ${ex&&tacts.some(t=>t!=='Neutral')?'flagged':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+        <div><div class="msg-sender">${m.sender||'?'} → ${m.recipient||'?'}</div>
+        <div class="msg-time">${m.timestamp_sent||''}${m.subject?' · '+m.subject:''}</div>
+        ${m.timestamp_viewed?`<div class="msg-viewed">Viewed: ${m.timestamp_viewed}</div>`:''}</div>
+        <div class="badges">${tacts.map(t=>`<span class="badge ${TC[t]||'b-gray'}">${t}</span>`).join('')}</div>
+      </div>
+      <div class="msg-body ${ex?'ex':''}">${m.body||''}</div>
+      ${!m.requires_response&&ex?`<div class="no-response-note">This message may not require a response — log your decision in the Non-response tab.</div>`:''}
+      <div class="analysis-tabs">
+        <button class="atab ${mode==='court'?'active':''}" onclick="setMsgMode(${i},'court')">Court language</button>
+        <button class="atab ${mode==='clinical'?'active':''}" onclick="setMsgMode(${i},'clinical')">Clinical analysis</button>
+      </div>
+      ${mode==='court'
+        ?`<div class="court-text">${m.court_summary||'No summary generated.'}</div>`
+        :`<div class="analysis-text">${(m.tactics_plain||[]).join(' ')}</div>`}
+    </div>`;
+  }).join(''):'<div class="empty-state">No messages match this filter.</div>';
+}
+
+function setMsgMode(i,mode){msgViewMode[i]=mode;renderMsgList();}
+
+// VIDEOS
+const VID_PROMPT=`You are analyzing a full OFW video call recording for a domestic abuse survivor building a court evidence record. The custody evaluator has already documented parental alienation by the father (Doug Rhodes). Children: Ethan (oldest, now living with father after documented intimidation — he recently started to say he missed mom and stopped himself mid-sentence), Charlotte, Duke. Mother is Chelsea.
+
+This single recording may contain multiple speakers and handoffs. Automatically detect everything.
+
+Return JSON with:
+- total_duration_seconds, speakers_detected, date_context
+- segments: array, each with: speaker_on_call, start_approx, end_approx, duration_seconds, handoff_type, handoff_note (critical — coaching often happens here), flags (array: category["alienation"|"background_adult"|"distraction"|"information_gathering"|"coaching"|"transition_negativity"|"self_censorship"|"bribery"|"signal_behavior"|"positive"], severity, timestamp_approx, observation, court_plain), transcript_key
+- background_incidents: array (timestamp_approx, who, what, effect_on_child, court_plain)
+- distraction_incidents: array (timestamp_approx, child, distraction_type, court_plain)
+- ethan_indicators: {eye_contact, off_screen_presence, affection_expressions, self_censorship_moments, affect, who_ended}
+- court_summary: 4-5 sentences, plain language, third person, no clinical labels
+- overall_severity: "high"|"medium"|"low"|"neutral"
+
+Reply ONLY with valid JSON. No markdown.`;
+
+async function analyzeVids(){
+  if(!vidQueue.length)return;
+  const btn=document.getElementById('vidAnalyzeBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analyzing...';
+  document.getElementById('vidProgress').style.display='block';
+  document.getElementById('vidError').innerHTML='';
+  allVids=[];
+  for(let i=0;i<vidQueue.length;i++){
+    document.getElementById('vidFill').style.width=Math.round((i/vidQueue.length)*100)+'%';
+    document.getElementById('vidProgressLabel').textContent=`${i+1} of ${vidQueue.length}`;
+    try{
+      const b64=await fileToBase64(vidQueue[i]);
+      const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:vidQueue[i].type||'video/mp4',data:b64}},{type:'text',text:VID_PROMPT}]}],1500);
+      const parsed=parseJSON(text);
+      if(parsed)allVids.push({...parsed,filename:vidQueue[i].name});
+    }catch(e){console.error(e);}
+  }
+  document.getElementById('vidFill').style.width='100%';
+  document.getElementById('vidProgressLabel').textContent='Done';
+  btn.disabled=false;btn.innerHTML='↺ Analyze more';
+  if(allVids.length){renderVids();renderDurChart();document.getElementById('vidExport').style.display='block';}
+  else document.getElementById('vidError').innerHTML='<div class="error-msg">Could not analyze video. Ensure the file is a valid MP4 recording.</div>';
+}
+
+function renderVids(){
+  const allFlags=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
+  const high=allFlags.filter(f=>f.severity==='high').length;
+  const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);
+  const dist=allVids.reduce((n,v)=>(v.distraction_incidents||[]).length+n,0);
+  document.getElementById('vidStats').style.display='grid';
+  document.getElementById('vidStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Recordings</div><div class="stat-value">${allVids.length}</div></div>
+    <div class="stat-card"><div class="stat-label">High flags</div><div class="stat-value red">${high}</div></div>
+    <div class="stat-card"><div class="stat-label">Background adults</div><div class="stat-value red">${bg}</div></div>
+    <div class="stat-card"><div class="stat-label">Distractions</div><div class="stat-value">${dist}</div></div>`;
+  const SC={high:'sev-high',medium:'sev-medium',low:'sev-low',neutral:'sev-neutral'};
+  const FC={alienation:'high',background_adult:'bg-adult',distraction:'distraction',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
+  document.getElementById('vidList').innerHTML=allVids.map((v,vi)=>`
+    <div class="video-result">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div><div style="font-size:13px;font-weight:600">${v.filename}</div>
+        <div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.speakers_detected?.length?' · '+v.speakers_detected.join(', '):''}</div></div>
+        <span class="badge ${SC[v.overall_severity]||'sev-neutral'}">${v.overall_severity||'unknown'}</span>
+      </div>
+      ${(v.segments||[]).map((seg,si)=>`
+        <div class="seg-block">
+          <div class="seg-hdr"><span class="seg-label">${seg.speaker_on_call||'Segment'}</span><span class="seg-time">${seg.start_approx||''}–${seg.end_approx||''}</span></div>
+          ${seg.handoff_note?`<div class="handoff-note">↔ Handoff: ${seg.handoff_note}</div>`:''}
+          <div class="seg-body">
+            ${(seg.flags||[]).map(f=>`<div class="flag-item ${FC[f.category]||f.severity}"><span class="flag-time">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}
+            ${seg.transcript_key?`<button class="trans-toggle" onclick="toggleVT(${vi},${si})">${vidTranscript[vi+'-'+si]?'▲ Hide':'▼ Show'} key dialogue</button>${vidTranscript[vi+'-'+si]?`<div class="trans-text">${seg.transcript_key}</div>`:''}`:''}
+          </div>
+        </div>`).join('')}
+      ${v.background_incidents?.length?`<div class="flag-item bg-adult" style="margin-top:8px;flex-direction:column;gap:4px"><strong>Background adult presence (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}
+      ${v.distraction_incidents?.length?`<div class="flag-item distraction" style="margin-top:8px;flex-direction:column;gap:4px"><strong>Distraction incidents (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}
+      ${v.ethan_indicators?`<div class="ethan-block"><strong>Ethan — specific observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'not noted'} · Eye contact: ${v.ethan_indicators.eye_contact||'not noted'} · Ended by: ${v.ethan_indicators.who_ended||'unclear'}</div>`:''}
+      ${v.court_summary?`<div class="court-summary-block">${v.court_summary}</div>`:''}
+    </div>`).join('');
+}
+
+function toggleVT(vi,si){const k=vi+'-'+si;vidTranscript[k]=!vidTranscript[k];renderVids();}
+
+// NON-RESPONSE
+function toggleReason(btn,r){
+  if(selectedNRReasons.has(r)){selectedNRReasons.delete(r);btn.classList.remove('sel');}
+  else{selectedNRReasons.add(r);btn.classList.add('sel');}
+}
+function addNR(){
+  const date=document.getElementById('nr-date').value;
+  const time=document.getElementById('nr-time').value;
+  const msg=document.getElementById('nr-msg').value.trim();
+  const notes=document.getElementById('nr-notes').value.trim();
+  if(!date||!msg||!selectedNRReasons.size){alert('Please fill in date, message, and at least one reason.');return;}
+  nrEntries.unshift({date,time,msg,notes,reasons:[...selectedNRReasons]});
+  document.getElementById('nr-date').value='';document.getElementById('nr-time').value='';
+  document.getElementById('nr-msg').value='';document.getElementById('nr-notes').value='';
+  selectedNRReasons.clear();document.querySelectorAll('.reason-btn').forEach(b=>b.classList.remove('sel'));
+  renderNR();
+}
+function renderNR(){
+  document.getElementById('nrList').innerHTML=nrEntries.length?nrEntries.map((e,i)=>`
+    <div class="log-entry blue-left">
+      <div class="log-entry-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="log-date">${e.date}${e.time?' at '+e.time:''}</span>
+          ${e.reasons.map(r=>`<span class="badge b-blue">${REASON_LABEL[r]}</span>`).join('')}
+        </div>
+        <button class="rm-btn" onclick="nrEntries.splice(${i},1);renderNR()">🗑</button>
+      </div>
+      <div class="log-body">"${e.msg}"</div>
+      ${e.notes?`<div class="log-body" style="color:#bbb">Context: ${e.notes}</div>`:''}
+      <div class="log-plain">${e.reasons.map(r=>REASON_PLAIN[r]).join(' ')}</div>
+    </div>`).join(''):'<div class="empty-state">No entries yet.</div>';
+}
+
+// RELUCTANCE
+function addRL(){
+  const date=document.getElementById('rl-date').value;
+  const time=document.getElementById('rl-time').value;
+  const child=document.getElementById('rl-child').value;
+  const words=document.getElementById('rl-words').value.trim();
+  const type=document.getElementById('rl-type').value;
+  const context=document.getElementById('rl-context').value.trim();
+  if(!date||!child||!words){alert('Please fill in date, child, and what was said or done.');return;}
+  rlEntries.unshift({date,time,child,words,type,context});
+  ['rl-date','rl-time','rl-words','rl-context'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rl-child').value='';document.getElementById('rl-type').value='';
+  renderRL();
+}
+function renderRL(){
+  const CC={Charlotte:'b-green',Duke:'b-purple',Ethan:'b-red'};
+  document.getElementById('rlList').innerHTML=rlEntries.length?rlEntries.map((e,i)=>`
+    <div class="log-entry purple-left">
+      <div class="log-entry-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="log-date">${e.date}${e.time?' at '+e.time:''}</span>
+          <span class="badge ${CC[e.child]||'b-gray'}">${e.child}</span>
+          ${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}
+        </div>
+        <button class="rm-btn" onclick="rlEntries.splice(${i},1);renderRL()">🗑</button>
+      </div>
+      <div class="log-body">"${e.words}"</div>
+      ${e.context?`<div class="log-body" style="color:#bbb">Context: ${e.context}</div>`:''}
+      <div class="log-plain">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?`Specifically: "${e.words}".`:''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div>
+    </div>`).join(''):'<div class="empty-state">No entries yet.</div>';
+}
+
+// DURATION
+function addDur(){
+  const date=document.getElementById('dur-date').value;
+  const type=document.getElementById('dur-type').value;
+  const mins=parseFloat(document.getElementById('dur-mins').value);
+  const ender=document.getElementById('dur-ender').value;
+  const notes=document.getElementById('dur-notes').value.trim();
+  if(!date||isNaN(mins)){alert('Please enter a date and duration.');return;}
+  durEntries.unshift({date,type,mins,ender,notes});
+  document.getElementById('dur-date').value='';document.getElementById('dur-mins').value='';document.getElementById('dur-notes').value='';
+  renderDurChart();renderDurList();
+}
+function getDurData(){
+  const fromVids=(type)=>allVids.flatMap(v=>(v.segments||[]).filter(s=>s.speaker_on_call&&s.speaker_on_call.toLowerCase().includes(type==='dad'?'doug':type==='mom'?'chelsea':'ethan')&&s.duration_seconds).map(s=>s.duration_seconds/60));
+  const fromManual=(type)=>durEntries.filter(e=>e.type===type).map(e=>e.mins);
+  const dad=[...fromVids('dad'),...fromManual('dad')];
+  const mom=[...fromVids('mom'),...fromManual('mom')];
+  const ethan=[...fromVids('ethan'),...fromManual('ethan')];
+  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+  return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};
+}
+function renderDurChart(){
+  const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();
+  const maxVal=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);
+  const rows=[{label:"His calls (avg)",val:avgDad,cls:'dad',n:dad.length},{label:"Your calls (avg)",val:avgMom,cls:'mom',n:mom.length},{label:"Ethan goodnight (avg)",val:avgEthan,cls:'ethan',n:ethan.length}].filter(r=>r.val!==null);
+  document.getElementById('durChart').innerHTML=rows.length?`
+    <div class="card">
+      ${rows.map(r=>`<div class="dur-row"><div class="dur-label">${r.label}</div><div class="dur-track"><div class="dur-fill ${r.cls}" style="width:${Math.min(100,(r.val/maxVal)*100)}%"></div></div><div class="dur-val">${r.val.toFixed(1)}m</div></div>`).join('')}
+      ${avgDad&&avgMom?`<p style="font-size:12px;color:#666;line-height:1.6;margin-top:8px">His calls average ${avgDad.toFixed(1)} minutes. Your calls average ${avgMom.toFixed(1)} minutes — a ${(avgDad/avgMom).toFixed(1)}x disparity across ${dad.length+mom.length} documented calls.</p>`:''}
+    </div>`:'<div class="empty-state">Add call entries above to see duration comparison.</div>';
+}
+function renderDurList(){
+  const TL={dad:"His call",mom:"My call",ethan:"Ethan goodnight"};
+  document.getElementById('durList').innerHTML=durEntries.length?durEntries.map((e,i)=>`
+    <div class="log-entry">
+      <div class="log-entry-hdr">
+        <div style="display:flex;align-items:center;gap:8px"><span class="log-date">${e.date}</span><span class="badge ${e.type==='dad'?'b-red':e.type==='mom'?'b-green':'b-purple'}">${TL[e.type]||e.type}</span></div>
+        <button class="rm-btn" onclick="durEntries.splice(${i},1);renderDurChart();renderDurList()">🗑</button>
+      </div>
+      <div class="log-body">${e.mins} min · Ended by: ${e.ender}${e.notes?' · '+e.notes:''}</div>
+    </div>`).join(''):'';
+}
+
+// PATTERNS
+function renderPatterns(){
+  const tactics={};
+  allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')tactics[t]=(tactics[t]||0)+1;}));
+  allVids.forEach(v=>(v.segments||[]).forEach(s=>(s.flags||[]).forEach(f=>{if(f.category&&f.category!=='positive')tactics[f.category]=(tactics[f.category]||0)+1;})));
+  const sorted=Object.entries(tactics).sort((a,b)=>b[1]-a[1]);
+  const DESC={
+    DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.',
+    'Blame-shifting':'Respondent consistently redirected responsibility for problems back to Petitioner, avoiding accountability.',
+    'False accusation':'Respondent made accusations without evidence, appearing designed to create a defensive dynamic.',
+    'Control attempt':"Respondent attempted to direct or monitor Petitioner's decisions beyond what co-parenting requires.",
+    Gaslighting:"Respondent contradicted Petitioner's account of events or implied her perception was incorrect.",
+    Monitoring:"Respondent tracked Petitioner's actions in ways not required for child welfare.",
+    Baiting:'Respondent sent provocative messages likely designed to elicit an emotional response.',
+    'Excessive contact':'Respondent sent a volume of messages disproportionate to the child-related matter at hand.',
+    alienation:'Respondent engaged in behaviors designed to undermine the children\'s relationship with Petitioner.',
+    background_adult:'An adult (grandparent or Respondent) was audible or present in background during children\'s calls with Petitioner.',
+    distraction:'Children were distracted or otherwise occupied during calls with Petitioner.',
+    coaching:'Respondent appeared to direct or influence children\'s responses.',
+    transition_negativity:"Respondent expressed negativity about children returning to Petitioner's home.",
+    self_censorship:'A child appeared to stop themselves from expressing natural affection toward Petitioner.',
+    bribery:'Respondent offered rewards conditional on children\'s behavior.',
+    signal_behavior:'Respondent arranged signals for children to communicate about Petitioner\'s home.',
+  };
+  document.getElementById('patternList').innerHTML=sorted.length?sorted.map(([t,c])=>`
+    <div class="pattern-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:600">${t}</div>
+        <span class="badge b-red">${c} instance${c!==1?'s':''}</span>
+      </div>
+      <div style="font-size:13px;color:#666;line-height:1.6;margin-bottom:8px">${DESC[t]||''}</div>
+      <div style="font-size:12px;color:#bbb;font-style:italic">From: ${[...allMsgs.filter(m=>(m.tactics_clinical||[]).includes(t)).map(m=>`"${(m.body||'').slice(0,50)}..."`).slice(0,1)].join(' ')}</div>
+    </div>`).join(''):'<div class="empty-state">Analyze messages or videos first to see patterns.</div>';
+}
+
+// ORDER GAPS
+function renderGaps(){
+  const tactics=new Set([...allMsgs.flatMap(m=>m.tactics_clinical||[]),...allVids.flatMap(v=>(v.segments||[]).flatMap(s=>(s.flags||[]).map(f=>f.category)))]);
+  const gaps=[
+    {title:'No definition of permissible communication scope',current:'Current order likely says communication must be "child-related" — but this term is undefined and unenforceable.',proposed:'All OFW communication shall pertain directly to the health, safety, education, or scheduled activities of the minor children. Neither party shall send messages addressing the other party\'s schedule, employment, location, transportation choices, or personal decisions unless they directly affect a scheduled custody exchange.'},
+    {title:'No limit on message volume or response obligation',current:'No restriction on how many messages may be sent or any requirement that they be necessary.',proposed:'Neither party shall send more than three OFW messages per calendar day except in documented medical or safety emergencies. The receiving party shall have 24 hours to respond to non-emergency messages and shall not be deemed uncooperative for failing to respond within a shorter period.'},
+    {title:'No prohibition on accusatory or non-child-centered content',current:'Orders require "civil" communication but civility is subjective and rarely sanctionable.',proposed:'OFW messages shall be limited to factual, logistical matters related to the minor children. Messages containing personal accusations, criticism of the other party\'s parenting unrelated to a specific child safety concern, or language designed to provoke a response shall constitute a violation of this order subject to sanctions.'},
+    {title:'Non-response not defined as permissible',current:'No order language explicitly permits a parent to decline to respond to harassing or off-topic messages. Silence can be mischaracterized as non-cooperation.',proposed:"A party's failure to respond to an OFW message shall not be construed as non-cooperation if: (a) the message contained no request requiring a response, (b) the message was not child-centered, or (c) the party has documented the non-response and the basis for it in a contemporaneous log."},
+    {title:'No exchange location or safety protocol',current:'Exchange logistics are vague, allowing exchanges to be used as opportunities for intimidation.',proposed:'All custody exchanges shall occur at [neutral public location]. Neither party shall approach the other\'s vehicle or residence during exchanges. Exchanges shall not be used to deliver non-child-related communications.'},
+    {title:'No restriction on third-party involvement in calls',current:'No prohibition on other adults being present, audible, or participating during custody calls with children.',proposed:'During scheduled telephone or video calls between a parent and the minor children, the other parent and all third parties shall remain out of earshot and shall not direct, interrupt, or participate in the call in any manner.'},
+  ];
+  document.getElementById('gapList').innerHTML=gaps.map(g=>`
+    <div class="loophole-card">
+      <div class="loophole-title">⚠ ${g.title}</div>
+      <div class="loophole-current">Current gap: ${g.current}</div>
+      <div class="loophole-proposed"><strong>Proposed language:</strong><br><br>${g.proposed}</div>
+    </div>`).join('');
+}
+
+// EXPORTS
+function exportMsgs(mode){
+  const lines=[mode==='plain'?'EXHIBIT — OFW COMMUNICATION RECORD (COURT COPY)':'EXHIBIT — OFW COMMUNICATION RECORD (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Total messages analyzed: ${allMsgs.length}`,'','─'.repeat(60)];
+  allMsgs.forEach((m,i)=>{
+    lines.push(`\nITEM ${i+1}`);
+    lines.push(`Date/Time Sent: ${m.timestamp_sent||'Unknown'}`);
+    if(m.timestamp_viewed)lines.push(`Viewed: ${m.timestamp_viewed}`);
+    lines.push(`From: ${m.sender||'?'} To: ${m.recipient||'?'}`);
+    lines.push(`Subject: ${m.subject||'N/A'}`);
+    lines.push(`\nMessage:\n"${m.body||''}"`);
+    if(mode==='plain'){lines.push(`\nDescription:\n${m.court_summary||''}`);}
+    else{lines.push(`\nBehavioral description: ${(m.tactics_plain||[]).join(' ')}`);lines.push(`Clinical classification (attorney only): ${(m.tactics_clinical||[]).join(', ')}`);}
+    lines.push('\n'+'─'.repeat(40));
+  });
+  dl(lines.join('\n'),mode==='plain'?'OFW_Court_Exhibit.txt':'OFW_Full_Analysis.txt');
+}
+function exportVids(mode){
+  const lines=[mode==='plain'?'EXHIBIT — VIDEO CALL ANALYSIS (COURT COPY)':'EXHIBIT — VIDEO CALL ANALYSIS (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Recordings: ${allVids.length}`,'','─'.repeat(60)];
+  allVids.forEach((v,i)=>{
+    lines.push(`\nRECORDING ${i+1}: ${v.filename}`);
+    lines.push(`Duration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}`);
+    lines.push(`Speakers: ${(v.speakers_detected||[]).join(', ')||'unknown'}`);
+    lines.push(`\nDescription:\n${v.court_summary||''}`);
+    if(v.background_incidents?.length){lines.push(`\nBackground adult presence:`);v.background_incidents.forEach(b=>lines.push(`  [${b.timestamp_approx}] ${b.court_plain}`));}
+    if(v.distraction_incidents?.length){lines.push(`\nDistraction incidents:`);v.distraction_incidents.forEach(d=>lines.push(`  [${d.timestamp_approx}] ${d.court_plain}`));}
+    if(v.ethan_indicators){lines.push(`\nEthan observations:`);if(v.ethan_indicators.self_censorship_moments)lines.push(`  Self-censorship: ${v.ethan_indicators.self_censorship_moments}`);}
+    lines.push('\n'+'─'.repeat(40));
+  });
+  dl(lines.join('\n'),mode==='plain'?'Video_Court_Exhibit.txt':'Video_Full_Analysis.txt');
+}
+function exportNR(){
+  const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents instances where Petitioner chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','','─'.repeat(60)];
+  nrEntries.forEach((e,i)=>{lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>REASON_PLAIN[r]).join(' ')}${e.notes?'\nContext: '+e.notes:''}`);});
+  dl(lines.join('\n'),'Non_Response_Log.txt');
+}
+function exportRL(){
+  const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','','─'.repeat(60)];
+  rlEntries.forEach((e,i)=>{lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance'}. ${e.words?`"${e.words}".`:''} ${e.context||''}`);});
+  dl(lines.join('\n'),'Reluctance_Log.txt');
+}
+function copyMsgSummary(){
+  const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));
+  const text=`OFW COMMUNICATION SUMMARY\nTotal messages: ${allMsgs.length}\nHigh severity: ${allMsgs.filter(m=>m.severity==='high').length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`• ${k}: ${v} instance${v!==1?'s':''}`).join('\n')}`;
+  navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard'));
+}
+function dl(content,filename){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'}));a.download=filename;a.click();
+}
+
+renderNR();renderRL();renderDurChart();renderGaps();
+</script>
+</body>
+</html>
