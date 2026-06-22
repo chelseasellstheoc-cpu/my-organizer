@@ -561,4 +561,4 @@ function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lin
 function copySum(){const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));const exM=allMsgs.filter(m=>isEx(m.sender));navigator.clipboard.writeText(`EVIDENCE SUMMARY\nMessages: ${allMsgs.length} - High severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours violations: ${exM.filter(m=>isDWH(m.timestamp_sent)).length}\nVideos: ${allVids.length}\nNon-response log: ${nrE.length}\nReluctance log: ${rlE.length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`- ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));}
 </script>
 </body>
-</html>
+</html> 
