@@ -333,7 +333,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
   </div>
 </div>
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 let API_KEY=null,onBreak=false;
 const WS=7.5,WE=16,WD=[1,2,3,4,5];
 let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
@@ -353,7 +353,7 @@ function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').
 // KEY
 function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();rAll();renderHourGrid([]);}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelector(`[onclick="sw('${n}')"]`).classList.add('active');document.getElementById('p-'+n).classList.add('active');}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -561,4 +561,4 @@ function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lin
 function copySum(){const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));const exM=allMsgs.filter(m=>isEx(m.sender));navigator.clipboard.writeText(`EVIDENCE SUMMARY\nMessages: ${allMsgs.length} - High severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours violations: ${exM.filter(m=>isDWH(m.timestamp_sent)).length}\nVideos: ${allVids.length}\nNon-response log: ${nrE.length}\nReluctance log: ${rlE.length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`- ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));}
 </script>
 </body>
-</html> 
+</html>
