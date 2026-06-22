@@ -8,1202 +8,557 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
-.app-shell{max-width:780px;margin:0 auto;padding:1rem}
-.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 1.5rem;flex-wrap:wrap;gap:8px}
-.top-bar h1{font-size:18px;font-weight:600}
-.api-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#666}
-.api-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
-.api-dot.connected{background:#1D9E75}
-.api-key-form{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
-.api-key-form h2{font-size:15px;font-weight:600;margin-bottom:6px}
-.api-key-form p{font-size:13px;color:#666;margin-bottom:12px;line-height:1.5}
-.api-row{display:flex;gap:8px}
-.api-row input{flex:1;font-size:13px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-family:inherit}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;transition:background 0.15s}
-.btn:hover{background:#f5f5f0}
-.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn-primary:hover{background:#333}
-.btn-sm{padding:5px 12px;font-size:12px}
-.btn:disabled{opacity:0.5;cursor:not-allowed}
-.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:1rem}
-.toggle-label{font-size:13px;color:#1a1a1a;flex:1}
-.toggle-sub{font-size:11px;color:#999;display:block;margin-top:2px}
-.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:22px;transition:.3s}
-.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
-input:checked+.toggle-slider{background:#1D9E75}
-input:checked+.toggle-slider:before{transform:translateX(18px)}
-.tabs{display:flex;border-bottom:1px solid #e5e5e0;margin-bottom:1.5rem;overflow-x:auto;gap:0}
-.tab{padding:10px 14px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh;font-size:14px}
+.shell{max-width:780px;margin:0 auto;padding:1rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 1.5rem;flex-wrap:wrap;gap:8px}
+.topbar h1{font-size:18px;font-weight:600}
+.apist{display:flex;align-items:center;gap:8px;font-size:12px;color:#666}
+.dot{width:8px;height:8px;border-radius:50%;background:#ccc}
+.dot.on{background:#1D9E75}
+.svi{font-size:11px;color:#1D9E75;display:none}
+.akf{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.akf h2{font-size:15px;font-weight:600;margin-bottom:6px}
+.akf p{font-size:13px;color:#666;margin-bottom:12px;line-height:1.5}
+.akrow{display:flex;gap:8px}
+.akrow input{flex:1;font-size:13px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-family:inherit}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a}
+.btn:hover{background:#f0f0ea}
+.btnp{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btnp:hover{background:#333}
+.btns{padding:4px 10px;font-size:12px}
+.btne{padding:3px 8px;font-size:11px;background:#eef4fd;color:#1a5fa8;border-color:#c5d8f5}
+.btnd{padding:3px 8px;font-size:11px;background:#fdf0f0;color:#c0392b;border-color:#f5c5c5}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.togrow{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:1rem}
+.toglbl{font-size:13px;flex:1}
+.togsub{font-size:11px;color:#999;display:block;margin-top:2px}
+.tog{position:relative;width:40px;height:22px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.togs{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:22px;transition:.3s}
+.togs::before{content:"";position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.togs{background:#1D9E75}
+input:checked+.togs::before{transform:translateX(18px)}
+.tabs{display:flex;border-bottom:1px solid #e5e5e0;margin-bottom:1.5rem;overflow-x:auto}
+.tab{padding:9px 11px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
 .tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
 .panel{display:none}
 .panel.active{display:block}
 .card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
 .card h3{font-size:14px;font-weight:600;margin-bottom:4px}
-.card p{font-size:12px;color:#666;margin-bottom:12px;line-height:1.5}
-.upload-zone{border:1.5px dashed #ccc;border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:1rem;transition:background 0.15s}
-.upload-zone:hover{background:#f9f9f7}
-.upload-zone .icon{font-size:28px;margin-bottom:8px}
-.upload-zone p{font-size:14px;color:#555;margin-bottom:4px}
-.upload-zone span{font-size:12px;color:#999}
-.format-badges{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
-.format-badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:500;background:#f0f0ea;color:#666}
-.queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #e5e5e0;background:#f9f9f7;font-size:13px;margin-bottom:6px}
-.queue-item .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.queue-item .fsize{font-size:11px;color:#999;flex-shrink:0}
-.ftype{font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;flex-shrink:0}
-.ftype-pdf{background:#fdf0f0;color:#c0392b}
-.ftype-zip{background:#eef4fd;color:#1a5fa8}
-.ftype-img{background:#f0faf5;color:#1a7a52}
-.ftype-vid{background:#f3f0fd;color:#5b4fcf}
-.rm-btn{background:none;border:none;cursor:pointer;color:#bbb;font-size:16px;padding:2px;flex-shrink:0}
-.rm-btn:hover{color:#666}
-.analyze-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:1rem}
-.progress-wrap{flex:1;min-width:80px;height:4px;background:#e5e5e0;border-radius:2px;overflow:hidden;display:none}
-.progress-fill{height:100%;background:#1a1a1a;border-radius:2px;transition:width 0.3s}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:4px}
+.cp{font-size:12px;color:#666;margin-bottom:12px;line-height:1.5}
+.uz{border:1.5px dashed #ccc;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;margin-bottom:1rem}
+.uz:hover{background:#f9f9f7}
+.uzi{font-size:24px;margin-bottom:6px}
+.uzp{font-size:13px;color:#555;margin-bottom:4px}
+.fmts{display:flex;gap:6px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.fmt{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;background:#f0f0ea;color:#666}
+.qi{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #e5e5e0;background:#f9f9f7;font-size:13px;margin-bottom:6px}
+.fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fs2{font-size:11px;color:#999;flex-shrink:0}
+.ft{font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;flex-shrink:0}
+.fp{background:#fdf0f0;color:#c0392b}.fz{background:#eef4fd;color:#1a5fa8}.fi2{background:#f0faf5;color:#1a7a52}.fv{background:#f3f0fd;color:#5b4fcf}
+.rmb{background:none;border:none;cursor:pointer;color:#bbb;font-size:15px;padding:2px}
+.abar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:1rem}
+.pw{flex:1;min-width:80px;height:4px;background:#e5e5e0;border-radius:2px;overflow:hidden;display:none}
+.pf{height:100%;background:#1a1a1a;border-radius:2px;transition:width .3s}
+.sp{display:inline-block;width:13px;height:13px;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:3px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
-.stat-card{background:#f9f9f7;border-radius:8px;padding:10px 12px;border:1px solid #e5e5e0}
-.stat-label{font-size:11px;color:#888;margin-bottom:4px}
-.stat-value{font-size:22px;font-weight:600;color:#1a1a1a}
-.stat-value.red{color:#c0392b}
-.stat-value.amber{color:#b7770d}
-.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
-.chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+.sc{background:#f9f9f7;border-radius:8px;padding:10px 12px;border:1px solid #e5e5e0}
+.sl{font-size:11px;color:#888;margin-bottom:4px}
+.sv{font-size:20px;font-weight:600}
+.sv.red{color:#c0392b}.sv.amb{color:#b7770d}
+.fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}
 .chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.msg-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
-.msg-card.flagged{border-left:3px solid #c0392b}
-.msg-card.work-hours{border-left:3px solid #e67e22}
-.msg-card.late-night{border-left:3px solid #7F77DD}
-.msg-sender{font-size:13px;font-weight:600}
-.msg-time{font-size:11px;color:#999;margin-top:2px}
-.msg-viewed{font-size:11px;color:#bbb;margin-top:1px}
-.badges{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
-.badge{display:inline-flex;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:500}
-.b-red{background:#fdf0f0;color:#c0392b}
-.b-amber{background:#fdf6e3;color:#b7770d}
-.b-purple{background:#f3f0fd;color:#5b4fcf}
-.b-coral{background:#fdf2ee;color:#c0522b}
-.b-green{background:#f0faf5;color:#1a7a52}
-.b-gray{background:#f5f5f0;color:#666}
-.b-blue{background:#eef4fd;color:#1a5fa8}
-.b-orange{background:#fdf6e3;color:#b7770d}
-.b-violet{background:#f3f0fd;color:#5b4fcf}
-.msg-body{font-size:13px;color:#333;line-height:1.6;margin:8px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd}
-.msg-body.ex{border-left-color:#c0392b}
-.timing-flag{font-size:11px;padding:4px 10px;border-radius:6px;margin-bottom:6px;display:inline-flex;align-items:center;gap:4px}
-.timing-flag.work{background:#fdf6e3;color:#b7770d;border-left:none}
-.timing-flag.late{background:#f3f0fd;color:#5b4fcf;border-left:none}
-.analysis-tabs{display:flex;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0ea}
-.atab{padding:3px 10px;font-size:11px;border-radius:10px;cursor:pointer;border:1px solid #e0e0e0;background:none;color:#888}
+.mc{border:1px solid #e5e5e0;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
+.mc.fl{border-left:3px solid #c0392b}.mc.wh{border-left:3px solid #e67e22}.mc.ln{border-left:3px solid #7F77DD}
+.msn{font-size:13px;font-weight:600}
+.mts{font-size:11px;color:#999;margin-top:2px}
+.mvw{font-size:11px;color:#bbb;margin-top:1px}
+.bgs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.bg{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:500}
+.br{background:#fdf0f0;color:#c0392b}.ba{background:#fdf6e3;color:#b7770d}.bp{background:#f3f0fd;color:#5b4fcf}
+.bc{background:#fdf2ee;color:#c0522b}.bg2{background:#f0faf5;color:#1a7a52}.bgr{background:#f5f5f0;color:#666}
+.bb{background:#eef4fd;color:#1a5fa8}
+.mbody{font-size:13px;color:#333;line-height:1.6;margin:6px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd}
+.mbody.ex{border-left-color:#c0392b}
+.tf{font-size:11px;padding:3px 8px;border-radius:6px;margin-bottom:4px;display:inline-block}
+.tf.wk{background:#fdf6e3;color:#b7770d}.tf.lt{background:#f3f0fd;color:#5b4fcf}
+.atabs{display:flex;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid #f0f0ea}
+.atab{padding:3px 8px;font-size:11px;border-radius:10px;cursor:pointer;border:1px solid #e0e0e0;background:none;color:#888}
 .atab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.analysis-text{font-size:12px;color:#555;line-height:1.6;margin-top:8px}
-.court-text{font-size:13px;color:#1a5a3a;background:#f0faf5;padding:8px 10px;border-radius:6px;border-left:2px solid #1D9E75;line-height:1.6;margin-top:8px}
-.no-response-note{background:#eef4fd;border-radius:6px;padding:8px 10px;font-size:12px;color:#1a5fa8;margin-top:8px;border-left:2px solid #378ADD}
-.log-entry{border:1px solid #e5e5e0;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
-.log-entry.blue-left{border-left:3px solid #378ADD}
-.log-entry.purple-left{border-left:3px solid #7F77DD}
-.log-entry.orange-left{border-left:3px solid #e67e22}
-.log-entry-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
-.log-date{font-size:12px;font-weight:600}
-.log-body{font-size:12px;color:#666;line-height:1.5;margin-bottom:6px}
-.log-plain{font-size:12px;color:#3C3489;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.5}
-.reason-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-.reason-btn{padding:8px 10px;font-size:12px;border-radius:8px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666;text-align:left;line-height:1.4}
-.reason-btn.sel{border-color:#378ADD;background:#eef4fd;color:#1a5fa8}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.atext{font-size:12px;color:#555;line-height:1.6;margin-top:6px}
+.ctext{font-size:12px;color:#1a5a3a;background:#f0faf5;padding:8px 10px;border-radius:6px;border-left:2px solid #1D9E75;line-height:1.6;margin-top:6px}
+.nrnote{background:#eef4fd;border-radius:6px;padding:7px 10px;font-size:12px;color:#1a5fa8;margin-top:6px;border-left:2px solid #378ADD}
+.le{border:1px solid #e5e5e0;border-radius:10px;padding:11px 13px;margin-bottom:8px;background:#fff}
+.le.bl{border-left:3px solid #378ADD}.le.pl{border-left:3px solid #7F77DD}
+.lh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;gap:8px}
+.ld{font-size:12px;font-weight:600}
+.lb{font-size:12px;color:#666;line-height:1.5;margin-bottom:5px}
+.lp{font-size:12px;color:#3C3489;background:#f3f0fd;padding:7px 10px;border-radius:6px;line-height:1.5}
+.abtn{display:flex;gap:4px;flex-shrink:0}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.rb{padding:7px 9px;font-size:12px;border-radius:8px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666;text-align:left;line-height:1.4}
+.rb.sel{border-color:#378ADD;background:#eef4fd;color:#1a5fa8}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 label{font-size:12px;color:#666;display:block;margin-bottom:3px}
-input[type=date],input[type=time],input[type=number],select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;width:100%;margin-bottom:8px}
+input[type=date],input[type=time],input[type=number],input[type=text],select{font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;width:100%;margin-bottom:8px}
 textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;resize:vertical;min-height:60px;margin-bottom:8px}
-.video-result{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:12px;background:#fff}
-.seg-block{border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;overflow:hidden}
-.seg-hdr{padding:8px 12px;background:#f9f9f7;display:flex;align-items:center;justify-content:space-between;font-size:12px}
-.seg-label{font-weight:600}
-.seg-time{color:#999}
-.seg-body{padding:10px 12px}
-.flag-item{display:flex;gap:8px;padding:7px 10px;border-radius:6px;font-size:12px;line-height:1.5;margin-bottom:5px}
-.flag-item.high{background:#fdf0f0;color:#7a1a1a;border-left:2px solid #c0392b}
-.flag-item.medium{background:#fdf6e3;color:#6b4800;border-left:2px solid #e67e22}
-.flag-item.low{background:#eef4fd;color:#1a3a6b;border-left:2px solid #378ADD}
-.flag-item.bg-adult{background:#f3f0fd;color:#2d1f7a;border-left:2px solid #7F77DD}
-.flag-item.distraction{background:#fdf2ee;color:#6b2a10;border-left:2px solid #D85A30}
-.flag-time{font-weight:600;flex-shrink:0;min-width:36px}
-.handoff-note{padding:6px 12px;font-size:11px;color:#6b4800;background:#fdf6e3;border-bottom:1px solid #e5e5e0}
-.ethan-block{padding:10px 12px;background:#fdf0f0;border-radius:6px;border-left:2px solid #c0392b;margin-top:8px;font-size:12px;color:#7a1a1a;line-height:1.6}
-.court-summary-block{margin-top:10px;padding:10px 12px;background:#f0faf5;border-radius:6px;font-size:12px;color:#1a5a3a;line-height:1.6;border-left:2px solid #1D9E75}
-.dur-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.dur-label{font-size:12px;color:#666;width:150px;flex-shrink:0}
-.dur-track{flex:1;height:8px;background:#f0f0ea;border-radius:4px;overflow:hidden}
-.dur-fill{height:100%;border-radius:4px}
-.dur-fill.dad{background:#c0392b}
-.dur-fill.mom{background:#1D9E75}
-.dur-fill.ethan{background:#7F77DD}
-.dur-fill.work{background:#e67e22}
-.dur-fill.late{background:#7F77DD}
-.dur-val{font-size:12px;font-weight:600;width:50px;text-align:right;flex-shrink:0}
-.hour-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:8px 0}
-.hour-cell{height:32px;border-radius:3px;background:#f0f0ea;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:9px;color:#bbb;position:relative}
-.hour-cell .bar{position:absolute;bottom:0;left:0;right:0;border-radius:3px 3px 0 0;transition:height 0.3s}
-.hour-cell .bar.work-bar{background:#e67e22}
-.hour-cell .bar.normal-bar{background:#c0392b}
-.hour-cell .lbl{position:relative;z-index:1}
-.pattern-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
-.loophole-card{border:1px solid #e0b89a;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fdf8f5}
-.loophole-title{font-size:13px;font-weight:600;color:#7a3010;margin-bottom:6px}
-.loophole-current{font-size:12px;color:#7a3010;margin-bottom:8px;line-height:1.5}
-.loophole-proposed{font-size:12px;color:#2d1f7a;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.6}
-.export-section{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #e5e5e0}
-.export-section h3{font-size:14px;font-weight:600;margin-bottom:8px}
-.export-options{display:flex;gap:8px;flex-wrap:wrap}
-.empty-state{text-align:center;padding:3rem 1rem;color:#bbb;font-size:13px}
-.error-msg{background:#fdf0f0;color:#c0392b;padding:10px 14px;border-radius:8px;font-size:13px;margin-top:1rem}
-.info-box{background:#f9f9f7;border-radius:8px;padding:10px 14px;font-size:12px;color:#666;line-height:1.6;margin-bottom:1rem;border-left:2px solid #ccc}
-.info-box strong{color:#1a1a1a}
-.trans-toggle{font-size:12px;color:#888;cursor:pointer;background:none;border:none;padding:6px 0 0;display:flex;align-items:center;gap:4px}
-.trans-text{font-size:12px;color:#555;line-height:1.7;white-space:pre-wrap;background:#f9f9f7;padding:10px;border-radius:6px;margin-top:6px}
-.processing-log{background:#f9f9f7;border-radius:8px;padding:10px 14px;font-size:11px;color:#666;line-height:1.8;margin-top:8px;max-height:120px;overflow-y:auto;display:none}
-.section-title{font-size:14px;font-weight:600;color:#1a1a1a;margin:1.5rem 0 0.75rem}
-.gap-stat{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:#f9f9f7;border:1px solid #e5e5e0;margin-bottom:6px;font-size:13px}
-.gap-val{font-weight:600;color:#1a1a1a}
-.gap-val.red{color:#c0392b}
-.gap-val.amber{color:#b7770d}
-@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.reason-grid{grid-template-columns:1fr}.hour-grid{grid-template-columns:repeat(6,1fr)}}
+.vr{border:1px solid #e5e5e0;border-radius:10px;padding:13px 15px;margin-bottom:12px;background:#fff}
+.segb{border:1px solid #e5e5e0;border-radius:8px;margin-bottom:8px;overflow:hidden}
+.segh{padding:7px 11px;background:#f9f9f7;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.segl{font-weight:600}.segt{color:#999}
+.segbd{padding:9px 11px}
+.fi{display:flex;gap:7px;padding:6px 9px;border-radius:6px;font-size:12px;line-height:1.5;margin-bottom:4px}
+.fi.high{background:#fdf0f0;color:#7a1a1a;border-left:2px solid #c0392b}
+.fi.medium{background:#fdf6e3;color:#6b4800;border-left:2px solid #e67e22}
+.fi.low{background:#eef4fd;color:#1a3a6b;border-left:2px solid #378ADD}
+.fi.bga{background:#f3f0fd;color:#2d1f7a;border-left:2px solid #7F77DD}
+.fi.dis{background:#fdf2ee;color:#6b2a10;border-left:2px solid #D85A30}
+.fts{font-weight:600;flex-shrink:0;min-width:32px}
+.hn{padding:5px 11px;font-size:11px;color:#6b4800;background:#fdf6e3;border-bottom:1px solid #e5e5e0}
+.etb{padding:9px 11px;background:#fdf0f0;border-radius:6px;border-left:2px solid #c0392b;margin-top:7px;font-size:12px;color:#7a1a1a;line-height:1.6}
+.csb{margin-top:9px;padding:9px 11px;background:#f0faf5;border-radius:6px;font-size:12px;color:#1a5a3a;line-height:1.6;border-left:2px solid #1D9E75}
+.dr{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.dl2{font-size:12px;color:#666;width:140px;flex-shrink:0}
+.dt{flex:1;height:7px;background:#f0f0ea;border-radius:4px;overflow:hidden}
+.df{height:100%;border-radius:4px}
+.df.dad{background:#c0392b}.df.mom{background:#1D9E75}.df.ethan{background:#7F77DD}
+.dv{font-size:12px;font-weight:600;width:45px;text-align:right;flex-shrink:0}
+.hgrid{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:8px 0}
+.hc{height:36px;border-radius:3px;background:#f0f0ea;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:9px;color:#bbb;position:relative}
+.hbar{position:absolute;bottom:0;left:0;right:0;border-radius:3px 3px 0 0}
+.hbar.wb{background:#e67e22}.hbar.nb{background:#c0392b}
+.hl{position:relative;z-index:1}
+.pc{border:1px solid #e5e5e0;border-radius:10px;padding:13px 15px;margin-bottom:9px;background:#fff}
+.lcrd{border:1px solid #e0b89a;border-radius:10px;padding:13px 15px;margin-bottom:9px;background:#fdf8f5}
+.lct{font-size:13px;font-weight:600;color:#7a3010;margin-bottom:5px}
+.lcc{font-size:12px;color:#7a3010;margin-bottom:7px;line-height:1.5}
+.lcp{font-size:12px;color:#2d1f7a;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.6}
+.es{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #e5e5e0}
+.es h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.eo{display:flex;gap:8px;flex-wrap:wrap}
+.empty{text-align:center;padding:2.5rem 1rem;color:#bbb;font-size:13px}
+.err{background:#fdf0f0;color:#c0392b;padding:9px 13px;border-radius:8px;font-size:13px;margin-top:1rem}
+.ib{background:#f9f9f7;border-radius:8px;padding:9px 13px;font-size:12px;color:#666;line-height:1.6;margin-bottom:1rem;border-left:2px solid #ccc}
+.ib strong{color:#1a1a1a}
+.plog{background:#f9f9f7;border-radius:8px;padding:9px 13px;font-size:11px;color:#666;line-height:1.8;margin-top:8px;max-height:100px;overflow-y:auto;display:none}
+.stitle{font-size:14px;font-weight:600;color:#1a1a1a;margin:1.5rem 0 .75rem}
+.gstat{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-radius:8px;background:#f9f9f7;border:1px solid #e5e5e0;margin-bottom:5px;font-size:13px}
+.gv{font-weight:600}.gv.red{color:#c0392b}.gv.amb{color:#b7770d}
+.tt{cursor:pointer;background:none;border:none;padding:5px 0 0;font-size:12px;color:#888;display:flex;align-items:center;gap:4px}
+.ttxt{font-size:12px;color:#555;white-space:pre-wrap;background:#f9f9f7;padding:9px;border-radius:6px;margin-top:5px;line-height:1.7}
+.stcard{border:1px solid #e5e5e0;border-radius:10px;padding:13px 15px;margin-bottom:9px;background:#fff}
+.stcard h4{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:4px}
+.stcard .cite{font-size:11px;color:#1a5fa8;font-weight:500;margin-bottom:6px}
+.stcard .body2{font-size:12px;color:#555;line-height:1.6}
+.stcard .rel{font-size:12px;color:#1a5a3a;background:#f0faf5;padding:6px 9px;border-radius:6px;margin-top:7px;line-height:1.5}
+.hhead{background:linear-gradient(135deg,#1a1a1a,#333);color:#fff;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.hhead h2{font-size:16px;font-weight:600;margin-bottom:4px}
+.hhead p{font-size:12px;opacity:.7}
+.hhead .days{font-size:28px;font-weight:700;margin-top:8px}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:9px 13px;border-radius:8px;border:1px solid #e5e5e0;background:#fff;margin-bottom:6px;cursor:pointer}
+.chk.done{background:#f0faf5;border-color:#b8e0d0}
+.chkb{width:18px;height:18px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.chk.done .chkb{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.chkt{font-size:13px}
+.chks{font-size:11px;color:#999;margin-top:2px}
+.rcard{border:1px solid #e5e5e0;border-radius:10px;padding:13px 15px;margin-bottom:9px;background:#fff}
+.rcard h4{font-size:13px;font-weight:600;margin-bottom:3px}
+.rdate{font-size:11px;color:#999;margin-bottom:6px}
+.rbody{font-size:12px;color:#555;line-height:1.6}
+.rlink{font-size:12px;color:#1a5fa8;margin-top:5px;display:block;word-break:break-all}
+.modalbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
+.modalbg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;max-width:520px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0ea}
+@media(max-width:600px){.sg{grid-template-columns:repeat(2,1fr)}.fr{grid-template-columns:1fr}.rg{grid-template-columns:1fr}.hgrid{grid-template-columns:repeat(6,1fr)}}
 </style>
 </head>
 <body>
-<div class="app-shell">
-  <div class="top-bar">
-    <h1>🔒 Evidence Organizer</h1>
-    <div class="api-status">
-      <div class="api-dot" id="apiDot"></div>
-      <span id="apiStatusText">No API key</span>
-      <button class="btn btn-sm" onclick="resetKey()">Change key</button>
+<div class="shell">
+  <div class="topbar">
+    <h1>&#128274; Evidence Organizer</h1>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="svi" id="svi">&#10003; Saved</span>
+      <div class="apist"><div class="dot" id="dot"></div><span id="atxt">No API key</span><button class="btn btns" onclick="resetKey()">Change</button></div>
+      <button class="btn btns" onclick="exportDB()">&#128190; Backup</button>
+      <label class="btn btns" style="cursor:pointer">&#128194; Restore<input type="file" accept=".json" style="display:none" onchange="importDB(this)"></label>
     </div>
   </div>
-
-  <div class="api-key-form" id="apiKeyForm">
+  <div class="akf" id="keyForm">
     <h2>Enter your Anthropic API key</h2>
-    <p>Your key is used only in this browser session and is never stored. It clears when you close this tab. Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.</p>
-    <div class="api-row">
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
-      <button class="btn btn-primary" onclick="setKey()">Connect</button>
-    </div>
-    <div id="keyError" style="font-size:12px;color:#c0392b;margin-top:6px;display:none">Please enter a valid API key starting with sk-ant-</div>
+    <p>Your key is used only in this session and never stored. All your evidence data saves automatically in your browser and persists between sessions. Get a key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+    <div class="akrow"><input type="password" id="keyIn" placeholder="sk-ant-..." autocomplete="off"><button class="btn btnp" onclick="setKey()">Connect</button></div>
+    <div id="keyErr" style="font-size:12px;color:#c0392b;margin-top:6px;display:none">Please enter a valid key starting with sk-ant-</div>
   </div>
-
-  <div id="mainApp" style="display:none">
+  <div id="app" style="display:none">
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('messages')">📋 Messages</button>
-      <button class="tab" onclick="switchTab('videos')">🎥 Videos</button>
-      <button class="tab" onclick="switchTab('nonresponse')">🔕 Non-response</button>
-      <button class="tab" onclick="switchTab('reluctance')">😶 Reluctance</button>
-      <button class="tab" onclick="switchTab('duration')">⏱ Duration & Timing</button>
-      <button class="tab" onclick="switchTab('patterns')">📊 Patterns</button>
-      <button class="tab" onclick="switchTab('gaps')">⚠️ Order gaps</button>
+      <button class="tab active" onclick="sw('messages')">&#128203; Messages</button>
+      <button class="tab" onclick="sw('videos')">&#127909; Videos</button>
+      <button class="tab" onclick="sw('nonresponse')">&#128276; Non-response</button>
+      <button class="tab" onclick="sw('reluctance')">&#128566; Reluctance</button>
+      <button class="tab" onclick="sw('duration')">&#9201; Duration</button>
+      <button class="tab" onclick="sw('patterns')">&#128202; Patterns</button>
+      <button class="tab" onclick="sw('gaps')">&#9888; Order gaps</button>
+      <button class="tab" onclick="sw('hearing')">&#128197; 7/30 Hearing</button>
+      <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
+      <button class="tab" onclick="sw('docs')">&#128193; My docs</button>
     </div>
-
     <!-- MESSAGES -->
-    <div id="panel-messages" class="panel active">
-      <div class="toggle-row">
-        <div class="toggle-label">
-          Summer break mode
-          <span class="toggle-sub">On break 6/25/26–7/20/26 — suspends work-hours flagging</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="breakToggle" onchange="updateBreakMode()">
-          <span class="toggle-slider"></span>
-        </label>
+    <div id="p-messages" class="panel active">
+      <div class="togrow"><div class="toglbl">Summer break mode <span class="togsub">6/25-7/20/26 - suspends work-hours flagging</span></div><label class="tog"><input type="checkbox" id="brk" onchange="onBreak=this.checked;save();if(allMsgs.length)renderMsgs()"><span class="togs"></span></label></div>
+      <div class="card"><h3>Upload OFW messages</h3><p class="cp">PDF, ZIP, or screenshots. Work-hours messages (Mon-Fri 7:30am-4pm) flagged automatically. All data saves between sessions automatically.</p>
+        <div class="uz" onclick="document.getElementById('mIn').click()" id="mDrop"><div class="uzi">&#128228;</div><p class="uzp">Drop files here or click to browse</p><div class="fmts"><span class="fmt">&#128196; PDF</span><span class="fmt">&#128476; ZIP</span><span class="fmt">&#128444; PNG/JPG</span></div></div>
+        <input type="file" id="mIn" multiple accept=".pdf,.zip,image/*" style="display:none" onchange="addQ(Array.from(this.files),mQ,'mQEl','mABar')">
+        <div id="mQEl"></div>
+        <div class="abar" id="mABar" style="display:none"><button class="btn btnp" onclick="analyzeMsgs()" id="mBtn">&#10022; Analyze</button><div class="pw" id="mPW"><div class="pf" id="mPF" style="width:0%"></div></div><span style="font-size:11px;color:#999" id="mPL"></span></div>
+        <div class="plog" id="mLog"></div><div id="mErr"></div>
       </div>
-      <div class="card">
-        <h3>Upload OFW messages</h3>
-        <p>Upload OFW exports in any format. PDFs are parsed directly. ZIPs are unpacked automatically. Messages sent during your work hours (Mon–Fri 7:30am–4:00pm) are flagged automatically unless break mode is on.</p>
-        <div class="upload-zone" onclick="document.getElementById('msgInput').click()" id="msgDrop">
-          <div class="icon">📤</div>
-          <p>Drop files here or click to browse</p>
-          <span>Supports all OFW export formats</span>
-          <div class="format-badges">
-            <span class="format-badge">📄 PDF</span>
-            <span class="format-badge">🗜 ZIP</span>
-            <span class="format-badge">🖼 PNG / JPG</span>
-          </div>
-        </div>
-        <input type="file" id="msgInput" multiple accept=".pdf,.zip,image/*" style="display:none" onchange="handleMsgFiles(this.files)">
-        <div id="msgQueue"></div>
-        <div class="analyze-bar" id="msgAnalyzeBar" style="display:none">
-          <button class="btn btn-primary" onclick="analyzeMsgs()" id="msgAnalyzeBtn">✦ Analyze messages</button>
-          <div class="progress-wrap" id="msgProgress"><div class="progress-fill" id="msgFill" style="width:0%"></div></div>
-          <span style="font-size:12px;color:#999" id="msgProgressLabel"></span>
-        </div>
-        <div class="processing-log" id="msgLog"></div>
-        <div id="msgError"></div>
-      </div>
-      <div class="stat-grid" id="msgStats" style="display:none"></div>
-      <div class="filter-bar" id="msgFilters"></div>
-      <div id="msgList"></div>
-      <div class="export-section" id="msgExport" style="display:none">
-        <h3>Export for court</h3>
-        <div class="export-options">
-          <button class="btn btn-sm" onclick="exportMsgs('plain')">📄 Plain-language exhibit</button>
-          <button class="btn btn-sm" onclick="exportMsgs('full')">📄 Full analysis (attorney)</button>
-          <button class="btn btn-sm" onclick="copyMsgSummary()">📋 Copy summary</button>
-        </div>
-      </div>
+      <div class="sg" id="mStats" style="display:none"></div>
+      <div class="fbar" id="mFilters"></div>
+      <div id="mList"></div>
+      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
     </div>
-
     <!-- VIDEOS -->
-    <div id="panel-videos" class="panel">
-      <div class="card">
-        <h3>Upload OFW call recordings</h3>
-        <p>Upload full MP4 recordings. AI automatically detects speakers, handoffs, background adults, distractions, and alienation behaviors. Call durations are automatically logged to the Duration & Timing tab.</p>
-        <div class="info-box"><strong>Before uploading:</strong> Confirm with your attorney that OFW's built-in recording satisfies California two-party consent requirements before using recordings in court filings.</div>
-        <div class="upload-zone" onclick="document.getElementById('vidInput').click()" id="vidDrop">
-          <div class="icon">🎥</div>
-          <p>Drop MP4 recordings here or click to browse</p>
-          <div class="format-badges"><span class="format-badge">🎥 MP4</span></div>
-        </div>
-        <input type="file" id="vidInput" multiple accept="video/*" style="display:none" onchange="handleVidFiles(this.files)">
-        <div id="vidQueue"></div>
-        <div class="analyze-bar" id="vidAnalyzeBar" style="display:none">
-          <button class="btn btn-primary" onclick="analyzeVids()" id="vidAnalyzeBtn">✦ Analyze recordings</button>
-          <div class="progress-wrap" id="vidProgress"><div class="progress-fill" id="vidFill" style="width:0%"></div></div>
-          <span style="font-size:12px;color:#999" id="vidProgressLabel"></span>
-        </div>
-        <div id="vidError"></div>
+    <div id="p-videos" class="panel">
+      <div class="card"><h3>Upload OFW call recordings</h3><p class="cp">Full MP4. AI auto-detects speakers, handoffs, background adults, distractions, alienation behaviors. Durations auto-logged to Duration tab.</p>
+        <div class="ib"><strong>Before uploading:</strong> Confirm with your attorney that OFW recording satisfies California two-party consent requirements.</div>
+        <div class="uz" onclick="document.getElementById('vIn').click()" id="vDrop"><div class="uzi">&#127909;</div><p class="uzp">Drop MP4 recordings here</p></div>
+        <input type="file" id="vIn" multiple accept="video/*" style="display:none" onchange="addQ(Array.from(this.files),vQ,'vQEl','vABar')">
+        <div id="vQEl"></div>
+        <div class="abar" id="vABar" style="display:none"><button class="btn btnp" onclick="analyzeVids()" id="vBtn">&#10022; Analyze</button><div class="pw" id="vPW"><div class="pf" id="vPF" style="width:0%"></div></div><span style="font-size:11px;color:#999" id="vPL"></span></div>
+        <div id="vErr"></div>
       </div>
-      <div class="stat-grid" id="vidStats" style="display:none"></div>
-      <div id="vidList"></div>
-      <div class="export-section" id="vidExport" style="display:none">
-        <h3>Export for court</h3>
-        <div class="export-options">
-          <button class="btn btn-sm" onclick="exportVids('plain')">📄 Plain-language exhibit</button>
-          <button class="btn btn-sm" onclick="exportVids('full')">📄 Full analysis (attorney)</button>
-        </div>
-      </div>
+      <div class="sg" id="vStats" style="display:none"></div>
+      <div id="vList"></div>
+      <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportVids('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportVids('full')">&#128196; Attorney copy</button></div></div>
     </div>
-
     <!-- NON-RESPONSE -->
-    <div id="panel-nonresponse" class="panel">
-      <div class="card">
-        <h3>Log a non-response decision</h3>
-        <p>Every time you choose not to respond, log it here. This protects you from being characterized as uncooperative and documents the pattern of messages requiring disengagement.</p>
-        <div class="form-row">
-          <div><label>Date</label><input type="date" id="nr-date"></div>
-          <div><label>Time</label><input type="time" id="nr-time"></div>
+    <div id="p-nonresponse" class="panel">
+      <div class="card"><h3>Log a non-response decision</h3><p class="cp">Document every time you choose not to respond. Protects you from being characterized as uncooperative. Edit any entry anytime. Saves automatically.</p>
+        <div class="fr"><div><label>Date</label><input type="date" id="nrd"></div><div><label>Time</label><input type="time" id="nrt"></div></div>
+        <label>Message you chose not to respond to</label><textarea id="nrm" placeholder="Paste or summarize..."></textarea>
+        <label>Reason (select all that apply)</label>
+        <div class="rg">
+          <button class="rb" onclick="togR(this,'boundary')">Boundary - responding would reinforce the behavior</button>
+          <button class="rb" onclick="togR(this,'info')">No further child-related information needed</button>
+          <button class="rb" onclick="togR(this,'lastword')">Last-word pattern - response invites further contact</button>
+          <button class="rb" onclick="togR(this,'attack')">Message attacked character or not child-centered</button>
         </div>
-        <label>Message you chose not to respond to</label>
-        <textarea id="nr-msg" placeholder="Paste or summarize the message..."></textarea>
-        <label>Why you chose not to respond</label>
-        <div class="reason-grid">
-          <button class="reason-btn" onclick="toggleReason(this,'boundary')">Boundary — responding would reinforce the behavior</button>
-          <button class="reason-btn" onclick="toggleReason(this,'info')">No further child-related information needed</button>
-          <button class="reason-btn" onclick="toggleReason(this,'lastword')">Last-word pattern — response invites further contact</button>
-          <button class="reason-btn" onclick="toggleReason(this,'attack')">Message attacked character or was not child-centered</button>
-        </div>
-        <label>Optional context</label>
-        <textarea id="nr-notes" placeholder="e.g. 4th message that day, I was at work..." style="min-height:45px"></textarea>
-        <button class="btn btn-primary" onclick="addNR()">+ Add to log</button>
+        <label>Optional context</label><textarea id="nrn" style="min-height:40px" placeholder="e.g. 4th message that day, I was at work..."></textarea>
+        <button class="btn btnp" onclick="addNR()">+ Add to log</button>
       </div>
       <div id="nrList"></div>
-      <div class="export-section">
-        <h3>Export non-response log</h3>
-        <div class="export-options"><button class="btn btn-sm" onclick="exportNR()">📄 Export as court exhibit</button></div>
-      </div>
+      <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportNR()">&#128196; Court exhibit</button></div></div>
     </div>
-
     <!-- RELUCTANCE -->
-    <div id="panel-reluctance" class="panel">
-      <div class="card">
-        <h3>Log reluctance or self-censorship</h3>
-        <p>Record every instance of coached reluctance, early call endings, or self-censorship — including Ethan stopping himself from saying he missed you. Approximate dates are fine.</p>
-        <div class="form-row">
-          <div><label>Date (approximate is okay)</label><input type="date" id="rl-date"></div>
-          <div><label>Time</label><input type="time" id="rl-time"></div>
-        </div>
-        <label>Child</label>
-        <select id="rl-child"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
-        <label>Exact words or what happened</label>
-        <textarea id="rl-words" placeholder="e.g. Ethan began to say 'I miss—' then stopped, looked off-camera, changed subject"></textarea>
-        <label>Type of incident</label>
-        <select id="rl-type">
-          <option value="">Select...</option>
-          <option>Child refused to talk</option>
-          <option>Child self-censored expression of affection</option>
-          <option>Child ended call abruptly</option>
-          <option>Child gave only one-word answers</option>
-          <option>Child looked off-screen before responding</option>
-          <option>Adult voice ended call</option>
-          <option>Child seemed flat or emotionally unavailable</option>
-          <option>Other</option>
-        </select>
-        <label>Context — what happened in the 24-48 hours before</label>
-        <textarea id="rl-context" placeholder="e.g. Long call with Dad previous night. Ethan has been at Dad's for 6 months." style="min-height:45px"></textarea>
-        <button class="btn btn-primary" onclick="addRL()">+ Add to log</button>
+    <div id="p-reluctance" class="panel">
+      <div class="card"><h3>Log reluctance or self-censorship</h3><p class="cp">Approximate dates are fine and more credible than precise dates entered before a hearing. Edit any entry anytime.</p>
+        <div class="fr"><div><label>Date (approximate okay)</label><input type="date" id="rld"></div><div><label>Time</label><input type="time" id="rlt"></div></div>
+        <label>Child</label><select id="rlc"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
+        <label>What happened - quote as precisely as possible</label><textarea id="rlw" placeholder="e.g. Ethan began to say I miss- then stopped, looked off-camera, changed subject"></textarea>
+        <label>Type</label><select id="rlty"><option value="">Select...</option><option>Child refused to talk</option><option>Child self-censored expression of affection</option><option>Child ended call abruptly</option><option>Child gave only one-word answers</option><option>Child looked off-screen before responding</option><option>Adult voice ended call</option><option>Child seemed flat or emotionally unavailable</option><option>Other</option></select>
+        <label>Context - 24-48 hours before</label><textarea id="rlctx" style="min-height:40px" placeholder="e.g. Long call with Petitioner previous night. Ethan has been at Petitioner house 6 months."></textarea>
+        <button class="btn btnp" onclick="addRL()">+ Add to log</button>
       </div>
       <div id="rlList"></div>
-      <div class="export-section">
-        <h3>Export reluctance log</h3>
-        <div class="export-options"><button class="btn btn-sm" onclick="exportRL()">📄 Export as court exhibit</button></div>
-      </div>
+      <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportRL()">&#128196; Court exhibit</button></div></div>
     </div>
-
-    <!-- DURATION & TIMING -->
-    <div id="panel-duration" class="panel">
-      <p class="section-title">📞 Call duration</p>
-      <div id="durChart"><div class="empty-state">Analyze videos or add manual entries below to see call duration comparison.</div></div>
-      <div id="autoLoggedCalls" style="margin-bottom:1rem"></div>
-
-      <div class="card">
-        <h3>Manually log a call duration</h3>
-        <p>Log any call even without a recording. Auto-populated from video analysis above.</p>
-        <div class="form-row">
-          <div><label>Date</label><input type="date" id="dur-date"></div>
-          <div><label>Call type</label>
-            <select id="dur-type">
-              <option value="dad">His call with kids at my home</option>
-              <option value="mom">My call with kids</option>
-              <option value="ethan">Ethan goodnight call</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div><label>Duration (minutes)</label><input type="number" id="dur-mins" min="1" max="180" placeholder="e.g. 22"></div>
-          <div><label>Who ended call</label>
-            <select id="dur-ender"><option>Dad</option><option>Child</option><option>Me</option><option>Unknown</option></select>
-          </div>
-        </div>
-        <label>Notes (optional)</label>
-        <textarea id="dur-notes" placeholder="e.g. Grandparents audible. Kids eating during my portion." style="min-height:40px"></textarea>
-        <button class="btn btn-primary" onclick="addDur()">+ Add entry</button>
+    <!-- DURATION -->
+    <div id="p-duration" class="panel">
+      <p class="stitle">&#128222; Call duration</p>
+      <div id="durChart"></div>
+      <div id="autoLog" style="margin-bottom:8px"></div>
+      <div class="card"><h3>Manually log a call</h3>
+        <div class="fr"><div><label>Date</label><input type="date" id="dud"></div><div><label>Type</label><select id="duty"><option value="dad">His call with kids at my home</option><option value="mom">My call with kids</option><option value="ethan">Ethan goodnight call</option></select></div></div>
+        <div class="fr"><div><label>Duration (min)</label><input type="number" id="dum" min="1" max="180" placeholder="e.g. 22"></div><div><label>Who ended</label><select id="due"><option>Dad</option><option>Child</option><option>Me</option><option>Unknown</option></select></div></div>
+        <label>Notes</label><textarea id="dun" style="min-height:35px" placeholder="e.g. Grandparents audible. Kids eating."></textarea>
+        <button class="btn btnp" onclick="addDur()">+ Add</button>
       </div>
       <div id="durList"></div>
-
-      <p class="section-title">🕐 Message timing patterns</p>
-      <p style="font-size:12px;color:#666;margin-bottom:1rem;line-height:1.5">Messages sent during your work hours (Mon–Fri 7:30am–4:00pm) represent a documented pattern of boundary violations. You have previously requested he not message you during work hours.</p>
-      <div id="timingStats"><div class="empty-state">Analyze messages first to see timing patterns.</div></div>
-
-      <p class="section-title">📊 Message density by hour</p>
-      <p style="font-size:12px;color:#666;margin-bottom:0.5rem">Orange = your work hours. Each bar shows number of his messages in that hour across all analyzed messages.</p>
-      <div class="hour-grid" id="hourGrid"></div>
-      <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:#888">
-        <span>🟠 Your work hours (7:30am–4pm)</span>
-        <span>🔴 Other hours</span>
-      </div>
-
-      <p class="section-title">⏱ Response gap analysis</p>
-      <p style="font-size:12px;color:#666;margin-bottom:1rem;line-height:1.5">How quickly each party responds to the other's messages. A pattern of him demanding fast responses while taking hours himself is documentable.</p>
-      <div id="responseGaps"><div class="empty-state">Analyze messages first to see response gap data.</div></div>
-
-      <div class="export-section">
-        <h3>Export timing analysis</h3>
-        <div class="export-options">
-          <button class="btn btn-sm" onclick="exportTiming()">📄 Export timing report</button>
-          <button class="btn btn-sm" onclick="exportDur()">📄 Export call duration log</button>
-        </div>
-      </div>
+      <p class="stitle">&#128336; Message timing patterns</p>
+      <p style="font-size:12px;color:#666;margin-bottom:.75rem;line-height:1.5">Petitioner has repeatedly requested no non-urgent contact during work hours (Mon-Fri 7:30am-4pm). This section documents that pattern.</p>
+      <div id="timingStats"><div class="empty">Analyze messages first.</div></div>
+      <p class="stitle" style="margin-top:1rem">&#128202; His messages by hour</p>
+      <p style="font-size:11px;color:#888;margin-bottom:6px">Orange = your work hours (7:30am-4pm)</p>
+      <div class="hgrid" id="hourGrid"></div>
+      <p class="stitle">&#9201; Response gaps</p>
+      <div id="respGaps"><div class="empty">Analyze messages first.</div></div>
+      <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportTiming()">&#128196; Timing report</button><button class="btn btns" onclick="exportDurLog()">&#128196; Call duration log</button></div></div>
     </div>
-
     <!-- PATTERNS -->
-    <div id="panel-patterns" class="panel">
-      <div id="patternList"><div class="empty-state">Analyze messages or videos first to see patterns.</div></div>
-    </div>
-
+    <div id="p-patterns" class="panel"><div id="patList"><div class="empty">Analyze messages or videos first.</div></div></div>
     <!-- ORDER GAPS -->
-    <div id="panel-gaps" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Based on analyzed messages and documented behaviors, these are likely gaps in your current order — with proposed plain-language replacement language for your attorney.</p>
+    <div id="p-gaps" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Gaps in your current order with proposed plain-language replacement language for your attorney.</p>
       <div id="gapList"></div>
+    </div>
+    <!-- HEARING -->
+    <div id="p-hearing" class="panel">
+      <div class="hhead"><h2>&#128197; July 30, 2026 - Custody Hearing</h2><p>Dr. Kelley (custody evaluator) testifying - Focus: custody modification</p><div class="days" id="daysLeft"></div></div>
+      <p class="stitle">Evidence aligned with Dr. Kelley findings</p>
+      <div id="hearingEv"></div>
+      <p class="stitle">Hearing prep checklist</p>
+      <div id="checklist"></div>
+      <p class="stitle">Key statutory framework</p>
+      <div class="stcard"><h4>Family Code section 3044 - Domestic Violence Presumption</h4><div class="cite">Cal. Fam. Code section 3044</div><div class="body2">Creates a rebuttable presumption that granting custody to a person who has perpetrated domestic violence is detrimental to the best interest of the child. Petitioner bears the burden to rebut it.</div><div class="rel">Your TDVRO and documented physical intimidation (arm grabbing, intimidating exchanges) directly invoke this presumption.</div></div>
+      <div class="stcard"><h4>Family Code section 3020 - Legislative Policy</h4><div class="cite">Cal. Fam. Code section 3020</div><div class="body2">Declares California public policy to assure children frequent and continuing contact with both parents - except where contact would not be in the child best interest.</div><div class="rel">Ethan estrangement from Respondent directly conflicts with this policy. Dr. Kelley testimony that he was intimidated and saw Respondent as the primary parent is central.</div></div>
+      <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportHearing()">&#128196; Hearing brief</button></div></div>
+    </div>
+    <!-- LEGAL -->
+    <div id="p-legal" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Verified California statutes relevant to your case. Ask your attorney to identify specific cases that apply to your documented facts - do not cite cases from this tool without attorney verification.</p>
+      <div id="legalRef"></div>
+    </div>
+    <!-- DOCS -->
+    <div id="p-docs" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Reference index for your court documents. Enter key details manually - no content sent to AI. Store actual files in Google Drive and link here. All entries save automatically.</p>
+      <div class="card"><h3>Add a document</h3>
+        <div class="fr"><div><label>Type</label><select id="dtype"><option>Current custody and visitation order</option><option>TDVRO</option><option>Custody evaluation (Dr. Kelley)</option><option>Emergency investigation report</option><option>Attorney correspondence</option><option>School or medical record</option><option>Court filing</option><option>Other</option></select></div><div><label>Date</label><input type="date" id="ddate"></div></div>
+        <label>Title / description</label><input type="text" id="dtitle" placeholder="e.g. Current custody order issued 1/15/25">
+        <label>Key points (your summary - no verbatim quotes from protected docs)</label><textarea id="dnotes" placeholder="e.g. Exchange at neutral location, communication via OFW only, nightly calls at 8pm..."></textarea>
+        <label>Google Drive link (optional)</label><input type="text" id="dlink" placeholder="https://drive.google.com/...">
+        <button class="btn btnp" onclick="addDoc()">+ Add document</button>
+      </div>
+      <div id="docList"></div>
     </div>
   </div>
 </div>
-
+<div class="modalbg" id="editModal">
+  <div class="modal"><h3 id="mTitle">Edit entry</h3><div id="mBody"></div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btnp" onclick="saveEdit()">Save changes</button></div>
+  </div>
+</div>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let API_KEY=null,onBreak=false;
+const WS=7.5,WE=16,WD=[1,2,3,4,5];
+let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
+let nrE=[],rlE=[],durE=[],docE=[],clState={};
+let aMF='all',mVM={},vTr={};
+const selNR=new Set();
+let editCtx=null;
 
-let API_KEY=null;
-let onBreak=false;
-const WORK_START=7.5; // 7:30am
-const WORK_END=16.0;  // 4:00pm
-const WORK_DAYS=[1,2,3,4,5]; // Mon-Fri
+// PERSISTENCE
+function save(){try{localStorage.setItem('eo',JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,v:3}));showSave();}catch(e){console.error(e);}}
+function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON.parse(r);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;if(onBreak&&document.getElementById('brk'))document.getElementById('brk').checked=true;}catch(e){console.error(e);}}
+function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
+function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
+function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();}
 
-const msgQueue=[],vidQueue=[],nrEntries=[],rlEntries=[],durEntries=[],autoCallLog=[];
-let allMsgs=[],allVids=[];
-let activeMsgFilter='all',msgViewMode={},vidTranscript={};
-const selectedNRReasons=new Set();
-
-const REASON_PLAIN={
-  boundary:'Petitioner did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',
-  info:'No response was required because all necessary child-related information had already been communicated.',
-  lastword:'Petitioner did not respond because Respondent has an established pattern of requiring the final message in every exchange regardless of content.',
-  attack:'Petitioner did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a pattern of using OFW to harass rather than co-parent.'
-};
-const REASON_LABEL={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
-
-// TIMING HELPERS
-function parseTimestamp(ts){
-  if(!ts)return null;
-  // Format: "03/22/2025 at 09:06 PM"
-  const m=ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+at\s+(\d{2}):(\d{2})\s+(AM|PM)/i);
-  if(!m)return null;
-  let h=parseInt(m[4]);
-  const min=parseInt(m[5]);
-  const ampm=m[6].toUpperCase();
-  if(ampm==='PM'&&h!==12)h+=12;
-  if(ampm==='AM'&&h===12)h=0;
-  return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,min);
-}
-function isDuringWorkHours(ts){
-  if(onBreak)return false;
-  const d=parseTimestamp(ts);
-  if(!d)return false;
-  const dow=d.getDay();
-  if(!WORK_DAYS.includes(dow))return false;
-  const frac=d.getHours()+(d.getMinutes()/60);
-  return frac>=WORK_START&&frac<WORK_END;
-}
-function isLateNight(ts){
-  const d=parseTimestamp(ts);
-  if(!d)return false;
-  const h=d.getHours();
-  return h>=21||h<7;
-}
-function getHour(ts){
-  const d=parseTimestamp(ts);
-  return d?d.getHours():null;
-}
-function isWorkHour(h){return h>=8&&h<16;} // 7:30 rounds to 8 for display
-function minutesBetween(ts1,ts2){
-  const a=parseTimestamp(ts1),b=parseTimestamp(ts2);
-  if(!a||!b)return null;
-  return Math.abs(b-a)/60000;
-}
-function updateBreakMode(){
-  onBreak=document.getElementById('breakToggle').checked;
-  if(allMsgs.length)renderMsgs();
-}
-
-function setKey(){
-  const k=document.getElementById('apiKeyInput').value.trim();
-  if(!k.startsWith('sk-ant-')){document.getElementById('keyError').style.display='block';return;}
-  API_KEY=k;
-  document.getElementById('keyError').style.display='none';
-  document.getElementById('apiKeyForm').style.display='none';
-  document.getElementById('mainApp').style.display='block';
-  document.getElementById('apiDot').classList.add('connected');
-  document.getElementById('apiStatusText').textContent='API connected';
-  renderGaps();renderHourGrid([]);
-}
-function resetKey(){
-  API_KEY=null;
-  document.getElementById('apiKeyInput').value='';
-  document.getElementById('apiKeyForm').style.display='block';
-  document.getElementById('mainApp').style.display='none';
-  document.getElementById('apiDot').classList.remove('connected');
-  document.getElementById('apiStatusText').textContent='No API key';
-}
-function switchTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
-  document.getElementById(`panel-${name}`).classList.add('active');
-}
+// KEY
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();rAll();renderHourGrid([]);}
+function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelector(`[onclick="sw('${n}')"]`).classList.add('active');document.getElementById('p-'+n).classList.add('active');}
 
 // FILE HANDLING
-function getFileType(f){
-  if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';
-  if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';
-  if(f.type.startsWith('video/'))return'vid';
-  return'img';
-}
-function ftLabel(t){return{pdf:'PDF',zip:'ZIP',img:'IMG',vid:'VID'}[t]||'FILE';}
-function ftClass(t){return{pdf:'ftype-pdf',zip:'ftype-zip',img:'ftype-img',vid:'ftype-vid'}[t]||'';}
-function ftIcon(t){return{pdf:'📄',zip:'🗜',img:'🖼',vid:'🎥'}[t]||'📁';}
-function addToMsgQueue(files){
-  Array.from(files).forEach(f=>{if(!msgQueue.find(q=>q.name===f.name))msgQueue.push(f);});
-  renderMsgQueue();
-}
-function addToVidQueue(files){
-  Array.from(files).forEach(f=>{if(!vidQueue.find(q=>q.name===f.name))vidQueue.push(f);});
-  renderVidQueue();
-}
-function renderMsgQueue(){
-  document.getElementById('msgQueue').innerHTML=msgQueue.map((f,i)=>{
-    const t=getFileType(f);
-    return`<div class="queue-item"><span>${ftIcon(t)}</span><span class="ftype ${ftClass(t)}">${ftLabel(t)}</span><span class="fname">${f.name}</span><span class="fsize">${(f.size/1024).toFixed(0)}KB</span><button class="rm-btn" onclick="msgQueue.splice(${i},1);renderMsgQueue()">✕</button></div>`;
-  }).join('');
-  document.getElementById('msgAnalyzeBar').style.display=msgQueue.length?'flex':'none';
-}
-function renderVidQueue(){
-  document.getElementById('vidQueue').innerHTML=vidQueue.map((f,i)=>`
-    <div class="queue-item"><span>🎥</span><span class="ftype ftype-vid">VID</span><span class="fname">${f.name}</span><span class="fsize">${(f.size/1024/1024).toFixed(1)}MB</span><button class="rm-btn" onclick="vidQueue.splice(${i},1);renderVidQueue()">✕</button></div>`).join('');
-  document.getElementById('vidAnalyzeBar').style.display=vidQueue.length?'flex':'none';
-}
-function handleMsgFiles(files){addToMsgQueue(files);}
-function handleVidFiles(files){addToVidQueue(files);}
-function setupDrop(zoneId,handler){
-  const z=document.getElementById(zoneId);
-  z.addEventListener('dragover',e=>{e.preventDefault();z.style.background='#f5f5f0';});
-  z.addEventListener('dragleave',()=>z.style.background='');
-  z.addEventListener('drop',e=>{e.preventDefault();z.style.background='';handler(e.dataTransfer.files);});
-}
-setupDrop('msgDrop',addToMsgQueue);
-setupDrop('vidDrop',addToVidQueue);
+function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
+function addQ(files,q,elId,barId){files.forEach(f=>{if(!q.find(x=>x.name===f.name))q.push(f);});renderQ(q,elId,barId);}
+function renderQ(q,elId,barId){const ic={pdf:'📄',zip:'🗜',img:'🖼',vid:'🎥'};const cl={pdf:'fp',zip:'fz',img:'fi2',vid:'fv'};document.getElementById(elId).innerHTML=q.map((f,i)=>{const t=getFT(f);return`<div class="qi"><span>${ic[t]}</span><span class="ft ${cl[t]}">${t.toUpperCase()}</span><span class="fn">${f.name}</span><span class="fs2">${(f.size/1024).toFixed(0)}KB</span><button class="rmb" onclick="q.splice(${i},1);renderQ(q,'${elId}','${barId}')">&#x2715;</button></div>`;}).join('');document.getElementById(barId).style.display=q.length?'flex':'none';}
+function sDrop(id,q,elId,barId){const z=document.getElementById(id);z.addEventListener('dragover',e=>{e.preventDefault();z.style.background='#f5f5f0';});z.addEventListener('dragleave',()=>z.style.background='');z.addEventListener('drop',e=>{e.preventDefault();z.style.background='';addQ(Array.from(e.dataTransfer.files),q,elId,barId);});}
+sDrop('mDrop',mQ,'mQEl','mABar');sDrop('vDrop',vQ,'vQEl','vABar');
 
-// PDF
-async function extractPDF(file){
-  const ab=await file.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
-  let fullText='';
-  for(let i=1;i<=pdf.numPages;i++){
-    const page=await pdf.getPage(i);
-    const content=await page.getTextContent();
-    fullText+=content.items.map(item=>item.str).join(' ')+'\n';
-  }
-  return fullText;
-}
-function parseOFWText(text,filename){
-  const messages=[];
-  const blocks=text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4}\s+at)/i);
-  blocks.forEach(block=>{
-    const sentMatch=block.match(/Sent:\s+(\d{2}\/\d{2}\/\d{4}\s+at\s+\d{2}:\d{2}\s+[AP]M)/i);
-    const fromMatch=block.match(/From:\s+([^\n\r]+?)(?=\s+To:|$)/i);
-    const toMatch=block.match(/To:\s+([^\n\r(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?:\s|$)/i);
-    const subjectMatch=block.match(/Subject:\s+([^\n\r]+)/i);
-    if(!sentMatch||!fromMatch)return;
-    let body=block;
-    if(subjectMatch){const idx=block.indexOf(subjectMatch[0]);body=block.slice(idx+subjectMatch[0].length);}
-    body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').replace(/\s+/g,' ').trim();
-    if(body.length<2)return;
-    messages.push({
-      source_file:filename,source_type:'pdf',
-      timestamp_sent:sentMatch[1],
-      sender:fromMatch[1].trim(),
-      recipient:toMatch?toMatch[1].trim():'Unknown',
-      timestamp_viewed:toMatch&&toMatch[2]?toMatch[2].trim():null,
-      subject:subjectMatch?subjectMatch[1].trim():null,
-      body,
-      tactics_clinical:[],tactics_plain:[],court_summary:null,
-      severity:'pending',child_mentioned:[],requires_response:null,needs_ai_analysis:true
-    });
-  });
-  return messages;
-}
-async function extractZIP(file){
-  const zip=await JSZip.loadAsync(file);
-  const imageFiles=[];
-  const promises=[];
-  zip.forEach((path,entry)=>{
-    if(!entry.dir&&/\.(png|jpg|jpeg|webp)$/i.test(path)){
-      promises.push(entry.async('blob').then(blob=>{
-        const ext=path.split('.').pop().toLowerCase();
-        const mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
-        imageFiles.push({name:path.split('/').pop(),blob,type:mime[ext]||'image/png'});
-      }));
-    }
-  });
-  await Promise.all(promises);
-  return imageFiles;
-}
-async function blobToBase64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(blob);});}
-async function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
-function logMsg(s){const el=document.getElementById('msgLog');el.style.display='block';el.innerHTML+=s+'<br>';el.scrollTop=el.scrollHeight;}
+// PDF + ZIP
+async function exPDF(file){const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;let t='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();t+=ct.items.map(x=>x.str).join(' ')+'
+';}return t;}
+function parseOFW(text,fname){const msgs=[];const blocks=text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4}\s+at)/i);blocks.forEach(block=>{const sm=block.match(/Sent:\s+(\d{2}\/\d{2}\/\d{4}\s+at\s+\d{2}:\d{2}\s+[AP]M)/i);const fm=block.match(/From:\s+([^
+
+]+?)(?=\s+To:|$)/i);const tm=block.match(/To:\s+([^
+
+(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?:\s|$)/i);const subm=block.match(/Subject:\s+([^
+
+]+)/i);if(!sm||!fm)return;let body=block;if(subm){const idx=block.indexOf(subm[0]);body=block.slice(idx+subm[0].length);}body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').replace(/\s+/g,' ').trim();if(body.length<2)return;msgs.push({source_file:fname,source_type:'pdf',timestamp_sent:sm[1],sender:fm[1].trim(),recipient:tm?tm[1].trim():'Unknown',timestamp_viewed:tm&&tm[2]?tm[2].trim():null,subject:subm?subm[1].trim():null,body,tactics_clinical:[],tactics_plain:[],court_summary:null,severity:'pending',child_mentioned:[],requires_response:null});});return msgs;}
+async function exZIP(file){const zip=await JSZip.loadAsync(file);const imgs=[];const ps=[];zip.forEach((path,entry)=>{if(!entry.dir&&/\.(png|jpg|jpeg|webp)$/i.test(path)){ps.push(entry.async('blob').then(blob=>{const ext=path.split('.').pop().toLowerCase();const mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};imgs.push({name:path.split('/').pop(),blob,type:mime[ext]||'image/png'});}));}});await Promise.all(ps);return imgs;}
+async function b64b(blob){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(blob);});}
+async function b64f(file){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(file);});}
+function logM(s){const el=document.getElementById('mLog');el.style.display='block';el.innerHTML+=s+'<br>';el.scrollTop=el.scrollHeight;}
 
 // API
-async function callAPI(messages,maxTokens=1500){
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,messages})
-  });
-  const d=await r.json();
-  if(d.error)throw new Error(d.error.message);
-  return d.content?.map(c=>c.text||'').join('')||'';
-}
-function parseJSON(text){
-  try{return JSON.parse(text.replace(/```json|```/g,'').trim());}
-  catch(e){console.error('Parse error',text.slice(0,200));return null;}
-}
+async function callAPI(msgs,mt=1500){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:mt,messages:msgs})});const d=await r.json();if(d.error)throw new Error(d.error.message);return d.content?.map(c=>c.text||'').join('')||'';}
+function pJ(t){try{return JSON.parse(t.replace(/```json|```/g,'').trim());}catch(e){return null;}}
 
-const MSG_PROMPT_IMAGE=`You are analyzing an OFW screenshot for a domestic abuse survivor. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
+const MI=`You are analyzing an OFW screenshot for a domestic abuse case. Respondent (father): Doug Rhodes. Petitioner (mother): Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
+Extract ALL messages. Return JSON array, each: sender,recipient,timestamp_sent,timestamp_viewed,subject,body(verbatim),tactics_clinical:[DARVO,Blame-shifting,False accusation,Control attempt,Gaslighting,Minimizing,Monitoring,Baiting,Excessive contact,Neutral],tactics_plain(plain descriptions for judge),court_summary(2-3 sentences third person factual no clinical labels starting On date Respondent or Petitioner),severity(high|medium|low|neutral),child_mentioned(array),requires_response(true if needed for child safety),is_call_related(true if about phone/video call).
+Reply ONLY with valid JSON array.`;
 
-Extract ALL messages. Return JSON array, each object:
-- sender, recipient, timestamp_sent, timestamp_viewed, subject, body (verbatim)
-- tactics_clinical: [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
-- tactics_plain: plain behavioral descriptions for a judge
-- court_summary: 2-3 sentences, third person, factual, no clinical labels
-- severity: "high"|"medium"|"low"|"neutral"
-- child_mentioned: array of child names
-- requires_response: true if needed for child safety/logistics
-- is_call_related: true if message is about a phone/video call with children
-
-Reply ONLY with valid JSON array. No markdown.`;
-
-const MSG_PROMPT_TEXT=`You are analyzing OFW message text for a domestic abuse survivor. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
-
-For each message in the array below, add:
-- tactics_clinical: [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
-- tactics_plain: plain behavioral descriptions for a judge
-- court_summary: 2-3 sentences, third person, factual, no clinical labels
-- severity: "high"|"medium"|"low"|"neutral"
-- child_mentioned: array of child names
-- requires_response: true if needed for child safety/logistics
-- is_call_related: true if message is about a phone/video call with children
-
-Messages:
-PLACEHOLDER
-
-Return complete array with all original fields plus new fields. Reply ONLY with valid JSON array. No markdown.`;
+const MT=`You are analyzing OFW messages for a domestic abuse case. Respondent (father): Doug Rhodes. Petitioner (mother): Chelsea Rhodes. Children: Ethan,Charlotte,Duke.
+For each message add: tactics_clinical,tactics_plain,court_summary,severity,child_mentioned,requires_response,is_call_related.
+Messages: MSGS
+Return complete array with all original fields plus new fields. Reply ONLY with valid JSON array.`;
 
 async function analyzeMsgs(){
-  if(!msgQueue.length)return;
-  const btn=document.getElementById('msgAnalyzeBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analyzing...';
-  document.getElementById('msgProgress').style.display='block';
-  document.getElementById('msgError').innerHTML='';
-  document.getElementById('msgLog').innerHTML='';
-  allMsgs=[];
-  for(let i=0;i<msgQueue.length;i++){
-    const file=msgQueue[i];
-    const ftype=getFileType(file);
-    document.getElementById('msgFill').style.width=Math.round((i/msgQueue.length)*100)+'%';
-    document.getElementById('msgProgressLabel').textContent=`Processing ${file.name}...`;
+  if(!mQ.length)return;
+  const btn=document.getElementById('mBtn');btn.disabled=true;btn.innerHTML="<span class='sp'></span>Analyzing...";
+  document.getElementById('mPW').style.display='block';document.getElementById('mErr').innerHTML='';document.getElementById('mLog').innerHTML='';
+  const newM=[];
+  for(let i=0;i<mQ.length;i++){
+    const file=mQ[i];const ft=getFT(file);
+    document.getElementById('mPF').style.width=Math.round((i/mQ.length)*100)+'%';document.getElementById('mPL').textContent='Processing '+file.name+'...';
     try{
-      if(ftype==='pdf'){
-        logMsg(`📄 Extracting PDF: ${file.name}`);
-        const text=await extractPDF(file);
-        const parsed=parseOFWText(text,file.name);
-        logMsg(`Found ${parsed.length} messages — analyzing...`);
-        if(parsed.length>0){
-          const batchSize=10;
-          for(let b=0;b<parsed.length;b+=batchSize){
-            const batch=parsed.slice(b,b+batchSize);
-            const prompt=MSG_PROMPT_TEXT.replace('PLACEHOLDER',JSON.stringify(batch,null,2));
-            const result=await callAPI([{role:'user',content:prompt}],1500);
-            const analyzed=parseJSON(result);
-            if(analyzed)allMsgs.push(...analyzed);
-            else allMsgs.push(...batch);
-          }
-        }
-      } else if(ftype==='zip'){
-        logMsg(`🗜 Unpacking ZIP: ${file.name}`);
-        const images=await extractZIP(file);
-        logMsg(`Found ${images.length} images`);
-        for(let j=0;j<images.length;j++){
-          logMsg(`  🖼 Analyzing ${j+1}/${images.length}: ${images[j].name}`);
-          const b64=await blobToBase64(images[j].blob);
-          const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:images[j].type,data:b64}},{type:'text',text:MSG_PROMPT_IMAGE}]}]);
-          const parsed=parseJSON(text);
-          if(parsed)allMsgs.push(...parsed.map(m=>({...m,source_file:images[j].name})));
-        }
-      } else {
-        logMsg(`🖼 Analyzing: ${file.name}`);
-        const b64=await fileToBase64(file);
-        const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type||'image/png',data:b64}},{type:'text',text:MSG_PROMPT_IMAGE}]}]);
-        const parsed=parseJSON(text);
-        if(parsed)allMsgs.push(...parsed.map(m=>({...m,source_file:file.name})));
-      }
-    } catch(e){logMsg(`⚠ Error: ${e.message}`);console.error(e);}
+      if(ft==='pdf'){logM('PDF: '+file.name);const text=await exPDF(file);const parsed=parseOFW(text,file.name);logM('Found '+parsed.length+' messages');if(parsed.length){for(let b=0;b<parsed.length;b+=10){const batch=parsed.slice(b,b+10);const res=await callAPI([{role:'user',content:MT.replace('MSGS',JSON.stringify(batch))}]);const a=pJ(res);if(a)newM.push(...a);else newM.push(...batch);}}}
+      else if(ft==='zip'){logM('ZIP: '+file.name);const imgs=await exZIP(file);for(let j=0;j<imgs.length;j++){logM('  Image '+(j+1)+'/'+imgs.length+': '+imgs[j].name);const b64=await b64b(imgs[j].blob);const t=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:imgs[j].type,data:b64}},{type:'text',text:MI}]}]);const a=pJ(t);if(a)newM.push(...a.map(m=>({...m,source_file:imgs[j].name})));}}
+      else{logM('Image: '+file.name);const b64=await b64f(file);const t=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type||'image/png',data:b64}},{type:'text',text:MI}]}]);const a=pJ(t);if(a)newM.push(...a.map(m=>({...m,source_file:file.name})));}
+    }catch(e){logM('Error: '+e.message);}
   }
-  document.getElementById('msgFill').style.width='100%';
-  document.getElementById('msgProgressLabel').textContent=`Done — ${allMsgs.length} messages analyzed`;
-  btn.disabled=false;btn.innerHTML='↺ Re-analyze';
-  if(allMsgs.length){
-    renderMsgs();renderPatterns();renderGaps();renderTimingAnalysis();
-    document.getElementById('msgExport').style.display='block';
-  } else {
-    document.getElementById('msgError').innerHTML='<div class="error-msg">Could not extract messages. Check processing log above.</div>';
-  }
+  document.getElementById('mPF').style.width='100%';document.getElementById('mPL').textContent='Done - '+newM.length+' new messages';
+  btn.disabled=false;btn.innerHTML='&#x21BA; More';
+  allMsgs=[...allMsgs,...newM];save();
+  if(allMsgs.length){renderMsgs();renderPatterns();renderGaps();renderTiming();renderHearing();document.getElementById('mExp').style.display='block';}
+  else document.getElementById('mErr').innerHTML="<div class='err'>Could not extract messages.</div>";
 }
 
-// VIDEOS
-const VID_PROMPT=`You are analyzing a full OFW video call recording for a domestic abuse survivor. Father: Doug Rhodes. Children: Ethan (oldest, living with father after documented intimidation — recently started to say he missed mom and stopped himself mid-sentence), Charlotte, Duke. Mother: Chelsea.
-
-This single recording may contain multiple speakers and handoffs. Auto-detect everything.
-
-Return JSON:
-- total_duration_seconds, speakers_detected, date_context
-- segments: [{speaker_on_call, start_approx, end_approx, duration_seconds, handoff_type, handoff_note, flags:[{category,severity,timestamp_approx,observation,court_plain}], transcript_key}]
-- background_incidents: [{timestamp_approx,who,what,effect_on_child,court_plain}]
-- distraction_incidents: [{timestamp_approx,child,distraction_type,court_plain}]
-- ethan_indicators: {eye_contact,off_screen_presence,affection_expressions,self_censorship_moments,affect,who_ended}
-- call_date: date of this call if determinable (format MM/DD/YYYY)
-- court_summary: 4-5 sentences, plain language, third person, no clinical labels
-- overall_severity: "high"|"medium"|"low"|"neutral"
-
-Reply ONLY with valid JSON. No markdown.`;
+const VP=`You are analyzing a full OFW video call for a domestic abuse case. Respondent (father): Doug Rhodes. Children: Ethan (oldest, living with father after documented intimidation - recently started to say he missed mom and stopped mid-sentence), Charlotte, Duke. Petitioner (mother): Chelsea.
+Single recording may have multiple speakers/handoffs. Auto-detect everything.
+Return JSON: total_duration_seconds,speakers_detected,date_context,call_date(MM/DD/YYYY),segments:[{speaker_on_call,start_approx,end_approx,duration_seconds,handoff_type,handoff_note,flags:[{category,severity,timestamp_approx,observation,court_plain}],transcript_key}],background_incidents:[{timestamp_approx,who,what,effect_on_child,court_plain}],distraction_incidents:[{timestamp_approx,child,distraction_type,court_plain}],ethan_indicators:{eye_contact,off_screen_presence,affection_expressions,self_censorship_moments,affect,who_ended},court_summary(4-5 sentences plain third person no clinical labels),overall_severity(high|medium|low|neutral).
+Reply ONLY with valid JSON.`;
 
 async function analyzeVids(){
-  if(!vidQueue.length)return;
-  const btn=document.getElementById('vidAnalyzeBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analyzing...';
-  document.getElementById('vidProgress').style.display='block';
-  document.getElementById('vidError').innerHTML='';
-  allVids=[];
-  for(let i=0;i<vidQueue.length;i++){
-    document.getElementById('vidFill').style.width=Math.round((i/vidQueue.length)*100)+'%';
-    document.getElementById('vidProgressLabel').textContent=`${i+1} of ${vidQueue.length}`;
-    try{
-      const b64=await fileToBase64(vidQueue[i]);
-      const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:vidQueue[i].type||'video/mp4',data:b64}},{type:'text',text:VID_PROMPT}]}],1500);
-      const parsed=parseJSON(text);
-      if(parsed){
-        allVids.push({...parsed,filename:vidQueue[i].name});
-        autoLogCallsFromVideo(parsed,vidQueue[i].name);
-      }
-    }catch(e){console.error(e);}
+  if(!vQ.length)return;
+  const btn=document.getElementById('vBtn');btn.disabled=true;btn.innerHTML="<span class='sp'></span>Analyzing...";
+  document.getElementById('vPW').style.display='block';document.getElementById('vErr').innerHTML='';
+  for(let i=0;i<vQ.length;i++){
+    document.getElementById('vPF').style.width=Math.round((i/vQ.length)*100)+'%';document.getElementById('vPL').textContent=(i+1)+' of '+vQ.length;
+    try{const b64=await b64f(vQ[i]);const t=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:vQ[i].type||'video/mp4',data:b64}},{type:'text',text:VP}]}],1500);const p=pJ(t);if(p){allVids.push({...p,filename:vQ[i].name});autoLog(p);}}
+    catch(e){console.error(e);}
   }
-  document.getElementById('vidFill').style.width='100%';
-  document.getElementById('vidProgressLabel').textContent='Done';
-  btn.disabled=false;btn.innerHTML='↺ Analyze more';
-  if(allVids.length){
-    renderVids();renderDurChart();renderAutoCallLog();
-    document.getElementById('vidExport').style.display='block';
-  } else {
-    document.getElementById('vidError').innerHTML='<div class="error-msg">Could not analyze video.</div>';
-  }
+  document.getElementById('vPF').style.width='100%';document.getElementById('vPL').textContent='Done';
+  btn.disabled=false;btn.innerHTML='&#x21BA; More';save();
+  if(allVids.length){renderVids();renderDurChart();renderAutoLog();document.getElementById('vExp').style.display='block';}
+  else document.getElementById('vErr').innerHTML="<div class='err'>Could not analyze video.</div>";
 }
+function autoLog(v){(v.segments||[]).forEach(seg=>{if(!seg.duration_seconds||seg.duration_seconds<30)return;const isDad=seg.speaker_on_call?.toLowerCase().includes('doug');const isMom=seg.speaker_on_call?.toLowerCase().includes('chelsea');const isEt=seg.speaker_on_call?.toLowerCase().includes('ethan');const type=isDad?'dad':isMom?'mom':isEt?'ethan':null;if(!type)return;autoCallLog.push({date:v.call_date||'Unknown',type,mins:Math.round(seg.duration_seconds/60*10)/10,ender:'Unknown',source:v.filename||'',auto:true});});}
 
-function autoLogCallsFromVideo(v,filename){
-  if(!v.segments)return;
-  v.segments.forEach(seg=>{
-    if(!seg.duration_seconds||seg.duration_seconds<30)return;
-    const isDad=seg.speaker_on_call&&seg.speaker_on_call.toLowerCase().includes('doug');
-    const isMom=seg.speaker_on_call&&(seg.speaker_on_call.toLowerCase().includes('chelsea')||seg.speaker_on_call.toLowerCase().includes('mom'));
-    const isEthan=seg.speaker_on_call&&seg.speaker_on_call.toLowerCase().includes('ethan');
-    const type=isDad?'dad':isMom?'mom':isEthan?'ethan':null;
-    if(!type)return;
-    autoCallLog.push({
-      date:v.call_date||'Unknown',
-      type,
-      mins:Math.round(seg.duration_seconds/60*10)/10,
-      ender:seg.speaker_on_call||'Unknown',
-      source:filename,
-      auto:true
-    });
-  });
-}
+// TIMING
+function parsTS(ts){if(!ts)return null;const m=ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+at\s+(\d{2}):(\d{2})\s+(AM|PM)/i);if(!m)return null;let h=parseInt(m[4]);const mn=parseInt(m[5]);const ap=m[6].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,mn);}
+function isDWH(ts){if(onBreak)return false;const d=parsTS(ts);if(!d)return false;if(!WD.includes(d.getDay()))return false;const f=d.getHours()+(d.getMinutes()/60);return f>=WS&&f<WE;}
+function isLN(ts){const d=parsTS(ts);if(!d)return false;const h=d.getHours();return h>=21||h<7;}
+function getH(ts){const d=parsTS(ts);return d?d.getHours():null;}
+function mBetween(ts1,ts2){const a=parsTS(ts1),b=parsTS(ts2);if(!a||!b)return null;return Math.abs(b-a)/60000;}
+function isEx(s){return s&&!s.toLowerCase().includes('chelsea');}
+const TC={DARVO:'br','Blame-shifting':'ba','False accusation':'br','Control attempt':'bp','Gaslighting':'bc','Minimizing':'bgr','Monitoring':'bp','Baiting':'br','Neutral':'bgr','Excessive contact':'bp'};
 
-function isEx(sender){return sender&&!sender.toLowerCase().includes('chelsea');}
-const TC={DARVO:'b-red','Blame-shifting':'b-amber','False accusation':'b-red','Control attempt':'b-purple','Gaslighting':'b-coral','Minimizing':'b-gray','Monitoring':'b-purple','Baiting':'b-red','Neutral':'b-gray','Excessive contact':'b-purple'};
-
+// RENDER MESSAGES
 function renderMsgs(){
-  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
-  const workHourMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
-  const lateNightMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
-  const high=allMsgs.filter(m=>m.severity==='high').length;
-  const children=[...new Set(allMsgs.flatMap(m=>m.child_mentioned||[]))];
-  document.getElementById('msgStats').style.display='grid';
-  document.getElementById('msgStats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Total messages</div><div class="stat-value">${allMsgs.length}</div></div>
-    <div class="stat-card"><div class="stat-label">High severity</div><div class="stat-value red">${high}</div></div>
-    <div class="stat-card"><div class="stat-label">During work hours</div><div class="stat-value amber">${workHourMsgs.length}</div></div>
-    <div class="stat-card"><div class="stat-label">After 9pm / before 7am</div><div class="stat-value amber">${lateNightMsgs.length}</div></div>`;
-  const tactics=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[])),...(workHourMsgs.length?['⚠ Work hours']:[]),...(lateNightMsgs.length?['🌙 Late night']:[])].filter(Boolean);
-  document.getElementById('msgFilters').innerHTML=tactics.map(t=>`<button class="chip ${t===activeMsgFilter?'active':''}" onclick="filterMsgs('${t}')">${t==='all'?'All':t}</button>`).join('');
-  renderMsgList();
+  const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent)).length;const ln=exM.filter(m=>isLN(m.timestamp_sent)).length;const hi=allMsgs.filter(m=>m.severity==='high').length;
+  document.getElementById('mStats').style.display='grid';
+  document.getElementById('mStats').innerHTML=`<div class="sc"><div class="sl">Total messages</div><div class="sv">${allMsgs.length}</div></div><div class="sc"><div class="sl">High severity</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">During work hours</div><div class="sv amb">${wh}</div></div><div class="sc"><div class="sl">Late night</div><div class="sv amb">${ln}</div></div>`;
+  const tacs=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[])),...(wh?['Work hours']:[]),...(ln?['Late night']:[])].filter(Boolean);
+  document.getElementById('mFilters').innerHTML=tacs.map(t=>`<button class="chip ${t===aMF?'active':''}" onclick="filterM('${t}')">${t==='all'?'All':t}</button>`).join('');
+  renderML();
 }
+function filterM(t){aMF=t;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(t==='all'?'All':t)));renderML();}
+function renderML(){
+  let f=allMsgs;
+  if(aMF==='Work hours')f=allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent));
+  else if(aMF==='Late night')f=allMsgs.filter(m=>isEx(m.sender)&&isLN(m.timestamp_sent));
+  else if(aMF!=='all')f=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(aMF));
+  document.getElementById('mList').innerHTML=f.length?f.map((m,i)=>{
+    const mode=mVM[i]||'court';const ex=isEx(m.sender);const tacts=m.tactics_clinical||['Neutral'];
+    const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
+    const idx=allMsgs.indexOf(m);
+    return`<div class="mc ${fl?'fl':wh?'wh':ln?'ln':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${idx})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
+  }).join(''):"<div class='empty'>No messages match this filter.</div>";}
+function setMM(i,mode){mVM[i]=mode;renderML();}
 
-function filterMsgs(t){
-  activeMsgFilter=t;
-  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(t==='all'?'All':t)));
-  renderMsgList();
+// EDIT MODAL
+function editMsg(i){const m=allMsgs[i];editCtx={type:'msg',index:i};document.getElementById('mTitle').textContent='Edit message analysis';document.getElementById('mBody').innerHTML=`<label>Court summary</label><textarea id="ecs" style="min-height:80px">${m.court_summary||''}</textarea><label>Severity</label><select id="esv"><option ${m.severity==='high'?'selected':''}>high</option><option ${m.severity==='medium'?'selected':''}>medium</option><option ${m.severity==='low'?'selected':''}>low</option><option ${m.severity==='neutral'?'selected':''}>neutral</option></select><label>Tactics (comma-separated)</label><input type="text" id="etc" value="${(m.tactics_clinical||[]).join(', ')}"><label>Notes to add</label><textarea id="ent" style="min-height:40px">${m.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
+function saveEdit(){
+  if(!editCtx)return;
+  if(editCtx.type==='msg'){const m=allMsgs[editCtx.index];m.court_summary=document.getElementById('ecs').value.trim();m.severity=document.getElementById('esv').value;m.tactics_clinical=document.getElementById('etc').value.split(',').map(s=>s.trim()).filter(Boolean);m.notes=document.getElementById('ent').value.trim();}
+  else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
+  else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
+  else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}
+  save();closeModal();rAll();
 }
+function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
+document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeModal();});
 
-function renderMsgList(){
-  let filtered=allMsgs;
-  if(activeMsgFilter==='⚠ Work hours')filtered=allMsgs.filter(m=>isEx(m.sender)&&isDuringWorkHours(m.timestamp_sent));
-  else if(activeMsgFilter==='🌙 Late night')filtered=allMsgs.filter(m=>isEx(m.sender)&&isLateNight(m.timestamp_sent));
-  else if(activeMsgFilter!=='all')filtered=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(activeMsgFilter));
-
-  document.getElementById('msgList').innerHTML=filtered.length?filtered.map((m,i)=>{
-    const mode=msgViewMode[i]||'court';
-    const ex=isEx(m.sender);
-    const tacts=m.tactics_clinical||['Neutral'];
-    const wh=ex&&isDuringWorkHours(m.timestamp_sent);
-    const ln=ex&&isLateNight(m.timestamp_sent);
-    const hasFlag=ex&&tacts.some(t=>t!=='Neutral');
-    return`<div class="msg-card ${hasFlag?'flagged':wh?'work-hours':ln?'late-night':''}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
-        <div>
-          <div class="msg-sender">${m.sender||'?'} → ${m.recipient||'?'}</div>
-          <div class="msg-time">${m.timestamp_sent||''}${m.subject?' · '+m.subject:''}</div>
-          ${m.timestamp_viewed?`<div class="msg-viewed">Viewed: ${m.timestamp_viewed}</div>`:''}
-        </div>
-        <div class="badges">${tacts.map(t=>`<span class="badge ${TC[t]||'b-gray'}">${t}</span>`).join('')}</div>
-      </div>
-      ${wh?`<div class="timing-flag work">⚠ Sent during your work hours (Mon–Fri 7:30am–4pm) — you have previously requested no contact during work hours</div>`:''}
-      ${ln?`<div class="timing-flag late">🌙 Sent after 9pm or before 7am during your parenting time</div>`:''}
-      <div class="msg-body ${ex?'ex':''}">${m.body||''}</div>
-      ${!m.requires_response&&ex?`<div class="no-response-note">This message may not require a response — log your decision in the Non-response tab.</div>`:''}
-      <div class="analysis-tabs">
-        <button class="atab ${mode==='court'?'active':''}" onclick="setMsgMode(${i},'court')">Court language</button>
-        <button class="atab ${mode==='clinical'?'active':''}" onclick="setMsgMode(${i},'clinical')">Clinical analysis</button>
-      </div>
-      ${mode==='court'
-        ?`<div class="court-text">${m.court_summary||'No summary generated.'}</div>`
-        :`<div class="analysis-text">${(m.tactics_plain||[]).join(' ')}</div>`}
-    </div>`;
-  }).join(''):'<div class="empty-state">No messages match this filter.</div>';
-}
-function setMsgMode(i,mode){msgViewMode[i]=mode;renderMsgList();}
-
-// TIMING ANALYSIS
-function renderTimingAnalysis(){
-  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
-  const workMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
-  const lateMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
-
-  // Response gap analysis
-  // Sort all by timestamp and find pairs
-  const sorted=[...allMsgs].sort((a,b)=>{
-    const da=parseTimestamp(a.timestamp_sent),db=parseTimestamp(b.timestamp_sent);
-    return(da||0)-(db||0);
-  });
-  const hisGaps=[],herGaps=[];
-  for(let i=1;i<sorted.length;i++){
-    const prev=sorted[i-1],curr=sorted[i];
-    const mins=minutesBetween(prev.timestamp_sent,curr.timestamp_sent);
-    if(!mins||mins>720)continue; // ignore gaps over 12 hours
-    if(isEx(prev.sender)&&!isEx(curr.sender))herGaps.push(mins);
-    else if(!isEx(prev.sender)&&isEx(curr.sender))hisGaps.push(mins);
-  }
-  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
-  const avgHers=avg(herGaps),avgHis=avg(hisGaps);
-
-  document.getElementById('timingStats').innerHTML=`
-    <div class="gap-stat"><span>His messages during your work hours</span><span class="gap-val red">${workMsgs.length} messages</span></div>
-    <div class="gap-stat"><span>His messages after 9pm or before 7am</span><span class="gap-val amber">${lateMsgs.length} messages</span></div>
-    <div class="gap-stat"><span>Total his messages analyzed</span><span class="gap-val">${exMsgs.length}</span></div>
-    <div class="gap-stat"><span>Work-hours messages as % of his total</span><span class="gap-val ${workMsgs.length/Math.max(exMsgs.length,1)>0.2?'red':'amber'}">${exMsgs.length?Math.round(workMsgs.length/exMsgs.length*100)+'%':'—'}</span></div>
-  `;
-
-  document.getElementById('responseGaps').innerHTML=`
-    <div class="gap-stat"><span>Your avg response time to his messages</span><span class="gap-val">${avgHers?avgHers.toFixed(0)+' min':'Insufficient data'}</span></div>
-    <div class="gap-stat"><span>His avg response time to your messages</span><span class="gap-val">${avgHis?avgHis.toFixed(0)+' min':'Insufficient data'}</span></div>
-    ${avgHers&&avgHis?`<div class="gap-stat" style="background:#fdf0f0;border-color:#e0b8b8"><span>Response time disparity</span><span class="gap-val red">You respond ${(avgHers/avgHis).toFixed(1)}x ${avgHers>avgHis?'slower':'faster'} than he does</span></div>`:''}
-    <p style="font-size:11px;color:#bbb;margin-top:6px">Response gaps calculated from consecutive message timestamps within 12-hour windows.</p>
-  `;
-
-  renderHourGrid(exMsgs);
-}
-
-function renderHourGrid(exMsgs){
-  const counts=new Array(24).fill(0);
-  exMsgs.forEach(m=>{const h=getHour(m.timestamp_sent);if(h!==null)counts[h]++;});
-  const max=Math.max(...counts,1);
-  // Show hours 6am-11pm (17 hours) but group for display
-  const displayHours=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
-  document.getElementById('hourGrid').innerHTML=displayHours.map(h=>{
-    const isWork=h>=8&&h<16;
-    const pct=Math.round((counts[h]/max)*100);
-    const label=h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p';
-    return`<div class="hour-cell" title="${counts[h]} messages at ${label}">
-      <div class="bar ${isWork?'work-bar':'normal-bar'}" style="height:${pct}%"></div>
-      <span class="lbl">${label}</span>
-    </div>`;
-  }).join('');
-}
-
+// RENDER VIDEOS
 function renderVids(){
-  const allFlags=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
-  const high=allFlags.filter(f=>f.severity==='high').length;
-  const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);
-  const dist=allVids.reduce((n,v)=>(v.distraction_incidents||[]).length+n,0);
-  document.getElementById('vidStats').style.display='grid';
-  document.getElementById('vidStats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Recordings</div><div class="stat-value">${allVids.length}</div></div>
-    <div class="stat-card"><div class="stat-label">High flags</div><div class="stat-value red">${high}</div></div>
-    <div class="stat-card"><div class="stat-label">Background adults</div><div class="stat-value red">${bg}</div></div>
-    <div class="stat-card"><div class="stat-label">Distractions</div><div class="stat-value">${dist}</div></div>`;
-  const SC={high:'b-red',medium:'b-amber',low:'b-blue',neutral:'b-gray'};
-  const FC={alienation:'high',background_adult:'bg-adult',distraction:'distraction',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
-  document.getElementById('vidList').innerHTML=allVids.map((v,vi)=>`
-    <div class="video-result">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">
-        <div><div style="font-size:13px;font-weight:600">${v.filename}</div>
-        <div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min total':''} ${v.call_date?' · '+v.call_date:''} ${v.speakers_detected?.length?' · '+v.speakers_detected.join(', '):''}</div></div>
-        <span class="badge ${SC[v.overall_severity]||'b-gray'}">${v.overall_severity||'unknown'}</span>
-      </div>
-      ${(v.segments||[]).map((seg,si)=>`
-        <div class="seg-block">
-          <div class="seg-hdr"><span class="seg-label">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="seg-time">${seg.start_approx||''}–${seg.end_approx||''}</span></div>
-          ${seg.handoff_note?`<div class="handoff-note">↔ Handoff: ${seg.handoff_note}</div>`:''}
-          <div class="seg-body">
-            ${(seg.flags||[]).map(f=>`<div class="flag-item ${FC[f.category]||f.severity}"><span class="flag-time">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}
-            ${seg.transcript_key?`<button class="trans-toggle" onclick="toggleVT(${vi},${si})">${vidTranscript[vi+'-'+si]?'▲ Hide':'▼ Show'} key dialogue</button>${vidTranscript[vi+'-'+si]?`<div class="trans-text">${seg.transcript_key}</div>`:''}`:''}
-          </div>
-        </div>`).join('')}
-      ${v.background_incidents?.length?`<div class="flag-item bg-adult" style="margin-top:8px;flex-direction:column;gap:4px"><strong>Background adult presence (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}
-      ${v.distraction_incidents?.length?`<div class="flag-item distraction" style="margin-top:8px;flex-direction:column;gap:4px"><strong>Distraction incidents (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}
-      ${v.ethan_indicators?`<div class="ethan-block"><strong>Ethan — specific observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'not noted'} · Eye contact: ${v.ethan_indicators.eye_contact||'not noted'} · Ended by: ${v.ethan_indicators.who_ended||'unclear'}</div>`:''}
-      ${v.court_summary?`<div class="court-summary-block">${v.court_summary}</div>`:''}
-    </div>`).join('');
-}
-function toggleVT(vi,si){const k=vi+'-'+si;vidTranscript[k]=!vidTranscript[k];renderVids();}
-
-// DURATION
-function addDur(){
-  const date=document.getElementById('dur-date').value;
-  const type=document.getElementById('dur-type').value;
-  const mins=parseFloat(document.getElementById('dur-mins').value);
-  const ender=document.getElementById('dur-ender').value;
-  const notes=document.getElementById('dur-notes').value.trim();
-  if(!date||isNaN(mins)){alert('Please enter a date and duration.');return;}
-  durEntries.unshift({date,type,mins,ender,notes,auto:false});
-  document.getElementById('dur-date').value='';document.getElementById('dur-mins').value='';document.getElementById('dur-notes').value='';
-  renderDurChart();renderDurList();
-}
-function getDurData(){
-  const all=[...durEntries,...autoCallLog];
-  const dad=all.filter(e=>e.type==='dad').map(e=>e.mins);
-  const mom=all.filter(e=>e.type==='mom').map(e=>e.mins);
-  const ethan=all.filter(e=>e.type==='ethan').map(e=>e.mins);
-  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
-  return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};
-}
-function renderDurChart(){
-  const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();
-  const maxVal=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);
-  const rows=[
-    {label:"His calls (avg)",val:avgDad,cls:'dad',n:dad.length},
-    {label:"Your calls (avg)",val:avgMom,cls:'mom',n:mom.length},
-    {label:"Ethan goodnight (avg)",val:avgEthan,cls:'ethan',n:ethan.length}
-  ].filter(r=>r.val!==null);
-  document.getElementById('durChart').innerHTML=rows.length?`
-    <div class="card">
-      ${rows.map(r=>`<div class="dur-row">
-        <div class="dur-label">${r.label} (${r.n})</div>
-        <div class="dur-track"><div class="dur-fill ${r.cls}" style="width:${Math.min(100,(r.val/maxVal)*100)}%"></div></div>
-        <div class="dur-val">${r.val.toFixed(1)}m</div>
-      </div>`).join('')}
-      ${avgDad&&avgMom?`<p style="font-size:12px;color:#666;line-height:1.6;margin-top:8px">His calls average <strong>${avgDad.toFixed(1)} min</strong>. Your calls average <strong>${avgMom.toFixed(1)} min</strong> — a <strong>${(avgDad/avgMom).toFixed(1)}x disparity</strong> across ${dad.length+mom.length} documented calls. This is quantifiable evidence of calls being used to occupy children's time at your home.</p>`:''}
-    </div>`:'<div class="empty-state">No call data yet. Analyze videos or add manual entries.</div>';
-}
-function renderAutoCallLog(){
-  document.getElementById('autoLoggedCalls').innerHTML=autoCallLog.length?`
-    <div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:8px 12px;border-radius:8px;border-left:2px solid #1D9E75;margin-bottom:8px">
-      ✓ ${autoCallLog.length} call segment${autoCallLog.length!==1?'s':''} auto-logged from video analysis
-    </div>`:'';
-}
-function renderDurList(){
-  const TL={dad:"His call",mom:"My call",ethan:"Ethan goodnight"};
-  document.getElementById('durList').innerHTML=durEntries.length?durEntries.map((e,i)=>`
-    <div class="log-entry">
-      <div class="log-entry-hdr">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="log-date">${e.date}</span><span class="badge ${e.type==='dad'?'b-red':e.type==='mom'?'b-green':'b-purple'}">${TL[e.type]||e.type}</span></div>
-        <button class="rm-btn" onclick="durEntries.splice(${i},1);renderDurChart();renderDurList()">🗑</button>
-      </div>
-      <div class="log-body">${e.mins} min · Ended by: ${e.ender}${e.notes?' · '+e.notes:''}</div>
-    </div>`).join(''):'';
-}
+  const af=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));const hi=af.filter(f=>f.severity==='high').length;const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);const di=allVids.reduce((n,v)=>(v.distraction_incidents||[]).length+n,0);
+  document.getElementById('vStats').style.display='grid';
+  document.getElementById('vStats').innerHTML=`<div class="sc"><div class="sl">Recordings</div><div class="sv">${allVids.length}</div></div><div class="sc"><div class="sl">High flags</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">Background adults</div><div class="sv red">${bg}</div></div><div class="sc"><div class="sl">Distractions</div><div class="sv">${di}</div></div>`;
+  const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};const FC={alienation:'high',background_adult:'bga',distraction:'dis',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
+  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div></div><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map(f=>`<div class="fi ${FC[f.category]||f.severity}"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
+function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 
 // NON-RESPONSE
-function toggleReason(btn,r){
-  if(selectedNRReasons.has(r)){selectedNRReasons.delete(r);btn.classList.remove('sel');}
-  else{selectedNRReasons.add(r);btn.classList.add('sel');}
-}
-function addNR(){
-  const date=document.getElementById('nr-date').value;
-  const time=document.getElementById('nr-time').value;
-  const msg=document.getElementById('nr-msg').value.trim();
-  const notes=document.getElementById('nr-notes').value.trim();
-  if(!date||!msg||!selectedNRReasons.size){alert('Please fill in date, message, and at least one reason.');return;}
-  nrEntries.unshift({date,time,msg,notes,reasons:[...selectedNRReasons]});
-  document.getElementById('nr-date').value='';document.getElementById('nr-time').value='';
-  document.getElementById('nr-msg').value='';document.getElementById('nr-notes').value='';
-  selectedNRReasons.clear();document.querySelectorAll('.reason-btn').forEach(b=>b.classList.remove('sel'));
-  renderNR();
-}
-function renderNR(){
-  document.getElementById('nrList').innerHTML=nrEntries.length?nrEntries.map((e,i)=>`
-    <div class="log-entry blue-left">
-      <div class="log-entry-hdr">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="log-date">${e.date}${e.time?' at '+e.time:''}</span>
-          ${e.reasons.map(r=>`<span class="badge b-blue">${REASON_LABEL[r]}</span>`).join('')}
-        </div>
-        <button class="rm-btn" onclick="nrEntries.splice(${i},1);renderNR()">🗑</button>
-      </div>
-      <div class="log-body">"${e.msg}"</div>
-      ${e.notes?`<div class="log-body" style="color:#bbb">Context: ${e.notes}</div>`:''}
-      <div class="log-plain">${e.reasons.map(r=>REASON_PLAIN[r]).join(' ')}</div>
-    </div>`).join(''):'<div class="empty-state">No entries yet.</div>';
-}
+const RP={boundary:'Respondent did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',info:'No response was required because all necessary child-related information had already been communicated.',lastword:'Respondent has an established pattern of requiring the final message in every exchange regardless of content, and Petitioner did not respond to avoid reinforcing this behavior.',attack:'Petitioner did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a documented pattern of using OFW to harass rather than co-parent.'};
+const RL2={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
+function togR(btn,r){if(selNR.has(r)){selNR.delete(r);btn.classList.remove('sel');}else{selNR.add(r);btn.classList.add('sel');}}
+function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!m||!selNR.size){alert('Fill in date, message, and at least one reason.');return;}nrE.unshift({date:d,time:t,msg:m,notes:n,reasons:[...selNR]});['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
+function renderNR(){document.getElementById('nrList').innerHTML=nrE.length?nrE.map((e,i)=>`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">"${e.msg}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`).join(''):"<div class='empty'>No entries yet.</div>";}
+function openENR(i){const e=nrE[i];editCtx={type:'nr',index:i};document.getElementById('mTitle').textContent='Edit non-response entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>Message</label><textarea id="em">${e.msg}</textarea><label>Context</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // RELUCTANCE
-function addRL(){
-  const date=document.getElementById('rl-date').value;
-  const time=document.getElementById('rl-time').value;
-  const child=document.getElementById('rl-child').value;
-  const words=document.getElementById('rl-words').value.trim();
-  const type=document.getElementById('rl-type').value;
-  const context=document.getElementById('rl-context').value.trim();
-  if(!date||!child||!words){alert('Please fill in date, child, and what was said or done.');return;}
-  rlEntries.unshift({date,time,child,words,type,context});
-  ['rl-date','rl-time','rl-words','rl-context'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rl-child').value='';document.getElementById('rl-type').value='';
-  renderRL();
+function addRL(){const d=document.getElementById('rld').value,t=document.getElementById('rlt').value,c=document.getElementById('rlc').value,w=document.getElementById('rlw').value.trim(),ty=document.getElementById('rlty').value,ctx=document.getElementById('rlctx').value.trim();if(!d||!c||!w){alert('Fill in date, child, and what happened.');return;}rlE.unshift({date:d,time:t,child:c,words:w,type:ty,context:ctx});['rld','rlt','rlw','rlctx'].forEach(id=>document.getElementById(id).value='');document.getElementById('rlc').value='';document.getElementById('rlty').value='';save();renderRL();}
+function renderRL(){const CC={Charlotte:'bg2',Duke:'bp',Ethan:'br'};document.getElementById('rlList').innerHTML=rlE.length?rlE.map((e,i)=>`<div class="le pl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span><span class="bg ${CC[e.child]||'bgr'}">${e.child}</span>${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}</div><div class="abtn"><button class="btn btne" onclick="openERL(${i})">Edit</button><button class="btn btnd" onclick="rlE.splice(${i},1);save();renderRL()">Del</button></div></div><div class="lb">"${e.words}"</div>${e.context?`<div class="lb" style="color:#bbb">Context: ${e.context}</div>`:''}<div class="lp">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'"':''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div></div>`).join(''):"<div class='empty'>No entries yet.</div>";}
+function openERL(i){const e=rlE[i];editCtx={type:'rl',index:i};document.getElementById('mTitle').textContent='Edit reluctance entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>What happened</label><textarea id="ew">${e.words}</textarea><label>Context</label><textarea id="ectx" style="min-height:40px">${e.context||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
+
+// DURATION
+function addDur(){const d=document.getElementById('dud').value,ty=document.getElementById('duty').value,m=parseFloat(document.getElementById('dum').value),e=document.getElementById('due').value,n=document.getElementById('dun').value.trim();if(!d||isNaN(m)){alert('Enter date and duration.');return;}durE.unshift({date:d,type:ty,mins:m,ender:e,notes:n,auto:false});document.getElementById('dud').value='';document.getElementById('dum').value='';document.getElementById('dun').value='';save();renderDurChart();renderDurList();}
+function getDurData(){const all=[...durE,...autoCallLog];const dad=all.filter(e=>e.type==='dad').map(e=>e.mins);const mom=all.filter(e=>e.type==='mom').map(e=>e.mins);const ethan=all.filter(e=>e.type==='ethan').map(e=>e.mins);const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};}
+function renderDurChart(){const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();const mx=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);const rows=[{l:'His calls (avg)',v:avgDad,c:'dad',n:dad.length},{l:'Your calls (avg)',v:avgMom,c:'mom',n:mom.length},{l:'Ethan goodnight (avg)',v:avgEthan,c:'ethan',n:ethan.length}].filter(r=>r.v!==null);document.getElementById('durChart').innerHTML=rows.length?`<div class="card">${rows.map(r=>`<div class="dr"><div class="dl2">${r.l} (${r.n})</div><div class="dt"><div class="df ${r.c}" style="width:${Math.min(100,(r.v/mx)*100)}%"></div></div><div class="dv">${r.v.toFixed(1)}m</div></div>`).join('')}${avgDad&&avgMom?`<p style="font-size:12px;color:#666;margin-top:8px;line-height:1.5">His calls avg <strong>${avgDad.toFixed(1)}min</strong> vs your <strong>${avgMom.toFixed(1)}min</strong> - a <strong>${(avgDad/avgMom).toFixed(1)}x disparity</strong> across ${dad.length+mom.length} documented calls.</p>`:''}</div>`:"<div class='empty'>No data yet.</div>";}
+function renderAutoLog(){document.getElementById('autoLog').innerHTML=autoCallLog.length?`<div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:7px 11px;border-radius:8px;border-left:2px solid #1D9E75">&#10003; ${autoCallLog.length} call segment${autoCallLog.length!==1?'s':''} auto-logged from video analysis</div>`:'';}
+function renderDurList(){const TL={dad:'His call',mom:'My call',ethan:'Ethan goodnight'};document.getElementById('durList').innerHTML=durE.length?durE.map((e,i)=>`<div class="le"><div class="lh"><div style="display:flex;align-items:center;gap:6px"><span class="ld">${e.date}</span><span class="bg ${e.type==='dad'?'br':e.type==='mom'?'bg2':'bp'}">${TL[e.type]||e.type}</span></div><div class="abtn"><button class="btn btne" onclick="openEDur(${i})">Edit</button><button class="btn btnd" onclick="durE.splice(${i},1);save();renderDurChart();renderDurList()">Del</button></div></div><div class="lb">${e.mins}min - Ended: ${e.ender}${e.notes?' - '+e.notes:''}</div></div>`).join(''):'';}
+function openEDur(i){const e=durE[i];editCtx={type:'dur',index:i};document.getElementById('mTitle').textContent='Edit call entry';document.getElementById('mBody').innerHTML=`<label>Date</label><input type="date" id="ed" value="${e.date}"><label>Duration (minutes)</label><input type="number" id="emins" value="${e.mins}"><label>Notes</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
+
+// TIMING
+function renderTiming(){
+  const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent));const ln=exM.filter(m=>isLN(m.timestamp_sent));
+  document.getElementById('timingStats').innerHTML=`<div class="gstat"><span>His messages during your work hours (Mon-Fri 7:30am-4pm)</span><span class="gv red">${wh.length}</span></div><div class="gstat"><span>His messages after 9pm or before 7am</span><span class="gv amb">${ln.length}</span></div><div class="gstat"><span>Work-hours messages as % of his total</span><span class="gv ${exM.length&&wh.length/exM.length>0.2?'red':'amb'}">${exM.length?Math.round(wh.length/exM.length*100)+'%':'n/a'}</span></div>`;
+  const sorted=[...allMsgs].sort((a,b)=>(parsTS(a.timestamp_sent)||0)-(parsTS(b.timestamp_sent)||0));const hg=[],hers=[];
+  for(let i=1;i<sorted.length;i++){const prev=sorted[i-1],curr=sorted[i];const mins=mBetween(prev.timestamp_sent,curr.timestamp_sent);if(!mins||mins>720)continue;if(isEx(prev.sender)&&!isEx(curr.sender))hers.push(mins);else if(!isEx(prev.sender)&&isEx(curr.sender))hg.push(mins);}
+  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;const ah=avg(hg),ahe=avg(hers);
+  document.getElementById('respGaps').innerHTML=`<div class="gstat"><span>Your avg response time to his messages</span><span class="gv">${ahe?ahe.toFixed(0)+' min':'Insufficient data'}</span></div><div class="gstat"><span>His avg response time to your messages</span><span class="gv">${ah?ah.toFixed(0)+' min':'Insufficient data'}</span></div>${ahe&&ah?`<div class="gstat" style="background:#fdf0f0;border-color:#e0b8b8"><span>Disparity</span><span class="gv red">You respond ${(ahe/ah).toFixed(1)}x ${ahe>ah?'slower':'faster'}</span></div>`:''}`;
+  renderHourGrid(exM);
 }
-function renderRL(){
-  const CC={Charlotte:'b-green',Duke:'b-purple',Ethan:'b-red'};
-  document.getElementById('rlList').innerHTML=rlEntries.length?rlEntries.map((e,i)=>`
-    <div class="log-entry purple-left">
-      <div class="log-entry-hdr">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="log-date">${e.date}${e.time?' at '+e.time:''}</span>
-          <span class="badge ${CC[e.child]||'b-gray'}">${e.child}</span>
-          ${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}
-        </div>
-        <button class="rm-btn" onclick="rlEntries.splice(${i},1);renderRL()">🗑</button>
-      </div>
-      <div class="log-body">"${e.words}"</div>
-      ${e.context?`<div class="log-body" style="color:#bbb">Context: ${e.context}</div>`:''}
-      <div class="log-plain">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?`Specifically: "${e.words}".`:''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div>
-    </div>`).join(''):'<div class="empty-state">No entries yet.</div>';
-}
+function renderHourGrid(exM){const counts=new Array(24).fill(0);exM.forEach(m=>{const h=getH(m.timestamp_sent);if(h!==null)counts[h]++;});const mx=Math.max(...counts,1);const hrs=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];document.getElementById('hourGrid').innerHTML=hrs.map(h=>{const isW=h>=8&&h<16;const pct=Math.round((counts[h]/mx)*100);const lbl=h<12?h+'a':h===12?'12p':(h-12)+'p';return`<div class="hc" title="${counts[h]} at ${lbl}"><div class="hbar ${isW?'wb':'nb'}" style="height:${pct}%"></div><span class="hl">${lbl}</span></div>`;}).join('');}
 
 // PATTERNS
 function renderPatterns(){
-  const tactics={};
-  allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')tactics[t]=(tactics[t]||0)+1;}));
-  allVids.forEach(v=>(v.segments||[]).forEach(s=>(s.flags||[]).forEach(f=>{if(f.category&&f.category!=='positive')tactics[f.category]=(tactics[f.category]||0)+1;})));
-  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
-  const workCount=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent)).length;
-  const lateCount=exMsgs.filter(m=>isLateNight(m.timestamp_sent)).length;
-  if(workCount>0)tactics['Work-hours messaging']=workCount;
-  if(lateCount>0)tactics['Late-night messaging']=lateCount;
-  const sorted=Object.entries(tactics).sort((a,b)=>b[1]-a[1]);
-  const DESC={
-    DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.',
-    'Blame-shifting':'Respondent consistently redirected responsibility for problems back to Petitioner, avoiding accountability.',
-    'False accusation':'Respondent made accusations without evidence, appearing designed to create a defensive dynamic.',
-    'Control attempt':"Respondent attempted to direct or monitor Petitioner's decisions beyond what co-parenting requires.",
-    Gaslighting:"Respondent contradicted Petitioner's account of events or implied her perception was incorrect.",
-    Monitoring:"Respondent tracked Petitioner's actions in ways not required for child welfare.",
-    Baiting:'Respondent sent provocative messages likely designed to elicit an emotional response.',
-    'Excessive contact':'Respondent sent a volume of messages disproportionate to the child-related matter at hand.',
-    alienation:"Respondent engaged in behaviors designed to undermine the children's relationship with Petitioner.",
-    background_adult:"An adult was audible or present during the children's calls with Petitioner.",
-    distraction:'Children were distracted or occupied during calls with Petitioner.',
-    coaching:"Respondent appeared to direct or influence children's responses.",
-    transition_negativity:"Respondent expressed negativity about children returning to Petitioner's home.",
-    self_censorship:'A child appeared to stop themselves from expressing natural affection toward Petitioner.',
-    bribery:"Respondent offered rewards conditional on children's behavior.",
-    signal_behavior:"Respondent arranged signals for children to communicate about conditions at Petitioner's home.",
-    'Work-hours messaging':'Respondent sent messages during Petitioner\'s documented work hours (Mon–Fri 7:30am–4pm) despite Petitioner\'s repeated requests not to be contacted during those hours.',
-    'Late-night messaging':'Respondent sent messages after 9pm or before 7am during Petitioner\'s parenting time, creating ongoing disruption.',
-  };
-  document.getElementById('patternList').innerHTML=sorted.length?sorted.map(([t,c])=>`
-    <div class="pattern-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:14px;font-weight:600">${t}</div>
-        <span class="badge b-red">${c} instance${c!==1?'s':''}</span>
-      </div>
-      <div style="font-size:13px;color:#666;line-height:1.6">${DESC[t]||''}</div>
-    </div>`).join(''):'<div class="empty-state">Analyze messages or videos first to see patterns.</div>';
-}
+  const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));allVids.forEach(v=>(v.segments||[]).forEach(s=>(s.flags||[]).forEach(f=>{if(f.category&&f.category!=='positive')t[f.category]=(t[f.category]||0)+1;})));
+  const exM=allMsgs.filter(m=>isEx(m.sender));const wc=exM.filter(m=>isDWH(m.timestamp_sent)).length;const lc=exM.filter(m=>isLN(m.timestamp_sent)).length;
+  if(wc)t['Work-hours messaging']=wc;if(lc)t['Late-night messaging']=lc;
+  const sorted=Object.entries(t).sort((a,b)=>b[1]-a[1]);
+  const D={DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.','Blame-shifting':'Respondent consistently redirected responsibility for problems back to Petitioner, avoiding accountability.','False accusation':'Respondent made accusations without evidence, appearing designed to create a defensive dynamic.','Control attempt':"Respondent attempted to direct or monitor Petitioner's decisions beyond what co-parenting requires.",'Gaslighting':"Respondent contradicted Petitioner's account of events or implied her perception was incorrect.",'Monitoring':"Respondent tracked Petitioner's actions in ways not required for child welfare.",'Baiting':'Respondent sent provocative messages likely designed to elicit an emotional response.','Excessive contact':'Respondent sent messages disproportionate to the child-related matter at hand.','alienation':"Respondent engaged in behaviors designed to undermine the children's relationship with Petitioner.",'background_adult':"An adult was audible or present during the children's calls with Petitioner.",'distraction':'Children were distracted or occupied during calls with Petitioner.','coaching':"Respondent appeared to direct or influence children's responses.",'transition_negativity':"Respondent expressed negativity about children returning to Petitioner's home.",'self_censorship':'A child appeared to stop themselves from expressing natural affection toward Petitioner.','bribery':"Respondent offered rewards conditional on children's behavior.",'signal_behavior':"Respondent arranged signals for children to communicate about conditions at Petitioner's home.",'Work-hours messaging':"Respondent sent messages during Petitioner's documented work hours (Mon-Fri 7:30am-4pm) despite repeated requests to stop.",'Late-night messaging':"Respondent sent messages after 9pm or before 7am during Petitioner's parenting time."};
+  document.getElementById('patList').innerHTML=sorted.length?sorted.map(([tc,c])=>`<div class="pc"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-size:13px;font-weight:600">${tc}</div><span class="bg br">${c} instance${c!==1?'s':''}</span></div><div style="font-size:12px;color:#666;line-height:1.6">${D[tc]||''}</div></div>`).join(''):"<div class='empty'>Analyze messages or videos first.</div>";}
 
 // ORDER GAPS
-function renderGaps(){
-  const gaps=[
-    {title:'No definition of permissible communication scope',current:'Current order likely says communication must be "child-related" — but this term is undefined and unenforceable.',proposed:'All OFW communication shall pertain directly to the health, safety, education, or scheduled activities of the minor children. Neither party shall send messages addressing the other party\'s schedule, employment, location, transportation choices, or personal decisions unless they directly affect a scheduled custody exchange.'},
-    {title:'No restriction on contacting the other party during work hours',current:'No prohibition on sending non-urgent messages during the other party\'s documented work hours despite repeated requests.',proposed:'Non-emergency OFW messages shall not be sent between 7:30am and 4:00pm Monday through Friday. Messages sent during these hours shall be limited to documented medical or safety emergencies affecting the minor children. Violations of this provision shall be subject to sanctions.'},
-    {title:'No limit on message volume or response obligation',current:'No restriction on how many messages may be sent or any requirement that they be necessary.',proposed:'Neither party shall send more than three OFW messages per calendar day except in documented medical or safety emergencies. The receiving party shall have 24 hours to respond to non-emergency messages and shall not be deemed uncooperative for failing to respond within a shorter period.'},
-    {title:'No prohibition on accusatory or non-child-centered content',current:'Orders require "civil" communication but civility is subjective and rarely sanctionable.',proposed:'OFW messages shall be limited to factual, logistical matters related to the minor children. Messages containing personal accusations, criticism of the other party\'s parenting unrelated to a specific child safety concern, or language designed to provoke a response shall constitute a violation of this order subject to sanctions.'},
-    {title:'Non-response not defined as permissible',current:'No order language explicitly permits a parent to decline to respond to harassing or off-topic messages. Silence can be mischaracterized as non-cooperation.',proposed:"A party's failure to respond to an OFW message shall not be construed as non-cooperation if: (a) the message contained no request requiring a response, (b) the message was not child-centered, or (c) the party has documented the non-response and the basis for it in a contemporaneous log."},
-    {title:'No exchange location or safety protocol',current:'Exchange logistics are vague, allowing exchanges to be used as opportunities for intimidation.',proposed:'All custody exchanges shall occur at a designated neutral public location. Neither party shall approach the other\'s vehicle or residence during exchanges. Exchanges shall not be used to deliver non-child-related communications.'},
-    {title:'No restriction on third-party involvement in calls',current:'No prohibition on other adults being present, audible, or participating during custody calls with children.',proposed:'During scheduled telephone or video calls between a parent and the minor children, the other parent and all third parties shall remain out of earshot and shall not direct, interrupt, or participate in the call in any manner.'},
-  ];
-  document.getElementById('gapList').innerHTML=gaps.map(g=>`
-    <div class="loophole-card">
-      <div class="loophole-title">⚠ ${g.title}</div>
-      <div class="loophole-current">Current gap: ${g.current}</div>
-      <div class="loophole-proposed"><strong>Proposed language:</strong><br><br>${g.proposed}</div>
-    </div>`).join('');
+function renderGaps(){const gaps=[{t:'No restriction on work-hours contact',c:'No prohibition on non-urgent messages during documented work hours despite repeated requests.',p:"Non-emergency OFW messages shall not be sent between 7:30am and 4:00pm Monday through Friday. Messages sent during these hours shall be limited to documented medical or safety emergencies. Violations shall be subject to sanctions."},{t:'No definition of permissible communication scope',c:'"Child-related" is undefined and unenforceable.',p:"All OFW communication shall pertain directly to the health, safety, education, or scheduled activities of the minor children. Neither party shall send messages addressing the other party's schedule, employment, location, or personal decisions unless they directly affect a scheduled custody exchange."},{t:'No limit on message volume or response obligation',c:'No restriction on message volume or response time.',p:'Neither party shall send more than three OFW messages per calendar day except in documented emergencies. The receiving party shall have 24 hours to respond and shall not be deemed uncooperative for failing to respond within a shorter period.'},{t:'No prohibition on accusatory content',c:'"Civil" is subjective and rarely sanctionable.',p:"OFW messages shall be limited to factual logistical matters related to the minor children. Messages containing personal accusations, criticism of the other party's parenting unrelated to a specific child safety concern, or language designed to provoke a response shall constitute a violation subject to sanctions."},{t:'Non-response not defined as permissible',c:'Silence can be mischaracterized as non-cooperation.',p:"A party's failure to respond to an OFW message shall not be construed as non-cooperation if: (a) the message required no response, (b) the message was not child-centered, or (c) the party has documented the non-response and basis for it contemporaneously."},{t:'No exchange location or safety protocol',c:'Vague exchange logistics allow intimidation opportunities.',p:"All custody exchanges shall occur at a designated neutral public location. Neither party shall approach the other's vehicle or residence during exchanges."},{t:'No restriction on third-party involvement in calls',c:'No prohibition on adults being present or participating during custody calls.',p:"During scheduled calls between a parent and the minor children, the other parent and all third parties shall remain out of earshot and shall not direct, interrupt, or participate in the call in any manner."}];document.getElementById('gapList').innerHTML=gaps.map(g=>`<div class="lcrd"><div class="lct">&#9888; ${g.t}</div><div class="lcc">Current gap: ${g.c}</div><div class="lcp"><strong>Proposed language:</strong><br><br>${g.p}</div></div>`).join('');}
+
+// HEARING PREP
+const CL=[{id:'c1',text:'Export all OFW message exhibits',sub:'Court exhibit export from Messages tab'},{id:'c2',text:'Export video call analysis',sub:'Court exhibit export from Videos tab'},{id:'c3',text:'Export non-response log',sub:'Demonstrates deliberate boundary-setting not avoidance'},{id:'c4',text:'Export reluctance log including Ethan entry',sub:'September/October self-censorship incident'},{id:'c5',text:'Export call duration disparity report',sub:'Quantifies his calls vs yours'},{id:'c6',text:'Export timing pattern report',sub:'Work-hours violations with timestamps'},{id:'c7',text:'Share all exports with attorney before 7/28',sub:'Give attorney time to review and select'},{id:'c8',text:'Confirm Dr. Kelley testimony scope with attorney',sub:'What specifically will she address'},{id:'c9',text:'Prepare declaration if needed',sub:'Attorney will advise - your logs support this'},{id:'c10',text:'Organize reference documents in Google Drive',sub:'Current order, TDVRO, evaluation - accessible on phone in court'},{id:'c11',text:'Log Ethan self-censorship incident in Reluctance tab',sub:'September/October approximate date - do this now if not done'},{id:'c12',text:'Confirm hearing day childcare arrangements',sub:'You need to be fully present'}];
+function renderChecklist(){const d=new Date('2026-07-30');const now=new Date();const diff=Math.ceil((d-now)/(1000*60*60*24));document.getElementById('daysLeft').textContent=diff>0?diff+' days away':'Today';document.getElementById('checklist').innerHTML=CL.map(item=>`<div class="chk ${clState[item.id]?'done':''}" onclick="togCL('${item.id}')"><div class="chkb">${clState[item.id]?'&#10003;':''}</div><div><div class="chkt">${item.text}</div><div class="chks">${item.sub}</div></div></div>`).join('');}
+function togCL(id){clState[id]=!clState[id];save();renderChecklist();}
+function renderHearing(){
+  const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent)).length;
+  document.getElementById('hearingEv').innerHTML=`<div class="stcard"><h4>Signal behaviors during calls</h4><div class="cite">Corroborates Dr. Kelley Finding 1</div><div class="body2">Dr. Kelley documented Respondent arranged thumb signals for children during calls to report on conditions at Petitioner home.</div><div class="rel">Your video analysis will flag signal behaviors. ${allVids.length?allVids.length+' recording(s) analyzed.':'Upload recordings in Videos tab.'}</div></div><div class="stcard"><h4>Transition language (sorry)</h4><div class="cite">Corroborates Dr. Kelley Finding 2</div><div class="body2">Dr. Kelley documented Respondent saying sorry when children had to go to Petitioner home, creating a negative association.</div><div class="rel">Video analysis flags transition negativity in handoff moments.</div></div><div class="stcard"><h4>Children using Respondent exact language</h4><div class="cite">Corroborates Dr. Kelley Finding 3</div><div class="body2">Dr. Kelley noted children used the same specific language and complaints as Respondent, indicating coaching.</div><div class="rel">Video analysis flags language mirroring. Message analysis identifies messages designed to plant narratives. ${allMsgs.length?allMsgs.length+' messages analyzed.':'Upload messages in Messages tab.'}</div></div><div class="stcard"><h4>Coached journal entries</h4><div class="cite">Corroborates Dr. Kelley Finding 4</div><div class="body2">Dr. Kelley found Respondent suggested children keep journals reflecting his narrative with dates beyond developmental capacity.</div><div class="rel">Check OFW messages for journal references.</div></div><div class="stcard"><h4>Ethan alienation from Petitioner</h4><div class="cite">Corroborates Dr. Kelley intimidation findings</div><div class="body2">Dr. Kelley documented Ethan was intimidated by Respondent and saw Petitioner as the primary parent. Ethan has been residing with Respondent approximately 6 months.</div><div class="rel">Reluctance log and goodnight call analysis directly support this. ${rlE.filter(e=>e.child==='Ethan').length} Ethan entries logged.</div></div><div class="stcard"><h4>Work-hours boundary violations</h4><div class="cite">Documented pattern of harassment</div><div class="body2">Petitioner works Mon-Fri 7:30am-4pm and has repeatedly requested no non-urgent contact. Respondent has consistently disregarded this.</div><div class="rel">${wh} messages documented during work hours. Export timing report for attorney.</div></div>`;
 }
+
+// LEGAL
+function renderLegal(){const statutes=[{title:'Family Code section 3044 - Domestic Violence Presumption',cite:'Cal. Fam. Code section 3044',body:'Creates a rebuttable presumption that granting custody to a person who has perpetrated domestic violence is detrimental to the best interest of the child. Petitioner bears the burden to rebut it.',rel:'The TDVRO, documented physical intimidation (arm grabbing), and emergency investigation report directly invoke this presumption.'},{title:'Family Code section 3020 - Legislative Policy',cite:'Cal. Fam. Code section 3020',body:"Declares California public policy to assure children frequent and continuing contact with both parents - except where contact would not be in the child's best interest.",rel:"Ethan's estrangement from Petitioner directly conflicts with this policy. Dr. Kelley's testimony that he was intimidated and saw Petitioner as the primary parent is central."},{title:'Family Code section 3011 - Best Interest Factors',cite:'Cal. Fam. Code section 3011',body:"Lists factors the court shall consider including: health, safety, and welfare of the child; any history of abuse; nature and amount of contact with both parents.",rel:"The evaluator's findings on alienation, intimidation, and the father's MCMI-IV results (high drug use area score) are relevant to multiple factors under this section."},{title:'Family Code section 3100 - Visitation Rights',cite:'Cal. Fam. Code section 3100',body:"The court shall grant reasonable visitation rights to a parent unless it is shown that visitation would be detrimental to the best interest of the child.",rel:"The documented pattern of using visitation calls to gather information, signal-based monitoring, and transition negativity are relevant to whether current visitation arrangements serve the children's best interest."},{title:'Family Code section 6203 - Abuse Defined',cite:'Cal. Fam. Code section 6203',body:"Defines abuse to include intentionally or recklessly causing bodily injury, placing a person in reasonable apprehension of imminent serious bodily injury, or engaging in behavior that could be enjoined under section 6320.",rel:"The documented arm grabbing of Ethan and pattern of intimidation at exchanges are relevant to this definition. The emergency investigation report is key evidence."},{title:'Family Code section 6320 - Enjoinable Conduct',cite:'Cal. Fam. Code section 6320',body:"Authorizes the court to enjoin a party from molesting, attacking, threatening, harassing, telephoning including making annoying telephone calls, or disturbing the peace of the other party or minor children.",rel:"The pattern of excessive OFW messaging, work-hours contact despite repeated requests to stop, and showing up at exchanges with extended family for intimidation may be relevant to this section."},{title:'Welfare and Institutions Code section 300 - Child Welfare',cite:'Cal. Welf. & Inst. Code section 300',body:"Establishes grounds for juvenile court jurisdiction including where a child is suffering serious emotional damage evidenced by severe anxiety, depression, withdrawal, or untoward aggressive behavior.",rel:"Dr. Kelley's warning about long-term consequences of alienation including anxiety, depression, and difficulty forming healthy relationships is directly relevant. The emotional impact on all three children, particularly Ethan, should be documented."}];document.getElementById('legalRef').innerHTML=statutes.map(s=>`<div class="stcard"><h4>${s.title}</h4><div class="cite">${s.cite}</div><div class="body2">${s.body}</div><div class="rel">&#8594; ${s.rel}</div></div>`).join('');}
+
+// DOCS
+function addDoc(){const type=document.getElementById('dtype').value,date=document.getElementById('ddate').value,title=document.getElementById('dtitle').value.trim(),notes=document.getElementById('dnotes').value.trim(),link=document.getElementById('dlink').value.trim();if(!title){alert('Please enter a title.');return;}docE.unshift({type,date,title,notes,link});['ddate','dtitle','dnotes','dlink'].forEach(id=>document.getElementById(id).value='');save();renderDocs();}
+function renderDocs(){document.getElementById('docList').innerHTML=docE.length?docE.map((e,i)=>`<div class="rcard"><div class="lh"><div><h4>${e.title}</h4><div class="rdate">${e.type}${e.date?' - '+e.date:''}</div></div><div class="abtn"><button class="btn btne" onclick="openEDoc(${i})">Edit</button><button class="btn btnd" onclick="docE.splice(${i},1);save();renderDocs()">Del</button></div></div>${e.notes?`<div class="rbody">${e.notes}</div>`:''}${e.link?`<a class="rlink" href="${e.link}" target="_blank">&#128279; Open in Google Drive</a>`:''}</div>`).join(''):"<div class='empty'>No documents yet. Add your current custody order, TDVRO, and key correspondence above.</div>";}
+function openEDoc(i){const e=docE[i];editCtx={type:'doc',index:i};document.getElementById('mTitle').textContent='Edit document';document.getElementById('mBody').innerHTML=`<label>Title</label><input type="text" id="etitle" value="${e.title}"><label>Key points</label><textarea id="enotes">${e.notes||''}</textarea><label>Google Drive link</label><input type="text" id="elink" value="${e.link||''}">`;document.getElementById('editModal').classList.add('open');}
 
 // EXPORTS
 function dl(content,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'}));a.download=filename;a.click();}
-
-function exportMsgs(mode){
-  const lines=[mode==='plain'?'EXHIBIT — OFW COMMUNICATION RECORD (COURT COPY)':'EXHIBIT — OFW COMMUNICATION RECORD (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Total messages: ${allMsgs.length}`,'','─'.repeat(60)];
-  allMsgs.forEach((m,i)=>{
-    const wh=isEx(m.sender)&&isDuringWorkHours(m.timestamp_sent);
-    const ln=isEx(m.sender)&&isLateNight(m.timestamp_sent);
-    lines.push(`\nITEM ${i+1}${wh?' [SENT DURING PETITIONER WORK HOURS]':''}${ln?' [SENT LATE NIGHT/EARLY MORNING]':''}`);
-    lines.push(`Date/Time Sent: ${m.timestamp_sent||'Unknown'}`);
-    if(m.timestamp_viewed)lines.push(`Viewed: ${m.timestamp_viewed}`);
-    lines.push(`From: ${m.sender||'?'} To: ${m.recipient||'?'}`);
-    lines.push(`Subject: ${m.subject||'N/A'}`);
-    lines.push(`\nMessage:\n"${m.body||''}"\n`);
-    if(mode==='plain')lines.push(`Description:\n${m.court_summary||''}`);
-    else{lines.push(`Behavioral description: ${(m.tactics_plain||[]).join(' ')}`);lines.push(`Clinical classification (attorney only): ${(m.tactics_clinical||[]).join(', ')}`);}
-    lines.push('\n'+'─'.repeat(40));
-  });
-  dl(lines.join('\n'),mode==='plain'?'OFW_Court_Exhibit.txt':'OFW_Full_Analysis.txt');
-}
-
-function exportTiming(){
-  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
-  const workMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
-  const lateMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
-  const lines=[
-    'EXHIBIT — MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'',
-    'Petitioner works Monday–Friday 7:30am–4:00pm. Petitioner has previously and repeatedly requested that Respondent not send non-urgent messages during work hours. The following documents Respondent\'s pattern of disregarding this request.','','─'.repeat(60),
-    `\nTotal messages from Respondent analyzed: ${exMsgs.length}`,
-    `Messages sent during Petitioner's work hours (Mon–Fri 7:30am–4pm): ${workMsgs.length} (${exMsgs.length?Math.round(workMsgs.length/exMsgs.length*100)+'%':'N/A'})`,
-    `Messages sent after 9pm or before 7am during Petitioner's parenting time: ${lateMsgs.length}`,
-    '\n── Work-hours messages ──'
-  ];
-  workMsgs.forEach((m,i)=>{lines.push(`\n${i+1}. ${m.timestamp_sent}\nFrom: ${m.sender}\nSubject: ${m.subject||'N/A'}\n"${m.body||''}"`);});
-  if(lateMsgs.length){
-    lines.push('\n\n── Late-night / early-morning messages ──');
-    lateMsgs.forEach((m,i)=>{lines.push(`\n${i+1}. ${m.timestamp_sent}\nFrom: ${m.sender}\n"${m.body||''}"`);});
-  }
-  dl(lines.join('\n'),'Timing_Pattern_Report.txt');
-}
-
-function exportDur(){
-  const all=[...durEntries,...autoCallLog];
-  const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','─'.repeat(60)];
-  const{avgDad,avgMom}=getDurData();
-  if(avgDad&&avgMom)lines.push(`\nSummary: His calls average ${avgDad.toFixed(1)} min. Petitioner's calls average ${avgMom.toFixed(1)} min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);
-  all.forEach((e,i)=>{lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Respondent's call":e.type==='mom'?"Petitioner's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`);});
-  dl(lines.join('\n'),'Call_Duration_Log.txt');
-}
-
-function exportVids(mode){
-  const lines=[mode==='plain'?'EXHIBIT — VIDEO CALL ANALYSIS (COURT COPY)':'EXHIBIT — VIDEO CALL ANALYSIS (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Recordings: ${allVids.length}`,'','─'.repeat(60)];
-  allVids.forEach((v,i)=>{
-    lines.push(`\nRECORDING ${i+1}: ${v.filename}\nDate: ${v.call_date||'Unknown'}\nTotal duration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}\nSpeakers: ${(v.speakers_detected||[]).join(', ')||'unknown'}\n\nDescription:\n${v.court_summary||''}`);
-    if(v.background_incidents?.length){lines.push('\nBackground adult presence:');v.background_incidents.forEach(b=>lines.push(`  [${b.timestamp_approx}] ${b.court_plain}`));}
-    if(v.distraction_incidents?.length){lines.push('\nDistraction incidents:');v.distraction_incidents.forEach(d=>lines.push(`  [${d.timestamp_approx}] ${d.court_plain}`));}
-    if(v.ethan_indicators&&mode==='full'){lines.push('\nEthan-specific observations:');const e=v.ethan_indicators;if(e.self_censorship_moments)lines.push('  Self-censorship: '+e.self_censorship_moments);if(e.affection_expressions)lines.push('  Affection: '+e.affection_expressions);if(e.off_screen_presence)lines.push('  Off-screen presence: '+e.off_screen_presence);}
-    lines.push('\n'+'─'.repeat(40));
-  });
-  dl(lines.join('\n'),mode==='plain'?'Video_Court_Exhibit.txt':'Video_Full_Analysis.txt');
-}
-
-function exportNR(){
-  const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents instances where Petitioner chose not to respond to OFW messages and the documented reason for each decision.','','─'.repeat(60)];
-  nrEntries.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>REASON_PLAIN[r]).join(' ')}${e.notes?'\nContext: '+e.notes:''}`));
-  dl(lines.join('\n'),'Non_Response_Log.txt');
-}
-
-function exportRL(){
-  const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','','─'.repeat(60)];
-  rlEntries.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance'}. ${e.words?`"${e.words}".`:''} ${e.context||''}`));
-  dl(lines.join('\n'),'Reluctance_Log.txt');
-}
-
-function copyMsgSummary(){
-  const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));
-  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
-  navigator.clipboard.writeText(`OFW COMMUNICATION SUMMARY\nTotal: ${allMsgs.length}\nHigh severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours messages: ${exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent)).length}\nLate-night messages: ${exMsgs.filter(m=>isLateNight(m.timestamp_sent)).length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`• ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));
-}
-
-renderNR();renderRL();renderDurChart();renderGaps();renderHourGrid([]);
+function exportMsgs(mode){const lines=[mode==='plain'?'EXHIBIT - OFW COMMUNICATION RECORD (COURT COPY)':'EXHIBIT - OFW COMMUNICATION RECORD (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Petitioner: Doug Rhodes - Respondent: Chelsea Rhodes',`Total messages: ${allMsgs.length}`,'',' -'.repeat(30)];allMsgs.forEach((m,i)=>{const wh=isEx(m.sender)&&isDWH(m.timestamp_sent);const ln=isEx(m.sender)&&isLN(m.timestamp_sent);lines.push(`\nITEM ${i+1}${wh?' [SENT DURING RESPONDENT WORK HOURS]':''}${ln?' [SENT LATE NIGHT]':''}`);lines.push(`Date/Time Sent: ${m.timestamp_sent||'Unknown'}`);if(m.timestamp_viewed)lines.push(`Viewed: ${m.timestamp_viewed}`);lines.push(`From: ${m.sender||'?'} To: ${m.recipient||'?'}\nSubject: ${m.subject||'N/A'}\n\nMessage:\n"${m.body||''}"`);if(mode==='plain')lines.push(`\nDescription:\n${m.court_summary||''}`);else{lines.push(`Behavioral description: ${(m.tactics_plain||[]).join(' ')}`);lines.push(`Clinical classification (attorney only): ${(m.tactics_clinical||[]).join(', ')}`);}lines.push('\n'+'-'.repeat(40));});dl(lines.join('\n'),mode==='plain'?'OFW_Court_Exhibit.txt':'OFW_Full_Analysis.txt');}
+function exportVids(mode){const lines=[mode==='plain'?'EXHIBIT - VIDEO CALL ANALYSIS (COURT COPY)':'EXHIBIT - VIDEO CALL ANALYSIS (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Petitioner: Doug Rhodes - Respondent: Chelsea Rhodes',`Recordings: ${allVids.length}`,'',' -'.repeat(30)];allVids.forEach((v,i)=>{lines.push(`\nRECORDING ${i+1}: ${v.filename}\nDate: ${v.call_date||'Unknown'}\nDuration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}\n\nDescription:\n${v.court_summary||''}`);if(v.background_incidents?.length){lines.push('\nBackground adults:');v.background_incidents.forEach(b=>lines.push(`  [${b.timestamp_approx}] ${b.court_plain}`));}if(v.distraction_incidents?.length){lines.push('\nDistractions:');v.distraction_incidents.forEach(d=>lines.push(`  [${d.timestamp_approx}] ${d.court_plain}`));}lines.push('\n'+'-'.repeat(40));});dl(lines.join('\n'),mode==='plain'?'Video_Court_Exhibit.txt':'Video_Full_Analysis.txt');}
+function exportNR(){const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents instances where Respondent chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','',' -'.repeat(30)];nrE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>RP[r]||'').join(' ')}${e.notes?'\nContext: '+e.notes:''}`));dl(lines.join('\n'),'Non_Response_Log.txt');}
+function exportRL(){const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','',' -'.repeat(30)];rlE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'".':''} ${e.context||''}`));dl(lines.join('\n'),'Reluctance_Log.txt');}
+function exportTiming(){const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent));const ln=exM.filter(m=>isLN(m.timestamp_sent));const lines=['EXHIBIT - MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','Respondent works Monday-Friday 7:30am-4:00pm. Respondent has previously and repeatedly requested that Petitioner not send non-urgent messages during work hours. The following documents the pattern of disregarding this request.','',' -'.repeat(30),`\nTotal Petitioner messages analyzed: ${exM.length}`,`Messages during Respondent work hours: ${wh.length} (${exM.length?Math.round(wh.length/exM.length*100)+'%':'n/a'})`,`Messages after 9pm or before 7am: ${ln.length}`,'\n-- Work-hours messages --'];wh.forEach((m,i)=>lines.push(`\n${i+1}. ${m.timestamp_sent}\n"${m.body||''}"`));dl(lines.join('\n'),'Timing_Pattern_Report.txt');}
+function exportDurLog(){const all=[...durE,...autoCallLog];const{avgDad,avgMom}=getDurData();const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','',' -'.repeat(30)];if(avgDad&&avgMom)lines.push(`\nSummary: Petitioner calls avg ${avgDad.toFixed(1)}min. Respondent calls avg ${avgMom.toFixed(1)}min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);all.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Petitioner's call":e.type==='mom'?"Respondent's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`));dl(lines.join('\n'),'Call_Duration_Log.txt');}
+function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lines=['HEARING PREPARATION BRIEF - JULY 30, 2026',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','Dr. Kelley (custody evaluator) testifying','',' -'.repeat(30),`\nPrep checklist: ${done}/${CL.length} items complete`,`Messages analyzed: ${allMsgs.length}`,`Videos analyzed: ${allVids.length}`,`Non-response log entries: ${nrE.length}`,`Reluctance log entries: ${rlE.length}`,`Ethan-specific entries: ${rlE.filter(e=>e.child==='Ethan').length}`,`Work-hours violations: ${allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent)).length}`,'\n-- Dr. Kelley Findings Corroboration --','1. Signal behaviors - check video analysis for signal_behavior flags','2. Transition negativity (sorry) - check video analysis for transition_negativity flags','3. Language mirroring - check video analysis coaching flags and message analysis','4. Coached journals - check OFW messages for journal references','Ethan alienation - see reluctance log and Ethan-specific video analysis'];dl(lines.join('\n'),'Hearing_Prep_Brief_730.txt');}
+function copySum(){const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));const exM=allMsgs.filter(m=>isEx(m.sender));navigator.clipboard.writeText(`EVIDENCE SUMMARY\nMessages: ${allMsgs.length} - High severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours violations: ${exM.filter(m=>isDWH(m.timestamp_sent)).length}\nVideos: ${allVids.length}\nNon-response log: ${nrE.length}\nReluctance log: ${rlE.length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`- ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));}
 </script>
 </body>
 </html>
