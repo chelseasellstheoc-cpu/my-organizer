@@ -10,10 +10,10 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;min-height:100vh}
 .app-shell{max-width:780px;margin:0 auto;padding:1rem}
-.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 1.5rem}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 1.5rem;flex-wrap:wrap;gap:8px}
 .top-bar h1{font-size:18px;font-weight:600}
 .api-status{display:flex;align-items:center;gap:8px;font-size:12px;color:#666}
-.api-dot{width:8px;height:8px;border-radius:50%;background:#ccc}
+.api-dot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
 .api-dot.connected{background:#1D9E75}
 .api-key-form{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
 .api-key-form h2{font-size:15px;font-weight:600;margin-bottom:6px}
@@ -26,6 +26,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn-primary:hover{background:#333}
 .btn-sm{padding:5px 12px;font-size:12px}
 .btn:disabled{opacity:0.5;cursor:not-allowed}
+.toggle-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e5e5e0;border-radius:8px;margin-bottom:1rem}
+.toggle-label{font-size:13px;color:#1a1a1a;flex:1}
+.toggle-sub{font-size:11px;color:#999;display:block;margin-top:2px}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:22px;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.toggle-slider{background:#1D9E75}
+input:checked+.toggle-slider:before{transform:translateX(18px)}
 .tabs{display:flex;border-bottom:1px solid #e5e5e0;margin-bottom:1.5rem;overflow-x:auto;gap:0}
 .tab{padding:10px 14px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
 .tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
@@ -44,7 +53,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .queue-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #e5e5e0;background:#f9f9f7;font-size:13px;margin-bottom:6px}
 .queue-item .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .queue-item .fsize{font-size:11px;color:#999;flex-shrink:0}
-.queue-item .ftype{font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;flex-shrink:0}
+.ftype{font-size:10px;padding:2px 6px;border-radius:6px;font-weight:600;flex-shrink:0}
 .ftype-pdf{background:#fdf0f0;color:#c0392b}
 .ftype-zip{background:#eef4fd;color:#1a5fa8}
 .ftype-img{background:#f0faf5;color:#1a7a52}
@@ -54,7 +63,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .analyze-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:1rem}
 .progress-wrap{flex:1;min-width:80px;height:4px;background:#e5e5e0;border-radius:2px;overflow:hidden;display:none}
 .progress-fill{height:100%;background:#1a1a1a;border-radius:2px;transition:width 0.3s}
-.progress-status{font-size:11px;color:#999;margin-top:4px}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
@@ -62,11 +70,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat-label{font-size:11px;color:#888;margin-bottom:4px}
 .stat-value{font-size:22px;font-weight:600;color:#1a1a1a}
 .stat-value.red{color:#c0392b}
+.stat-value.amber{color:#b7770d}
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
 .chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}
 .chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .msg-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
 .msg-card.flagged{border-left:3px solid #c0392b}
+.msg-card.work-hours{border-left:3px solid #e67e22}
+.msg-card.late-night{border-left:3px solid #7F77DD}
 .msg-sender{font-size:13px;font-weight:600}
 .msg-time{font-size:11px;color:#999;margin-top:2px}
 .msg-viewed{font-size:11px;color:#bbb;margin-top:1px}
@@ -79,8 +90,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .b-green{background:#f0faf5;color:#1a7a52}
 .b-gray{background:#f5f5f0;color:#666}
 .b-blue{background:#eef4fd;color:#1a5fa8}
+.b-orange{background:#fdf6e3;color:#b7770d}
+.b-violet{background:#f3f0fd;color:#5b4fcf}
 .msg-body{font-size:13px;color:#333;line-height:1.6;margin:8px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd}
 .msg-body.ex{border-left-color:#c0392b}
+.timing-flag{font-size:11px;padding:4px 10px;border-radius:6px;margin-bottom:6px;display:inline-flex;align-items:center;gap:4px}
+.timing-flag.work{background:#fdf6e3;color:#b7770d;border-left:none}
+.timing-flag.late{background:#f3f0fd;color:#5b4fcf;border-left:none}
 .analysis-tabs{display:flex;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0ea}
 .atab{padding:3px 10px;font-size:11px;border-radius:10px;cursor:pointer;border:1px solid #e0e0e0;background:none;color:#888}
 .atab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
@@ -90,7 +106,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .log-entry{border:1px solid #e5e5e0;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
 .log-entry.blue-left{border-left:3px solid #378ADD}
 .log-entry.purple-left{border-left:3px solid #7F77DD}
-.log-entry-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.log-entry.orange-left{border-left:3px solid #e67e22}
+.log-entry-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
 .log-date{font-size:12px;font-weight:600}
 .log-body{font-size:12px;color:#666;line-height:1.5;margin-bottom:6px}
 .log-plain{font-size:12px;color:#3C3489;background:#f3f0fd;padding:8px 10px;border-radius:6px;line-height:1.5}
@@ -118,13 +135,21 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 .ethan-block{padding:10px 12px;background:#fdf0f0;border-radius:6px;border-left:2px solid #c0392b;margin-top:8px;font-size:12px;color:#7a1a1a;line-height:1.6}
 .court-summary-block{margin-top:10px;padding:10px 12px;background:#f0faf5;border-radius:6px;font-size:12px;color:#1a5a3a;line-height:1.6;border-left:2px solid #1D9E75}
 .dur-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.dur-label{font-size:12px;color:#666;width:130px;flex-shrink:0}
+.dur-label{font-size:12px;color:#666;width:150px;flex-shrink:0}
 .dur-track{flex:1;height:8px;background:#f0f0ea;border-radius:4px;overflow:hidden}
 .dur-fill{height:100%;border-radius:4px}
 .dur-fill.dad{background:#c0392b}
 .dur-fill.mom{background:#1D9E75}
 .dur-fill.ethan{background:#7F77DD}
-.dur-val{font-size:12px;font-weight:600;width:40px;text-align:right}
+.dur-fill.work{background:#e67e22}
+.dur-fill.late{background:#7F77DD}
+.dur-val{font-size:12px;font-weight:600;width:50px;text-align:right;flex-shrink:0}
+.hour-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin:8px 0}
+.hour-cell{height:32px;border-radius:3px;background:#f0f0ea;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:9px;color:#bbb;position:relative}
+.hour-cell .bar{position:absolute;bottom:0;left:0;right:0;border-radius:3px 3px 0 0;transition:height 0.3s}
+.hour-cell .bar.work-bar{background:#e67e22}
+.hour-cell .bar.normal-bar{background:#c0392b}
+.hour-cell .lbl{position:relative;z-index:1}
 .pattern-card{border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
 .loophole-card{border:1px solid #e0b89a;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fdf8f5}
 .loophole-title{font-size:13px;font-weight:600;color:#7a3010;margin-bottom:6px}
@@ -140,7 +165,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 .trans-toggle{font-size:12px;color:#888;cursor:pointer;background:none;border:none;padding:6px 0 0;display:flex;align-items:center;gap:4px}
 .trans-text{font-size:12px;color:#555;line-height:1.7;white-space:pre-wrap;background:#f9f9f7;padding:10px;border-radius:6px;margin-top:6px}
 .processing-log{background:#f9f9f7;border-radius:8px;padding:10px 14px;font-size:11px;color:#666;line-height:1.8;margin-top:8px;max-height:120px;overflow-y:auto;display:none}
-@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.reason-grid{grid-template-columns:1fr}}
+.section-title{font-size:14px;font-weight:600;color:#1a1a1a;margin:1.5rem 0 0.75rem}
+.gap-stat{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:#f9f9f7;border:1px solid #e5e5e0;margin-bottom:6px;font-size:13px}
+.gap-val{font-weight:600;color:#1a1a1a}
+.gap-val.red{color:#c0392b}
+.gap-val.amber{color:#b7770d}
+@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.reason-grid{grid-template-columns:1fr}.hour-grid{grid-template-columns:repeat(6,1fr)}}
 </style>
 </head>
 <body>
@@ -170,16 +200,26 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="switchTab('videos')">🎥 Videos</button>
       <button class="tab" onclick="switchTab('nonresponse')">🔕 Non-response</button>
       <button class="tab" onclick="switchTab('reluctance')">😶 Reluctance</button>
-      <button class="tab" onclick="switchTab('duration')">⏱ Duration</button>
+      <button class="tab" onclick="switchTab('duration')">⏱ Duration & Timing</button>
       <button class="tab" onclick="switchTab('patterns')">📊 Patterns</button>
       <button class="tab" onclick="switchTab('gaps')">⚠️ Order gaps</button>
     </div>
 
     <!-- MESSAGES -->
     <div id="panel-messages" class="panel active">
+      <div class="toggle-row">
+        <div class="toggle-label">
+          Summer break mode
+          <span class="toggle-sub">On break 6/25/26–7/20/26 — suspends work-hours flagging</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="breakToggle" onchange="updateBreakMode()">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
       <div class="card">
         <h3>Upload OFW messages</h3>
-        <p>Upload OFW exports in any format. PDFs are parsed directly using the OFW Message Report structure. ZIPs are unpacked and all images analyzed. Screenshots uploaded individually also work.</p>
+        <p>Upload OFW exports in any format. PDFs are parsed directly. ZIPs are unpacked automatically. Messages sent during your work hours (Mon–Fri 7:30am–4:00pm) are flagged automatically unless break mode is on.</p>
         <div class="upload-zone" onclick="document.getElementById('msgInput').click()" id="msgDrop">
           <div class="icon">📤</div>
           <p>Drop files here or click to browse</p>
@@ -217,7 +257,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     <div id="panel-videos" class="panel">
       <div class="card">
         <h3>Upload OFW call recordings</h3>
-        <p>Upload full MP4 recordings. AI automatically detects speakers, handoffs, background adults, distractions, and alienation behaviors. No manual marking needed.</p>
+        <p>Upload full MP4 recordings. AI automatically detects speakers, handoffs, background adults, distractions, and alienation behaviors. Call durations are automatically logged to the Duration & Timing tab.</p>
         <div class="info-box"><strong>Before uploading:</strong> Confirm with your attorney that OFW's built-in recording satisfies California two-party consent requirements before using recordings in court filings.</div>
         <div class="upload-zone" onclick="document.getElementById('vidInput').click()" id="vidDrop">
           <div class="icon">🎥</div>
@@ -257,10 +297,10 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <textarea id="nr-msg" placeholder="Paste or summarize the message..."></textarea>
         <label>Why you chose not to respond</label>
         <div class="reason-grid">
-          <button class="reason-btn" onclick="toggleReason(this,'boundary')" data-r="boundary">Boundary — responding would reinforce the behavior</button>
-          <button class="reason-btn" onclick="toggleReason(this,'info')" data-r="info">No further child-related information needed</button>
-          <button class="reason-btn" onclick="toggleReason(this,'lastword')" data-r="lastword">Last-word pattern — response invites further contact</button>
-          <button class="reason-btn" onclick="toggleReason(this,'attack')" data-r="attack">Message attacked character or was not child-centered</button>
+          <button class="reason-btn" onclick="toggleReason(this,'boundary')">Boundary — responding would reinforce the behavior</button>
+          <button class="reason-btn" onclick="toggleReason(this,'info')">No further child-related information needed</button>
+          <button class="reason-btn" onclick="toggleReason(this,'lastword')">Last-word pattern — response invites further contact</button>
+          <button class="reason-btn" onclick="toggleReason(this,'attack')">Message attacked character or was not child-centered</button>
         </div>
         <label>Optional context</label>
         <textarea id="nr-notes" placeholder="e.g. 4th message that day, I was at work..." style="min-height:45px"></textarea>
@@ -277,14 +317,14 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     <div id="panel-reluctance" class="panel">
       <div class="card">
         <h3>Log reluctance or self-censorship</h3>
-        <p>Record every instance of coached reluctance, early call endings, or self-censorship — including Ethan stopping himself from saying he missed you. Use approximate dates when exact dates aren't known.</p>
+        <p>Record every instance of coached reluctance, early call endings, or self-censorship — including Ethan stopping himself from saying he missed you. Approximate dates are fine.</p>
         <div class="form-row">
           <div><label>Date (approximate is okay)</label><input type="date" id="rl-date"></div>
           <div><label>Time</label><input type="time" id="rl-time"></div>
         </div>
         <label>Child</label>
         <select id="rl-child"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
-        <label>Exact words or what happened — quote as precisely as possible</label>
+        <label>Exact words or what happened</label>
         <textarea id="rl-words" placeholder="e.g. Ethan began to say 'I miss—' then stopped, looked off-camera, changed subject"></textarea>
         <label>Type of incident</label>
         <select id="rl-type">
@@ -309,11 +349,15 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
     </div>
 
-    <!-- DURATION -->
+    <!-- DURATION & TIMING -->
     <div id="panel-duration" class="panel">
+      <p class="section-title">📞 Call duration</p>
+      <div id="durChart"><div class="empty-state">Analyze videos or add manual entries below to see call duration comparison.</div></div>
+      <div id="autoLoggedCalls" style="margin-bottom:1rem"></div>
+
       <div class="card">
-        <h3>Call duration tracker</h3>
-        <p>Log every call — even without a recording. The disparity between his call lengths and yours is quantifiable evidence of calls being used to control children's time at your home.</p>
+        <h3>Manually log a call duration</h3>
+        <p>Log any call even without a recording. Auto-populated from video analysis above.</p>
         <div class="form-row">
           <div><label>Date</label><input type="date" id="dur-date"></div>
           <div><label>Call type</label>
@@ -325,7 +369,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           </div>
         </div>
         <div class="form-row">
-          <div><label>Duration (minutes)</label><input type="number" id="dur-mins" min="1" max="120" placeholder="e.g. 22"></div>
+          <div><label>Duration (minutes)</label><input type="number" id="dur-mins" min="1" max="180" placeholder="e.g. 22"></div>
           <div><label>Who ended call</label>
             <select id="dur-ender"><option>Dad</option><option>Child</option><option>Me</option><option>Unknown</option></select>
           </div>
@@ -334,8 +378,31 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <textarea id="dur-notes" placeholder="e.g. Grandparents audible. Kids eating during my portion." style="min-height:40px"></textarea>
         <button class="btn btn-primary" onclick="addDur()">+ Add entry</button>
       </div>
-      <div id="durChart"></div>
-      <div id="durList" style="margin-top:1rem"></div>
+      <div id="durList"></div>
+
+      <p class="section-title">🕐 Message timing patterns</p>
+      <p style="font-size:12px;color:#666;margin-bottom:1rem;line-height:1.5">Messages sent during your work hours (Mon–Fri 7:30am–4:00pm) represent a documented pattern of boundary violations. You have previously requested he not message you during work hours.</p>
+      <div id="timingStats"><div class="empty-state">Analyze messages first to see timing patterns.</div></div>
+
+      <p class="section-title">📊 Message density by hour</p>
+      <p style="font-size:12px;color:#666;margin-bottom:0.5rem">Orange = your work hours. Each bar shows number of his messages in that hour across all analyzed messages.</p>
+      <div class="hour-grid" id="hourGrid"></div>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:11px;color:#888">
+        <span>🟠 Your work hours (7:30am–4pm)</span>
+        <span>🔴 Other hours</span>
+      </div>
+
+      <p class="section-title">⏱ Response gap analysis</p>
+      <p style="font-size:12px;color:#666;margin-bottom:1rem;line-height:1.5">How quickly each party responds to the other's messages. A pattern of him demanding fast responses while taking hours himself is documentable.</p>
+      <div id="responseGaps"><div class="empty-state">Analyze messages first to see response gap data.</div></div>
+
+      <div class="export-section">
+        <h3>Export timing analysis</h3>
+        <div class="export-options">
+          <button class="btn btn-sm" onclick="exportTiming()">📄 Export timing report</button>
+          <button class="btn btn-sm" onclick="exportDur()">📄 Export call duration log</button>
+        </div>
+      </div>
     </div>
 
     <!-- PATTERNS -->
@@ -345,18 +412,22 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 
     <!-- ORDER GAPS -->
     <div id="panel-gaps" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Based on analyzed messages and documented behaviors, these are likely gaps in your current order being exploited — with proposed plain-language replacement language for your attorney.</p>
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Based on analyzed messages and documented behaviors, these are likely gaps in your current order — with proposed plain-language replacement language for your attorney.</p>
       <div id="gapList"></div>
     </div>
   </div>
 </div>
 
 <script>
-// pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 let API_KEY=null;
-const msgQueue=[],vidQueue=[],nrEntries=[],rlEntries=[],durEntries=[];
+let onBreak=false;
+const WORK_START=7.5; // 7:30am
+const WORK_END=16.0;  // 4:00pm
+const WORK_DAYS=[1,2,3,4,5]; // Mon-Fri
+
+const msgQueue=[],vidQueue=[],nrEntries=[],rlEntries=[],durEntries=[],autoCallLog=[];
 let allMsgs=[],allVids=[];
 let activeMsgFilter='all',msgViewMode={},vidTranscript={};
 const selectedNRReasons=new Set();
@@ -369,6 +440,49 @@ const REASON_PLAIN={
 };
 const REASON_LABEL={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
 
+// TIMING HELPERS
+function parseTimestamp(ts){
+  if(!ts)return null;
+  // Format: "03/22/2025 at 09:06 PM"
+  const m=ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+at\s+(\d{2}):(\d{2})\s+(AM|PM)/i);
+  if(!m)return null;
+  let h=parseInt(m[4]);
+  const min=parseInt(m[5]);
+  const ampm=m[6].toUpperCase();
+  if(ampm==='PM'&&h!==12)h+=12;
+  if(ampm==='AM'&&h===12)h=0;
+  return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,min);
+}
+function isDuringWorkHours(ts){
+  if(onBreak)return false;
+  const d=parseTimestamp(ts);
+  if(!d)return false;
+  const dow=d.getDay();
+  if(!WORK_DAYS.includes(dow))return false;
+  const frac=d.getHours()+(d.getMinutes()/60);
+  return frac>=WORK_START&&frac<WORK_END;
+}
+function isLateNight(ts){
+  const d=parseTimestamp(ts);
+  if(!d)return false;
+  const h=d.getHours();
+  return h>=21||h<7;
+}
+function getHour(ts){
+  const d=parseTimestamp(ts);
+  return d?d.getHours():null;
+}
+function isWorkHour(h){return h>=8&&h<16;} // 7:30 rounds to 8 for display
+function minutesBetween(ts1,ts2){
+  const a=parseTimestamp(ts1),b=parseTimestamp(ts2);
+  if(!a||!b)return null;
+  return Math.abs(b-a)/60000;
+}
+function updateBreakMode(){
+  onBreak=document.getElementById('breakToggle').checked;
+  if(allMsgs.length)renderMsgs();
+}
+
 function setKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k.startsWith('sk-ant-')){document.getElementById('keyError').style.display='block';return;}
@@ -378,7 +492,7 @@ function setKey(){
   document.getElementById('mainApp').style.display='block';
   document.getElementById('apiDot').classList.add('connected');
   document.getElementById('apiStatusText').textContent='API connected';
-  renderGaps();
+  renderGaps();renderHourGrid([]);
 }
 function resetKey(){
   API_KEY=null;
@@ -395,7 +509,7 @@ function switchTab(name){
   document.getElementById(`panel-${name}`).classList.add('active');
 }
 
-// FILE TYPE DETECTION
+// FILE HANDLING
 function getFileType(f){
   if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';
   if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';
@@ -405,18 +519,12 @@ function getFileType(f){
 function ftLabel(t){return{pdf:'PDF',zip:'ZIP',img:'IMG',vid:'VID'}[t]||'FILE';}
 function ftClass(t){return{pdf:'ftype-pdf',zip:'ftype-zip',img:'ftype-img',vid:'ftype-vid'}[t]||'';}
 function ftIcon(t){return{pdf:'📄',zip:'🗜',img:'🖼',vid:'🎥'}[t]||'📁';}
-
-// QUEUE MANAGEMENT
 function addToMsgQueue(files){
-  Array.from(files).forEach(f=>{
-    if(!msgQueue.find(q=>q.name===f.name))msgQueue.push(f);
-  });
+  Array.from(files).forEach(f=>{if(!msgQueue.find(q=>q.name===f.name))msgQueue.push(f);});
   renderMsgQueue();
 }
 function addToVidQueue(files){
-  Array.from(files).forEach(f=>{
-    if(!vidQueue.find(q=>q.name===f.name))vidQueue.push(f);
-  });
+  Array.from(files).forEach(f=>{if(!vidQueue.find(q=>q.name===f.name))vidQueue.push(f);});
   renderVidQueue();
 }
 function renderMsgQueue(){
@@ -433,8 +541,6 @@ function renderVidQueue(){
 }
 function handleMsgFiles(files){addToMsgQueue(files);}
 function handleVidFiles(files){addToVidQueue(files);}
-
-// DRAG AND DROP
 function setupDrop(zoneId,handler){
   const z=document.getElementById(zoneId);
   z.addEventListener('dragover',e=>{e.preventDefault();z.style.background='#f5f5f0';});
@@ -444,10 +550,8 @@ function setupDrop(zoneId,handler){
 setupDrop('msgDrop',addToMsgQueue);
 setupDrop('vidDrop',addToVidQueue);
 
-// PDF EXTRACTION - OFW Message Report format
+// PDF
 async function extractPDF(file){
-  const log=s=>logMsg(s);
-  log(`Extracting text from ${file.name}...`);
   const ab=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data:ab}).promise;
   let fullText='';
@@ -456,67 +560,36 @@ async function extractPDF(file){
     const content=await page.getTextContent();
     fullText+=content.items.map(item=>item.str).join(' ')+'\n';
   }
-  log(`Extracted ${fullText.length} characters from ${pdf.numPages} pages`);
   return fullText;
 }
-
-// PARSE OFW MESSAGE REPORT TEXT
 function parseOFWText(text,filename){
   const messages=[];
-  // Split on "Message N of N" or "Sent:" patterns
-  const msgBlocks=text.split(/Message\s+\d+\s+of\s+\d+/i).filter(b=>b.trim().length>50);
-  // Also try splitting by "Sent:" as fallback
-  const blocks=msgBlocks.length>1?msgBlocks:text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4})/);
-  
+  const blocks=text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4}\s+at)/i);
   blocks.forEach(block=>{
-    // Extract sent time
     const sentMatch=block.match(/Sent:\s+(\d{2}\/\d{2}\/\d{4}\s+at\s+\d{2}:\d{2}\s+[AP]M)/i);
     const fromMatch=block.match(/From:\s+([^\n\r]+?)(?=\s+To:|$)/i);
-    const toMatch=block.match(/To:\s+([^\n\r(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?=\s|$)/i);
+    const toMatch=block.match(/To:\s+([^\n\r(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?:\s|$)/i);
     const subjectMatch=block.match(/Subject:\s+([^\n\r]+)/i);
-    
     if(!sentMatch||!fromMatch)return;
-    
-    // Extract body — text after subject line, before "On [date]" quoted section
     let body=block;
-    if(subjectMatch){
-      const subIdx=block.indexOf(subjectMatch[0]);
-      body=block.slice(subIdx+subjectMatch[0].length);
-    }
-    // Remove quoted prior messages
-    body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').trim();
-    // Remove OFW footer
-    body=body.replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').trim();
-    // Clean up extra whitespace
-    body=body.replace(/\s+/g,' ').trim();
-    
+    if(subjectMatch){const idx=block.indexOf(subjectMatch[0]);body=block.slice(idx+subjectMatch[0].length);}
+    body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').replace(/\s+/g,' ').trim();
     if(body.length<2)return;
-    
     messages.push({
-      source_file:filename,
-      source_type:'pdf',
+      source_file:filename,source_type:'pdf',
       timestamp_sent:sentMatch[1],
       sender:fromMatch[1].trim(),
       recipient:toMatch?toMatch[1].trim():'Unknown',
       timestamp_viewed:toMatch&&toMatch[2]?toMatch[2].trim():null,
       subject:subjectMatch?subjectMatch[1].trim():null,
       body,
-      tactics_clinical:[],
-      tactics_plain:[],
-      court_summary:null,
-      severity:'pending',
-      child_mentioned:[],
-      requires_response:null,
-      needs_ai_analysis:true
+      tactics_clinical:[],tactics_plain:[],court_summary:null,
+      severity:'pending',child_mentioned:[],requires_response:null,needs_ai_analysis:true
     });
   });
   return messages;
 }
-
-// ZIP EXTRACTION
 async function extractZIP(file){
-  const log=s=>logMsg(s);
-  log(`Unpacking ${file.name}...`);
   const zip=await JSZip.loadAsync(file);
   const imageFiles=[];
   const promises=[];
@@ -524,29 +597,17 @@ async function extractZIP(file){
     if(!entry.dir&&/\.(png|jpg|jpeg|webp)$/i.test(path)){
       promises.push(entry.async('blob').then(blob=>{
         const ext=path.split('.').pop().toLowerCase();
-        const mimeMap={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
-        imageFiles.push({name:path.split('/').pop(),blob,type:mimeMap[ext]||'image/png'});
+        const mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
+        imageFiles.push({name:path.split('/').pop(),blob,type:mime[ext]||'image/png'});
       }));
     }
   });
   await Promise.all(promises);
-  log(`Found ${imageFiles.length} images in ZIP`);
   return imageFiles;
 }
-
-async function blobToBase64(blob){
-  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(blob);});
-}
-async function fileToBase64(file){
-  return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-}
-
-function logMsg(s){
-  const el=document.getElementById('msgLog');
-  el.style.display='block';
-  el.innerHTML+=s+'<br>';
-  el.scrollTop=el.scrollHeight;
-}
+async function blobToBase64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(blob);});}
+async function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+function logMsg(s){const el=document.getElementById('msgLog');el.style.display='block';el.innerHTML+=s+'<br>';el.scrollTop=el.scrollHeight;}
 
 // API
 async function callAPI(messages,maxTokens=1500){
@@ -564,35 +625,36 @@ function parseJSON(text){
   catch(e){console.error('Parse error',text.slice(0,200));return null;}
 }
 
-const MSG_PROMPT_IMAGE=`You are analyzing an OFW (Our Family Wizard) screenshot for a domestic abuse survivor documenting coercive control for family court. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, now living with father after documented intimidation), Charlotte, Duke.
+const MSG_PROMPT_IMAGE=`You are analyzing an OFW screenshot for a domestic abuse survivor. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
 
-Extract ALL messages visible. Return a JSON array where each object has:
-- sender, recipient, timestamp_sent, timestamp_viewed (if shown), subject, body (verbatim)
-- tactics_clinical: array from [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
-- tactics_plain: plain behavioral descriptions a judge understands without clinical terms
-- court_summary: 2-3 sentences, third person, factual, no clinical labels, starting "On [date], Respondent..."
+Extract ALL messages. Return JSON array, each object:
+- sender, recipient, timestamp_sent, timestamp_viewed, subject, body (verbatim)
+- tactics_clinical: [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
+- tactics_plain: plain behavioral descriptions for a judge
+- court_summary: 2-3 sentences, third person, factual, no clinical labels
 - severity: "high"|"medium"|"low"|"neutral"
-- child_mentioned: array of child names mentioned
-- requires_response: true if response was needed for child safety/logistics
+- child_mentioned: array of child names
+- requires_response: true if needed for child safety/logistics
+- is_call_related: true if message is about a phone/video call with children
 
 Reply ONLY with valid JSON array. No markdown.`;
 
-const MSG_PROMPT_TEXT=`You are analyzing OFW (Our Family Wizard) message text extracted from a PDF Message Report, for a domestic abuse survivor documenting coercive control for family court. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, now living with father after documented intimidation), Charlotte, Duke.
+const MSG_PROMPT_TEXT=`You are analyzing OFW message text for a domestic abuse survivor. Father: Doug Rhodes. Mother: Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
 
-The messages have already been parsed. For each message provided, add:
-- tactics_clinical: array from [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
-- tactics_plain: array of plain behavioral descriptions a judge understands without clinical terms  
-- court_summary: 2-3 sentences, third person, factual, no clinical labels, starting "On [date], Respondent..." or "On [date], Petitioner..."
+For each message in the array below, add:
+- tactics_clinical: [DARVO, Blame-shifting, False accusation, Control attempt, Gaslighting, Minimizing, Monitoring, Baiting, Excessive contact, Neutral]
+- tactics_plain: plain behavioral descriptions for a judge
+- court_summary: 2-3 sentences, third person, factual, no clinical labels
 - severity: "high"|"medium"|"low"|"neutral"
-- child_mentioned: array of child names mentioned
-- requires_response: true if response was needed for child safety/logistics
+- child_mentioned: array of child names
+- requires_response: true if needed for child safety/logistics
+- is_call_related: true if message is about a phone/video call with children
 
-Here are the messages to analyze:
-MESSAGES_PLACEHOLDER
+Messages:
+PLACEHOLDER
 
-Return the complete array with all original fields plus the new fields added. Reply ONLY with valid JSON array. No markdown.`;
+Return complete array with all original fields plus new fields. Reply ONLY with valid JSON array. No markdown.`;
 
-// MAIN ANALYZE FUNCTION
 async function analyzeMsgs(){
   if(!msgQueue.length)return;
   const btn=document.getElementById('msgAnalyzeBtn');
@@ -601,29 +663,22 @@ async function analyzeMsgs(){
   document.getElementById('msgError').innerHTML='';
   document.getElementById('msgLog').innerHTML='';
   allMsgs=[];
-
-  const totalFiles=msgQueue.length;
-  let processed=0;
-
   for(let i=0;i<msgQueue.length;i++){
     const file=msgQueue[i];
     const ftype=getFileType(file);
-    document.getElementById('msgFill').style.width=Math.round((processed/totalFiles)*100)+'%';
+    document.getElementById('msgFill').style.width=Math.round((i/msgQueue.length)*100)+'%';
     document.getElementById('msgProgressLabel').textContent=`Processing ${file.name}...`;
-
     try{
       if(ftype==='pdf'){
-        // Extract text directly from PDF
-        logMsg(`📄 Processing PDF: ${file.name}`);
+        logMsg(`📄 Extracting PDF: ${file.name}`);
         const text=await extractPDF(file);
         const parsed=parseOFWText(text,file.name);
-        logMsg(`Found ${parsed.length} messages — sending for AI analysis...`);
+        logMsg(`Found ${parsed.length} messages — analyzing...`);
         if(parsed.length>0){
-          // Send parsed text to AI for tactic analysis in batches of 10
           const batchSize=10;
           for(let b=0;b<parsed.length;b+=batchSize){
             const batch=parsed.slice(b,b+batchSize);
-            const prompt=MSG_PROMPT_TEXT.replace('MESSAGES_PLACEHOLDER',JSON.stringify(batch,null,2));
+            const prompt=MSG_PROMPT_TEXT.replace('PLACEHOLDER',JSON.stringify(batch,null,2));
             const result=await callAPI([{role:'user',content:prompt}],1500);
             const analyzed=parseJSON(result);
             if(analyzed)allMsgs.push(...analyzed);
@@ -631,54 +686,48 @@ async function analyzeMsgs(){
           }
         }
       } else if(ftype==='zip'){
-        // Extract images from ZIP then analyze each
         logMsg(`🗜 Unpacking ZIP: ${file.name}`);
         const images=await extractZIP(file);
+        logMsg(`Found ${images.length} images`);
         for(let j=0;j<images.length;j++){
-          logMsg(`  🖼 Analyzing image ${j+1}/${images.length}: ${images[j].name}`);
+          logMsg(`  🖼 Analyzing ${j+1}/${images.length}: ${images[j].name}`);
           const b64=await blobToBase64(images[j].blob);
           const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:images[j].type,data:b64}},{type:'text',text:MSG_PROMPT_IMAGE}]}]);
           const parsed=parseJSON(text);
           if(parsed)allMsgs.push(...parsed.map(m=>({...m,source_file:images[j].name})));
         }
       } else {
-        // Regular image
-        logMsg(`🖼 Analyzing image: ${file.name}`);
+        logMsg(`🖼 Analyzing: ${file.name}`);
         const b64=await fileToBase64(file);
         const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:file.type||'image/png',data:b64}},{type:'text',text:MSG_PROMPT_IMAGE}]}]);
         const parsed=parseJSON(text);
         if(parsed)allMsgs.push(...parsed.map(m=>({...m,source_file:file.name})));
       }
-    } catch(e){
-      logMsg(`⚠ Error processing ${file.name}: ${e.message}`);
-      console.error(e);
-    }
-    processed++;
+    } catch(e){logMsg(`⚠ Error: ${e.message}`);console.error(e);}
   }
-
   document.getElementById('msgFill').style.width='100%';
   document.getElementById('msgProgressLabel').textContent=`Done — ${allMsgs.length} messages analyzed`;
   btn.disabled=false;btn.innerHTML='↺ Re-analyze';
-
   if(allMsgs.length){
-    renderMsgs();renderPatterns();renderGaps();
+    renderMsgs();renderPatterns();renderGaps();renderTimingAnalysis();
     document.getElementById('msgExport').style.display='block';
   } else {
-    document.getElementById('msgError').innerHTML='<div class="error-msg">Could not extract messages. Check the processing log above for details.</div>';
+    document.getElementById('msgError').innerHTML='<div class="error-msg">Could not extract messages. Check processing log above.</div>';
   }
 }
 
 // VIDEOS
-const VID_PROMPT=`You are analyzing a full OFW video call recording for a domestic abuse survivor building a court evidence record. The custody evaluator has already documented parental alienation by the father (Doug Rhodes). Children: Ethan (oldest, now living with father after documented intimidation — he recently started to say he missed mom and stopped himself mid-sentence), Charlotte, Duke. Mother is Chelsea.
+const VID_PROMPT=`You are analyzing a full OFW video call recording for a domestic abuse survivor. Father: Doug Rhodes. Children: Ethan (oldest, living with father after documented intimidation — recently started to say he missed mom and stopped himself mid-sentence), Charlotte, Duke. Mother: Chelsea.
 
-This single recording may contain multiple speakers and handoffs. Automatically detect everything.
+This single recording may contain multiple speakers and handoffs. Auto-detect everything.
 
-Return JSON with:
+Return JSON:
 - total_duration_seconds, speakers_detected, date_context
-- segments: array, each with: speaker_on_call, start_approx, end_approx, duration_seconds, handoff_type, handoff_note, flags (array: category, severity, timestamp_approx, observation, court_plain), transcript_key
-- background_incidents: array (timestamp_approx, who, what, effect_on_child, court_plain)
-- distraction_incidents: array (timestamp_approx, child, distraction_type, court_plain)
-- ethan_indicators: {eye_contact, off_screen_presence, affection_expressions, self_censorship_moments, affect, who_ended}
+- segments: [{speaker_on_call, start_approx, end_approx, duration_seconds, handoff_type, handoff_note, flags:[{category,severity,timestamp_approx,observation,court_plain}], transcript_key}]
+- background_incidents: [{timestamp_approx,who,what,effect_on_child,court_plain}]
+- distraction_incidents: [{timestamp_approx,child,distraction_type,court_plain}]
+- ethan_indicators: {eye_contact,off_screen_presence,affection_expressions,self_censorship_moments,affect,who_ended}
+- call_date: date of this call if determinable (format MM/DD/YYYY)
 - court_summary: 4-5 sentences, plain language, third person, no clinical labels
 - overall_severity: "high"|"medium"|"low"|"neutral"
 
@@ -698,51 +747,93 @@ async function analyzeVids(){
       const b64=await fileToBase64(vidQueue[i]);
       const text=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:vidQueue[i].type||'video/mp4',data:b64}},{type:'text',text:VID_PROMPT}]}],1500);
       const parsed=parseJSON(text);
-      if(parsed)allVids.push({...parsed,filename:vidQueue[i].name});
+      if(parsed){
+        allVids.push({...parsed,filename:vidQueue[i].name});
+        autoLogCallsFromVideo(parsed,vidQueue[i].name);
+      }
     }catch(e){console.error(e);}
   }
   document.getElementById('vidFill').style.width='100%';
   document.getElementById('vidProgressLabel').textContent='Done';
   btn.disabled=false;btn.innerHTML='↺ Analyze more';
-  if(allVids.length){renderVids();renderDurChart();document.getElementById('vidExport').style.display='block';}
-  else document.getElementById('vidError').innerHTML='<div class="error-msg">Could not analyze video. Ensure the file is a valid MP4 recording.</div>';
+  if(allVids.length){
+    renderVids();renderDurChart();renderAutoCallLog();
+    document.getElementById('vidExport').style.display='block';
+  } else {
+    document.getElementById('vidError').innerHTML='<div class="error-msg">Could not analyze video.</div>';
+  }
+}
+
+function autoLogCallsFromVideo(v,filename){
+  if(!v.segments)return;
+  v.segments.forEach(seg=>{
+    if(!seg.duration_seconds||seg.duration_seconds<30)return;
+    const isDad=seg.speaker_on_call&&seg.speaker_on_call.toLowerCase().includes('doug');
+    const isMom=seg.speaker_on_call&&(seg.speaker_on_call.toLowerCase().includes('chelsea')||seg.speaker_on_call.toLowerCase().includes('mom'));
+    const isEthan=seg.speaker_on_call&&seg.speaker_on_call.toLowerCase().includes('ethan');
+    const type=isDad?'dad':isMom?'mom':isEthan?'ethan':null;
+    if(!type)return;
+    autoCallLog.push({
+      date:v.call_date||'Unknown',
+      type,
+      mins:Math.round(seg.duration_seconds/60*10)/10,
+      ender:seg.speaker_on_call||'Unknown',
+      source:filename,
+      auto:true
+    });
+  });
 }
 
 function isEx(sender){return sender&&!sender.toLowerCase().includes('chelsea');}
 const TC={DARVO:'b-red','Blame-shifting':'b-amber','False accusation':'b-red','Control attempt':'b-purple','Gaslighting':'b-coral','Minimizing':'b-gray','Monitoring':'b-purple','Baiting':'b-red','Neutral':'b-gray','Excessive contact':'b-purple'};
 
 function renderMsgs(){
-  const tactics=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[]))].filter(Boolean);
+  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
+  const workHourMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
+  const lateNightMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
   const high=allMsgs.filter(m=>m.severity==='high').length;
-  const flagged=allMsgs.filter(m=>(m.tactics_clinical||[]).some(t=>t!=='Neutral')).length;
   const children=[...new Set(allMsgs.flatMap(m=>m.child_mentioned||[]))];
   document.getElementById('msgStats').style.display='grid';
   document.getElementById('msgStats').innerHTML=`
     <div class="stat-card"><div class="stat-label">Total messages</div><div class="stat-value">${allMsgs.length}</div></div>
     <div class="stat-card"><div class="stat-label">High severity</div><div class="stat-value red">${high}</div></div>
-    <div class="stat-card"><div class="stat-label">Tactics flagged</div><div class="stat-value">${flagged}</div></div>
-    <div class="stat-card"><div class="stat-label">Children referenced</div><div class="stat-value">${children.length||'—'}</div></div>`;
+    <div class="stat-card"><div class="stat-label">During work hours</div><div class="stat-value amber">${workHourMsgs.length}</div></div>
+    <div class="stat-card"><div class="stat-label">After 9pm / before 7am</div><div class="stat-value amber">${lateNightMsgs.length}</div></div>`;
+  const tactics=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[])),...(workHourMsgs.length?['⚠ Work hours']:[]),...(lateNightMsgs.length?['🌙 Late night']:[])].filter(Boolean);
   document.getElementById('msgFilters').innerHTML=tactics.map(t=>`<button class="chip ${t===activeMsgFilter?'active':''}" onclick="filterMsgs('${t}')">${t==='all'?'All':t}</button>`).join('');
   renderMsgList();
 }
+
 function filterMsgs(t){
   activeMsgFilter=t;
   document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(t==='all'?'All':t)));
   renderMsgList();
 }
+
 function renderMsgList(){
-  const filtered=activeMsgFilter==='all'?allMsgs:allMsgs.filter(m=>(m.tactics_clinical||[]).includes(activeMsgFilter));
+  let filtered=allMsgs;
+  if(activeMsgFilter==='⚠ Work hours')filtered=allMsgs.filter(m=>isEx(m.sender)&&isDuringWorkHours(m.timestamp_sent));
+  else if(activeMsgFilter==='🌙 Late night')filtered=allMsgs.filter(m=>isEx(m.sender)&&isLateNight(m.timestamp_sent));
+  else if(activeMsgFilter!=='all')filtered=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(activeMsgFilter));
+
   document.getElementById('msgList').innerHTML=filtered.length?filtered.map((m,i)=>{
     const mode=msgViewMode[i]||'court';
     const ex=isEx(m.sender);
     const tacts=m.tactics_clinical||['Neutral'];
-    return`<div class="msg-card ${ex&&tacts.some(t=>t!=='Neutral')?'flagged':''}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
-        <div><div class="msg-sender">${m.sender||'?'} → ${m.recipient||'?'}</div>
-        <div class="msg-time">${m.timestamp_sent||''}${m.subject?' · '+m.subject:''}</div>
-        ${m.timestamp_viewed?`<div class="msg-viewed">Viewed: ${m.timestamp_viewed}</div>`:''}</div>
+    const wh=ex&&isDuringWorkHours(m.timestamp_sent);
+    const ln=ex&&isLateNight(m.timestamp_sent);
+    const hasFlag=ex&&tacts.some(t=>t!=='Neutral');
+    return`<div class="msg-card ${hasFlag?'flagged':wh?'work-hours':ln?'late-night':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px">
+        <div>
+          <div class="msg-sender">${m.sender||'?'} → ${m.recipient||'?'}</div>
+          <div class="msg-time">${m.timestamp_sent||''}${m.subject?' · '+m.subject:''}</div>
+          ${m.timestamp_viewed?`<div class="msg-viewed">Viewed: ${m.timestamp_viewed}</div>`:''}
+        </div>
         <div class="badges">${tacts.map(t=>`<span class="badge ${TC[t]||'b-gray'}">${t}</span>`).join('')}</div>
       </div>
+      ${wh?`<div class="timing-flag work">⚠ Sent during your work hours (Mon–Fri 7:30am–4pm) — you have previously requested no contact during work hours</div>`:''}
+      ${ln?`<div class="timing-flag late">🌙 Sent after 9pm or before 7am during your parenting time</div>`:''}
       <div class="msg-body ${ex?'ex':''}">${m.body||''}</div>
       ${!m.requires_response&&ex?`<div class="no-response-note">This message may not require a response — log your decision in the Non-response tab.</div>`:''}
       <div class="analysis-tabs">
@@ -756,6 +847,63 @@ function renderMsgList(){
   }).join(''):'<div class="empty-state">No messages match this filter.</div>';
 }
 function setMsgMode(i,mode){msgViewMode[i]=mode;renderMsgList();}
+
+// TIMING ANALYSIS
+function renderTimingAnalysis(){
+  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
+  const workMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
+  const lateMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
+
+  // Response gap analysis
+  // Sort all by timestamp and find pairs
+  const sorted=[...allMsgs].sort((a,b)=>{
+    const da=parseTimestamp(a.timestamp_sent),db=parseTimestamp(b.timestamp_sent);
+    return(da||0)-(db||0);
+  });
+  const hisGaps=[],herGaps=[];
+  for(let i=1;i<sorted.length;i++){
+    const prev=sorted[i-1],curr=sorted[i];
+    const mins=minutesBetween(prev.timestamp_sent,curr.timestamp_sent);
+    if(!mins||mins>720)continue; // ignore gaps over 12 hours
+    if(isEx(prev.sender)&&!isEx(curr.sender))herGaps.push(mins);
+    else if(!isEx(prev.sender)&&isEx(curr.sender))hisGaps.push(mins);
+  }
+  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+  const avgHers=avg(herGaps),avgHis=avg(hisGaps);
+
+  document.getElementById('timingStats').innerHTML=`
+    <div class="gap-stat"><span>His messages during your work hours</span><span class="gap-val red">${workMsgs.length} messages</span></div>
+    <div class="gap-stat"><span>His messages after 9pm or before 7am</span><span class="gap-val amber">${lateMsgs.length} messages</span></div>
+    <div class="gap-stat"><span>Total his messages analyzed</span><span class="gap-val">${exMsgs.length}</span></div>
+    <div class="gap-stat"><span>Work-hours messages as % of his total</span><span class="gap-val ${workMsgs.length/Math.max(exMsgs.length,1)>0.2?'red':'amber'}">${exMsgs.length?Math.round(workMsgs.length/exMsgs.length*100)+'%':'—'}</span></div>
+  `;
+
+  document.getElementById('responseGaps').innerHTML=`
+    <div class="gap-stat"><span>Your avg response time to his messages</span><span class="gap-val">${avgHers?avgHers.toFixed(0)+' min':'Insufficient data'}</span></div>
+    <div class="gap-stat"><span>His avg response time to your messages</span><span class="gap-val">${avgHis?avgHis.toFixed(0)+' min':'Insufficient data'}</span></div>
+    ${avgHers&&avgHis?`<div class="gap-stat" style="background:#fdf0f0;border-color:#e0b8b8"><span>Response time disparity</span><span class="gap-val red">You respond ${(avgHers/avgHis).toFixed(1)}x ${avgHers>avgHis?'slower':'faster'} than he does</span></div>`:''}
+    <p style="font-size:11px;color:#bbb;margin-top:6px">Response gaps calculated from consecutive message timestamps within 12-hour windows.</p>
+  `;
+
+  renderHourGrid(exMsgs);
+}
+
+function renderHourGrid(exMsgs){
+  const counts=new Array(24).fill(0);
+  exMsgs.forEach(m=>{const h=getHour(m.timestamp_sent);if(h!==null)counts[h]++;});
+  const max=Math.max(...counts,1);
+  // Show hours 6am-11pm (17 hours) but group for display
+  const displayHours=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+  document.getElementById('hourGrid').innerHTML=displayHours.map(h=>{
+    const isWork=h>=8&&h<16;
+    const pct=Math.round((counts[h]/max)*100);
+    const label=h===0?'12a':h<12?h+'a':h===12?'12p':(h-12)+'p';
+    return`<div class="hour-cell" title="${counts[h]} messages at ${label}">
+      <div class="bar ${isWork?'work-bar':'normal-bar'}" style="height:${pct}%"></div>
+      <span class="lbl">${label}</span>
+    </div>`;
+  }).join('');
+}
 
 function renderVids(){
   const allFlags=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
@@ -772,14 +920,14 @@ function renderVids(){
   const FC={alienation:'high',background_adult:'bg-adult',distraction:'distraction',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
   document.getElementById('vidList').innerHTML=allVids.map((v,vi)=>`
     <div class="video-result">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">
         <div><div style="font-size:13px;font-weight:600">${v.filename}</div>
-        <div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.speakers_detected?.length?' · '+v.speakers_detected.join(', '):''}</div></div>
+        <div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min total':''} ${v.call_date?' · '+v.call_date:''} ${v.speakers_detected?.length?' · '+v.speakers_detected.join(', '):''}</div></div>
         <span class="badge ${SC[v.overall_severity]||'b-gray'}">${v.overall_severity||'unknown'}</span>
       </div>
       ${(v.segments||[]).map((seg,si)=>`
         <div class="seg-block">
-          <div class="seg-hdr"><span class="seg-label">${seg.speaker_on_call||'Segment'}</span><span class="seg-time">${seg.start_approx||''}–${seg.end_approx||''}</span></div>
+          <div class="seg-hdr"><span class="seg-label">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="seg-time">${seg.start_approx||''}–${seg.end_approx||''}</span></div>
           ${seg.handoff_note?`<div class="handoff-note">↔ Handoff: ${seg.handoff_note}</div>`:''}
           <div class="seg-body">
             ${(seg.flags||[]).map(f=>`<div class="flag-item ${FC[f.category]||f.severity}"><span class="flag-time">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}
@@ -793,6 +941,62 @@ function renderVids(){
     </div>`).join('');
 }
 function toggleVT(vi,si){const k=vi+'-'+si;vidTranscript[k]=!vidTranscript[k];renderVids();}
+
+// DURATION
+function addDur(){
+  const date=document.getElementById('dur-date').value;
+  const type=document.getElementById('dur-type').value;
+  const mins=parseFloat(document.getElementById('dur-mins').value);
+  const ender=document.getElementById('dur-ender').value;
+  const notes=document.getElementById('dur-notes').value.trim();
+  if(!date||isNaN(mins)){alert('Please enter a date and duration.');return;}
+  durEntries.unshift({date,type,mins,ender,notes,auto:false});
+  document.getElementById('dur-date').value='';document.getElementById('dur-mins').value='';document.getElementById('dur-notes').value='';
+  renderDurChart();renderDurList();
+}
+function getDurData(){
+  const all=[...durEntries,...autoCallLog];
+  const dad=all.filter(e=>e.type==='dad').map(e=>e.mins);
+  const mom=all.filter(e=>e.type==='mom').map(e=>e.mins);
+  const ethan=all.filter(e=>e.type==='ethan').map(e=>e.mins);
+  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+  return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};
+}
+function renderDurChart(){
+  const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();
+  const maxVal=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);
+  const rows=[
+    {label:"His calls (avg)",val:avgDad,cls:'dad',n:dad.length},
+    {label:"Your calls (avg)",val:avgMom,cls:'mom',n:mom.length},
+    {label:"Ethan goodnight (avg)",val:avgEthan,cls:'ethan',n:ethan.length}
+  ].filter(r=>r.val!==null);
+  document.getElementById('durChart').innerHTML=rows.length?`
+    <div class="card">
+      ${rows.map(r=>`<div class="dur-row">
+        <div class="dur-label">${r.label} (${r.n})</div>
+        <div class="dur-track"><div class="dur-fill ${r.cls}" style="width:${Math.min(100,(r.val/maxVal)*100)}%"></div></div>
+        <div class="dur-val">${r.val.toFixed(1)}m</div>
+      </div>`).join('')}
+      ${avgDad&&avgMom?`<p style="font-size:12px;color:#666;line-height:1.6;margin-top:8px">His calls average <strong>${avgDad.toFixed(1)} min</strong>. Your calls average <strong>${avgMom.toFixed(1)} min</strong> — a <strong>${(avgDad/avgMom).toFixed(1)}x disparity</strong> across ${dad.length+mom.length} documented calls. This is quantifiable evidence of calls being used to occupy children's time at your home.</p>`:''}
+    </div>`:'<div class="empty-state">No call data yet. Analyze videos or add manual entries.</div>';
+}
+function renderAutoCallLog(){
+  document.getElementById('autoLoggedCalls').innerHTML=autoCallLog.length?`
+    <div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:8px 12px;border-radius:8px;border-left:2px solid #1D9E75;margin-bottom:8px">
+      ✓ ${autoCallLog.length} call segment${autoCallLog.length!==1?'s':''} auto-logged from video analysis
+    </div>`:'';
+}
+function renderDurList(){
+  const TL={dad:"His call",mom:"My call",ethan:"Ethan goodnight"};
+  document.getElementById('durList').innerHTML=durEntries.length?durEntries.map((e,i)=>`
+    <div class="log-entry">
+      <div class="log-entry-hdr">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="log-date">${e.date}</span><span class="badge ${e.type==='dad'?'b-red':e.type==='mom'?'b-green':'b-purple'}">${TL[e.type]||e.type}</span></div>
+        <button class="rm-btn" onclick="durEntries.splice(${i},1);renderDurChart();renderDurList()">🗑</button>
+      </div>
+      <div class="log-body">${e.mins} min · Ended by: ${e.ender}${e.notes?' · '+e.notes:''}</div>
+    </div>`).join(''):'';
+}
 
 // NON-RESPONSE
 function toggleReason(btn,r){
@@ -859,54 +1063,16 @@ function renderRL(){
     </div>`).join(''):'<div class="empty-state">No entries yet.</div>';
 }
 
-// DURATION
-function addDur(){
-  const date=document.getElementById('dur-date').value;
-  const type=document.getElementById('dur-type').value;
-  const mins=parseFloat(document.getElementById('dur-mins').value);
-  const ender=document.getElementById('dur-ender').value;
-  const notes=document.getElementById('dur-notes').value.trim();
-  if(!date||isNaN(mins)){alert('Please enter a date and duration.');return;}
-  durEntries.unshift({date,type,mins,ender,notes});
-  document.getElementById('dur-date').value='';document.getElementById('dur-mins').value='';document.getElementById('dur-notes').value='';
-  renderDurChart();renderDurList();
-}
-function getDurData(){
-  const fromVids=type=>allVids.flatMap(v=>(v.segments||[]).filter(s=>s.speaker_on_call&&s.duration_seconds&&(type==='dad'?s.speaker_on_call.toLowerCase().includes('doug'):type==='mom'?s.speaker_on_call.toLowerCase().includes('chelsea'):s.speaker_on_call.toLowerCase().includes('ethan'))).map(s=>s.duration_seconds/60));
-  const fromManual=type=>durEntries.filter(e=>e.type===type).map(e=>e.mins);
-  const dad=[...fromVids('dad'),...fromManual('dad')];
-  const mom=[...fromVids('mom'),...fromManual('mom')];
-  const ethan=[...fromVids('ethan'),...fromManual('ethan')];
-  const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;
-  return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};
-}
-function renderDurChart(){
-  const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();
-  const maxVal=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);
-  const rows=[{label:"His calls (avg)",val:avgDad,cls:'dad',n:dad.length},{label:"Your calls (avg)",val:avgMom,cls:'mom',n:mom.length},{label:"Ethan goodnight (avg)",val:avgEthan,cls:'ethan',n:ethan.length}].filter(r=>r.val!==null);
-  document.getElementById('durChart').innerHTML=rows.length?`
-    <div class="card">
-      ${rows.map(r=>`<div class="dur-row"><div class="dur-label">${r.label}</div><div class="dur-track"><div class="dur-fill ${r.cls}" style="width:${Math.min(100,(r.val/maxVal)*100)}%"></div></div><div class="dur-val">${r.val.toFixed(1)}m</div></div>`).join('')}
-      ${avgDad&&avgMom?`<p style="font-size:12px;color:#666;line-height:1.6;margin-top:8px">His calls average ${avgDad.toFixed(1)} min. Your calls average ${avgMom.toFixed(1)} min — a ${(avgDad/avgMom).toFixed(1)}x disparity across ${dad.length+mom.length} documented calls.</p>`:''}
-    </div>`:'<div class="empty-state">Add call entries above to see duration comparison.</div>';
-}
-function renderDurList(){
-  const TL={dad:"His call",mom:"My call",ethan:"Ethan goodnight"};
-  document.getElementById('durList').innerHTML=durEntries.length?durEntries.map((e,i)=>`
-    <div class="log-entry">
-      <div class="log-entry-hdr">
-        <div style="display:flex;align-items:center;gap:8px"><span class="log-date">${e.date}</span><span class="badge ${e.type==='dad'?'b-red':e.type==='mom'?'b-green':'b-purple'}">${TL[e.type]||e.type}</span></div>
-        <button class="rm-btn" onclick="durEntries.splice(${i},1);renderDurChart();renderDurList()">🗑</button>
-      </div>
-      <div class="log-body">${e.mins} min · Ended by: ${e.ender}${e.notes?' · '+e.notes:''}</div>
-    </div>`).join(''):'';
-}
-
 // PATTERNS
 function renderPatterns(){
   const tactics={};
   allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')tactics[t]=(tactics[t]||0)+1;}));
   allVids.forEach(v=>(v.segments||[]).forEach(s=>(s.flags||[]).forEach(f=>{if(f.category&&f.category!=='positive')tactics[f.category]=(tactics[f.category]||0)+1;})));
+  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
+  const workCount=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent)).length;
+  const lateCount=exMsgs.filter(m=>isLateNight(m.timestamp_sent)).length;
+  if(workCount>0)tactics['Work-hours messaging']=workCount;
+  if(lateCount>0)tactics['Late-night messaging']=lateCount;
   const sorted=Object.entries(tactics).sort((a,b)=>b[1]-a[1]);
   const DESC={
     DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.',
@@ -918,13 +1084,15 @@ function renderPatterns(){
     Baiting:'Respondent sent provocative messages likely designed to elicit an emotional response.',
     'Excessive contact':'Respondent sent a volume of messages disproportionate to the child-related matter at hand.',
     alienation:"Respondent engaged in behaviors designed to undermine the children's relationship with Petitioner.",
-    background_adult:'An adult was audible or present in background during the children\'s calls with Petitioner.',
+    background_adult:"An adult was audible or present during the children's calls with Petitioner.",
     distraction:'Children were distracted or occupied during calls with Petitioner.',
     coaching:"Respondent appeared to direct or influence children's responses.",
     transition_negativity:"Respondent expressed negativity about children returning to Petitioner's home.",
     self_censorship:'A child appeared to stop themselves from expressing natural affection toward Petitioner.',
     bribery:"Respondent offered rewards conditional on children's behavior.",
-    signal_behavior:'Respondent arranged signals for children to communicate about conditions at Petitioner\'s home.',
+    signal_behavior:"Respondent arranged signals for children to communicate about conditions at Petitioner's home.",
+    'Work-hours messaging':'Respondent sent messages during Petitioner\'s documented work hours (Mon–Fri 7:30am–4pm) despite Petitioner\'s repeated requests not to be contacted during those hours.',
+    'Late-night messaging':'Respondent sent messages after 9pm or before 7am during Petitioner\'s parenting time, creating ongoing disruption.',
   };
   document.getElementById('patternList').innerHTML=sorted.length?sorted.map(([t,c])=>`
     <div class="pattern-card">
@@ -940,6 +1108,7 @@ function renderPatterns(){
 function renderGaps(){
   const gaps=[
     {title:'No definition of permissible communication scope',current:'Current order likely says communication must be "child-related" — but this term is undefined and unenforceable.',proposed:'All OFW communication shall pertain directly to the health, safety, education, or scheduled activities of the minor children. Neither party shall send messages addressing the other party\'s schedule, employment, location, transportation choices, or personal decisions unless they directly affect a scheduled custody exchange.'},
+    {title:'No restriction on contacting the other party during work hours',current:'No prohibition on sending non-urgent messages during the other party\'s documented work hours despite repeated requests.',proposed:'Non-emergency OFW messages shall not be sent between 7:30am and 4:00pm Monday through Friday. Messages sent during these hours shall be limited to documented medical or safety emergencies affecting the minor children. Violations of this provision shall be subject to sanctions.'},
     {title:'No limit on message volume or response obligation',current:'No restriction on how many messages may be sent or any requirement that they be necessary.',proposed:'Neither party shall send more than three OFW messages per calendar day except in documented medical or safety emergencies. The receiving party shall have 24 hours to respond to non-emergency messages and shall not be deemed uncooperative for failing to respond within a shorter period.'},
     {title:'No prohibition on accusatory or non-child-centered content',current:'Orders require "civil" communication but civility is subjective and rarely sanctionable.',proposed:'OFW messages shall be limited to factual, logistical matters related to the minor children. Messages containing personal accusations, criticism of the other party\'s parenting unrelated to a specific child safety concern, or language designed to provoke a response shall constitute a violation of this order subject to sanctions.'},
     {title:'Non-response not defined as permissible',current:'No order language explicitly permits a parent to decline to respond to harassing or off-topic messages. Silence can be mischaracterized as non-cooperation.',proposed:"A party's failure to respond to an OFW message shall not be construed as non-cooperation if: (a) the message contained no request requiring a response, (b) the message was not child-centered, or (c) the party has documented the non-response and the basis for it in a contemporaneous log."},
@@ -956,43 +1125,85 @@ function renderGaps(){
 
 // EXPORTS
 function dl(content,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'}));a.download=filename;a.click();}
+
 function exportMsgs(mode){
   const lines=[mode==='plain'?'EXHIBIT — OFW COMMUNICATION RECORD (COURT COPY)':'EXHIBIT — OFW COMMUNICATION RECORD (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Total messages: ${allMsgs.length}`,'','─'.repeat(60)];
   allMsgs.forEach((m,i)=>{
-    lines.push(`\nITEM ${i+1}\nDate/Time Sent: ${m.timestamp_sent||'Unknown'}${m.timestamp_viewed?'\nViewed: '+m.timestamp_viewed:''}\nFrom: ${m.sender||'?'} To: ${m.recipient||'?'}\nSubject: ${m.subject||'N/A'}\n\nMessage:\n"${m.body||''}"\n`);
+    const wh=isEx(m.sender)&&isDuringWorkHours(m.timestamp_sent);
+    const ln=isEx(m.sender)&&isLateNight(m.timestamp_sent);
+    lines.push(`\nITEM ${i+1}${wh?' [SENT DURING PETITIONER WORK HOURS]':''}${ln?' [SENT LATE NIGHT/EARLY MORNING]':''}`);
+    lines.push(`Date/Time Sent: ${m.timestamp_sent||'Unknown'}`);
+    if(m.timestamp_viewed)lines.push(`Viewed: ${m.timestamp_viewed}`);
+    lines.push(`From: ${m.sender||'?'} To: ${m.recipient||'?'}`);
+    lines.push(`Subject: ${m.subject||'N/A'}`);
+    lines.push(`\nMessage:\n"${m.body||''}"\n`);
     if(mode==='plain')lines.push(`Description:\n${m.court_summary||''}`);
     else{lines.push(`Behavioral description: ${(m.tactics_plain||[]).join(' ')}`);lines.push(`Clinical classification (attorney only): ${(m.tactics_clinical||[]).join(', ')}`);}
     lines.push('\n'+'─'.repeat(40));
   });
   dl(lines.join('\n'),mode==='plain'?'OFW_Court_Exhibit.txt':'OFW_Full_Analysis.txt');
 }
+
+function exportTiming(){
+  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
+  const workMsgs=exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent));
+  const lateMsgs=exMsgs.filter(m=>isLateNight(m.timestamp_sent));
+  const lines=[
+    'EXHIBIT — MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'',
+    'Petitioner works Monday–Friday 7:30am–4:00pm. Petitioner has previously and repeatedly requested that Respondent not send non-urgent messages during work hours. The following documents Respondent\'s pattern of disregarding this request.','','─'.repeat(60),
+    `\nTotal messages from Respondent analyzed: ${exMsgs.length}`,
+    `Messages sent during Petitioner's work hours (Mon–Fri 7:30am–4pm): ${workMsgs.length} (${exMsgs.length?Math.round(workMsgs.length/exMsgs.length*100)+'%':'N/A'})`,
+    `Messages sent after 9pm or before 7am during Petitioner's parenting time: ${lateMsgs.length}`,
+    '\n── Work-hours messages ──'
+  ];
+  workMsgs.forEach((m,i)=>{lines.push(`\n${i+1}. ${m.timestamp_sent}\nFrom: ${m.sender}\nSubject: ${m.subject||'N/A'}\n"${m.body||''}"`);});
+  if(lateMsgs.length){
+    lines.push('\n\n── Late-night / early-morning messages ──');
+    lateMsgs.forEach((m,i)=>{lines.push(`\n${i+1}. ${m.timestamp_sent}\nFrom: ${m.sender}\n"${m.body||''}"`);});
+  }
+  dl(lines.join('\n'),'Timing_Pattern_Report.txt');
+}
+
+function exportDur(){
+  const all=[...durEntries,...autoCallLog];
+  const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','─'.repeat(60)];
+  const{avgDad,avgMom}=getDurData();
+  if(avgDad&&avgMom)lines.push(`\nSummary: His calls average ${avgDad.toFixed(1)} min. Petitioner's calls average ${avgMom.toFixed(1)} min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);
+  all.forEach((e,i)=>{lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Respondent's call":e.type==='mom'?"Petitioner's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`);});
+  dl(lines.join('\n'),'Call_Duration_Log.txt');
+}
+
 function exportVids(mode){
   const lines=[mode==='plain'?'EXHIBIT — VIDEO CALL ANALYSIS (COURT COPY)':'EXHIBIT — VIDEO CALL ANALYSIS (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,`Recordings: ${allVids.length}`,'','─'.repeat(60)];
   allVids.forEach((v,i)=>{
-    lines.push(`\nRECORDING ${i+1}: ${v.filename}\nDuration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}\nSpeakers: ${(v.speakers_detected||[]).join(', ')||'unknown'}\n\nDescription:\n${v.court_summary||''}`);
+    lines.push(`\nRECORDING ${i+1}: ${v.filename}\nDate: ${v.call_date||'Unknown'}\nTotal duration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}\nSpeakers: ${(v.speakers_detected||[]).join(', ')||'unknown'}\n\nDescription:\n${v.court_summary||''}`);
     if(v.background_incidents?.length){lines.push('\nBackground adult presence:');v.background_incidents.forEach(b=>lines.push(`  [${b.timestamp_approx}] ${b.court_plain}`));}
     if(v.distraction_incidents?.length){lines.push('\nDistraction incidents:');v.distraction_incidents.forEach(d=>lines.push(`  [${d.timestamp_approx}] ${d.court_plain}`));}
-    if(v.ethan_indicators&&mode==='full'){lines.push('\nEthan observations:');if(v.ethan_indicators.self_censorship_moments)lines.push('  Self-censorship: '+v.ethan_indicators.self_censorship_moments);}
+    if(v.ethan_indicators&&mode==='full'){lines.push('\nEthan-specific observations:');const e=v.ethan_indicators;if(e.self_censorship_moments)lines.push('  Self-censorship: '+e.self_censorship_moments);if(e.affection_expressions)lines.push('  Affection: '+e.affection_expressions);if(e.off_screen_presence)lines.push('  Off-screen presence: '+e.off_screen_presence);}
     lines.push('\n'+'─'.repeat(40));
   });
   dl(lines.join('\n'),mode==='plain'?'Video_Court_Exhibit.txt':'Video_Full_Analysis.txt');
 }
+
 function exportNR(){
-  const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents instances where Petitioner chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','','─'.repeat(60)];
+  const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents instances where Petitioner chose not to respond to OFW messages and the documented reason for each decision.','','─'.repeat(60)];
   nrEntries.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>REASON_PLAIN[r]).join(' ')}${e.notes?'\nContext: '+e.notes:''}`));
   dl(lines.join('\n'),'Non_Response_Log.txt');
 }
+
 function exportRL(){
   const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','','─'.repeat(60)];
   rlEntries.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance'}. ${e.words?`"${e.words}".`:''} ${e.context||''}`));
   dl(lines.join('\n'),'Reluctance_Log.txt');
 }
+
 function copyMsgSummary(){
   const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));
-  navigator.clipboard.writeText(`OFW COMMUNICATION SUMMARY\nTotal: ${allMsgs.length}\nHigh severity: ${allMsgs.filter(m=>m.severity==='high').length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`• ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));
+  const exMsgs=allMsgs.filter(m=>isEx(m.sender));
+  navigator.clipboard.writeText(`OFW COMMUNICATION SUMMARY\nTotal: ${allMsgs.length}\nHigh severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours messages: ${exMsgs.filter(m=>isDuringWorkHours(m.timestamp_sent)).length}\nLate-night messages: ${exMsgs.filter(m=>isLateNight(m.timestamp_sent)).length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`• ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));
 }
 
-renderNR();renderRL();renderDurChart();renderGaps();
+renderNR();renderRL();renderDurChart();renderGaps();renderHourGrid([]);
 </script>
 </body>
 </html>
