@@ -363,15 +363,8 @@ function sDrop(id,q,elId,barId){const z=document.getElementById(id);z.addEventLi
 sDrop('mDrop',mQ,'mQEl','mABar');sDrop('vDrop',vQ,'vQEl','vABar');
 
 // PDF + ZIP
-async function exPDF(file){const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;let t='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();t+=ct.items.map(x=>x.str).join(' ')+'
-';}return t;}
-function parseOFW(text,fname){const msgs=[];const blocks=text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4}\s+at)/i);blocks.forEach(block=>{const sm=block.match(/Sent:\s+(\d{2}\/\d{2}\/\d{4}\s+at\s+\d{2}:\d{2}\s+[AP]M)/i);const fm=block.match(/From:\s+([^
-
-]+?)(?=\s+To:|$)/i);const tm=block.match(/To:\s+([^
-
-(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?:\s|$)/i);const subm=block.match(/Subject:\s+([^
-
-]+)/i);if(!sm||!fm)return;let body=block;if(subm){const idx=block.indexOf(subm[0]);body=block.slice(idx+subm[0].length);}body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').replace(/\s+/g,' ').trim();if(body.length<2)return;msgs.push({source_file:fname,source_type:'pdf',timestamp_sent:sm[1],sender:fm[1].trim(),recipient:tm?tm[1].trim():'Unknown',timestamp_viewed:tm&&tm[2]?tm[2].trim():null,subject:subm?subm[1].trim():null,body,tactics_clinical:[],tactics_plain:[],court_summary:null,severity:'pending',child_mentioned:[],requires_response:null});});return msgs;}
+async function exPDF(file){const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;let t='';for(let i=1;i<=pdf.numPages;i++){const pg=await pdf.getPage(i);const ct=await pg.getTextContent();t+=ct.items.map(x=>x.str).join(' ')+'\n';}return t;}
+function parseOFW(text,fname){const msgs=[];const blocks=text.split(/(?=Sent:\s+\d{2}\/\d{2}\/\d{4}\s+at)/i);blocks.forEach(block=>{const sm=block.match(/Sent:\s+(\d{2}\/\d{2}\/\d{4}\s+at\s+\d{2}:\d{2}\s+[AP]M)/i);const fm=block.match(/From:\s+([^\n\r]+?)(?=\s+To:|$)/i);const tm=block.match(/To:\s+([^\n\r(]+?)(?:\s*\(First Viewed:\s*([^)]+)\))?(?:\s|$)/i);const subm=block.match(/Subject:\s+([^\n\r]+)/i);if(!sm||!fm)return;let body=block;if(subm){const idx=block.indexOf(subm[0]);body=block.slice(idx+subm[0].length);}body=body.replace(/On \d{2}\/\d{2}\/\d{4}.*?wrote:[\s\S]*/i,'').replace(/OurFamilyWizard,\s*LLC[\s\S]*/i,'').replace(/\s+/g,' ').trim();if(body.length<2)return;msgs.push({source_file:fname,source_type:'pdf',timestamp_sent:sm[1],sender:fm[1].trim(),recipient:tm?tm[1].trim():'Unknown',timestamp_viewed:tm&&tm[2]?tm[2].trim():null,subject:subm?subm[1].trim():null,body,tactics_clinical:[],tactics_plain:[],court_summary:null,severity:'pending',child_mentioned:[],requires_response:null});});return msgs;}
 async function exZIP(file){const zip=await JSZip.loadAsync(file);const imgs=[];const ps=[];zip.forEach((path,entry)=>{if(!entry.dir&&/\.(png|jpg|jpeg|webp)$/i.test(path)){ps.push(entry.async('blob').then(blob=>{const ext=path.split('.').pop().toLowerCase();const mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};imgs.push({name:path.split('/').pop(),blob,type:mime[ext]||'image/png'});}));}});await Promise.all(ps);return imgs;}
 async function b64b(blob){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(blob);});}
 async function b64f(file){return new Promise((r,j)=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.onerror=j;fr.readAsDataURL(file);});}
