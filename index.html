@@ -492,6 +492,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <option value="added">Recently added</option>
           <option value="type">By type</option>
         </select>
+        <button class="btn btns" id="evStarFilter" onclick="evShowStarred=!evShowStarred;this.style.background=evShowStarred?'#fff3c0':'#fff';this.style.borderColor=evShowStarred?'#f0c040':'#e0e0e0';renderEvidence()" title="Show starred only">&#11088; Starred</button>
       </div>
       <div class="card">
         <h3>Add evidence</h3>
@@ -579,6 +580,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <option value="date-asc">Oldest first</option>
           <option value="date-desc">Newest first</option>
         </select>
+        <button class="btn btns" id="masterStarFilter" onclick="masterShowStarred=!masterShowStarred;this.style.background=masterShowStarred?'#fff3c0':'#fff';this.style.borderColor=masterShowStarred?'#f0c040':'#e0e0e0';renderMaster()" title="Show starred only">&#11088; Starred</button>
       </div>
       <div class="card" style="background:#f0f4ff;border-color:#c0d0f0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -642,7 +644,7 @@ let API_KEY=null,GEMINI_KEY=null,onBreak=false;
 const WS=7.5,WE=16,WD=[1,2,3,4,5];
 let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
 let nrE=[],rlE=[],durE=[],docE=[],clState={};
-let aMF='all',mVM={},vTr={},mSort='date-desc',mSearch='',hideInv=false,nrSort='desc',rlSort='desc',durSort='desc';
+let aMF='all',mVM={},vTr={},mSort='date-desc',mSearch='',hideInv=false,nrSort='desc',rlSort='desc',durSort='desc',evShowStarred=false;
 const selNR=new Set();
 let editCtx=null;
 
@@ -1878,6 +1880,7 @@ function renderEvidence(){
   const sort = document.getElementById('evSort')?.value||'newest';
 
   let items = [...evidenceItems];
+  if(evShowStarred) items = items.filter(e => e.starred);
   if(search) items = items.filter(e => (e.title||'').toLowerCase().includes(search)||(e.desc||'').toLowerCase().includes(search)||(e.analysis||'').toLowerCase().includes(search));
   if(cat) items = items.filter(e => e.type === cat);
   if(sort==='oldest') items.sort((a,b)=>a.addedAt.localeCompare(b.addedAt));
@@ -1900,7 +1903,7 @@ function renderEvidence(){
     return `<div class="le" style="border-left:3px solid ${color}">
       <div class="lh">
         <div>
-          <div class="ld">${e.title}</div>
+          <div style="display:flex;align-items:center;gap:6px"><div class="ld">${e.title}</div><button onclick="toggleStar('${e.id}',event)" style="background:none;border:none;cursor:pointer;font-size:15px;padding:0;line-height:1" title="Star this evidence">${e.starred?'&#11088;':'&#9734;'}</button></div>
           <div style="font-size:11px;color:#999">${e.type}${e.date?' - '+e.date:''}${e.fileName?' - '+e.fileName:''}</div>
         </div>
         <div class="abtn">
@@ -2105,6 +2108,7 @@ function exportPatternChart(){
 
 // EVIDENCE MASTER VIEW
 let masterSelected = new Set();
+let masterShowStarred = false;
 
 function onEvTypeChange(){
   const type = document.getElementById('evType').value;
@@ -2224,6 +2228,7 @@ function renderMaster(){
   const sort = document.getElementById('masterSort')?.value||'date-asc';
 
   let items = buildMasterItems();
+  if(masterShowStarred) items = items.filter(i => i.type==='evidence' && evidenceItems.find(e=>'ev_'+e.id===i.id)?.starred);
   if(search) items = items.filter(i =>
     (i.title||'').toLowerCase().includes(search)||
     (i.summary||'').toLowerCase().includes(search)||
@@ -2263,7 +2268,7 @@ function renderMaster(){
             ${item.severity&&item.severity!=='neutral'?`<span style="font-size:10px;color:${sevColor};font-weight:600">${item.severity.toUpperCase()}</span>`:''}
             <span style="font-size:11px;color:#888">${item.dateDisplay||''}</span>
           </div>
-          <div class="ld" style="margin-top:3px">${item.title}</div>
+          <div style="display:flex;align-items:center;gap:5px"><div class="ld" style="margin-top:0">${item.title}</div>${item.type==='evidence'&&evidenceItems.find(e=>'ev_'+e.id===item.id)?.starred?'<span title="Starred">&#11088;</span>':''}</div>
           ${item.summary?`<div class="lb" style="font-size:11px;margin-top:2px">${item.summary.slice(0,150)}${item.summary.length>150?'...':''}</div>`:''}
         </div>
         <div style="flex-shrink:0;margin-left:8px">
@@ -2427,6 +2432,16 @@ function openEditEvidence(i){
   `;
   document.getElementById('eevType').value = e.type || 'Other';
   document.getElementById('editModal').classList.add('open');
+}
+
+function toggleStar(id, e){
+  e.stopPropagation();
+  const item = evidenceItems.find(i=>i.id===id);
+  if(!item) return;
+  item.starred = !item.starred;
+  ctSave();
+  renderEvidence();
+  renderMaster();
 }
 
 </script>
