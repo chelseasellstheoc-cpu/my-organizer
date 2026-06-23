@@ -206,6 +206,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('hearing')">&#128197; 7/30 Hearing</button>
       <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
       <button class="tab" onclick="sw('docs')">&#128193; My docs</button>
+      <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
@@ -218,6 +219,16 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <div class="plog" id="mLog"></div><div id="mErr"></div>
       </div>
       <div class="sg" id="mStats" style="display:none"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="mSearchIn" placeholder="Search messages..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="mSearch=this.value;renderML()">
+        <select id="mSortSel" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="mSort=this.value;renderML()">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="severity">Severity</option>
+          <option value="sender">Sender</option>
+        </select>
+        <button class="btn btns" onclick="mSearch='';document.getElementById('mSearchIn').value='';mSort='date-desc';document.getElementById('mSortSel').value='date-desc';renderML()">Clear</button>
+      </div>
       <div class="fbar" id="mFilters"></div>
       <div id="mList"></div>
       <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
@@ -340,6 +351,67 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="docList"></div>
     </div>
+    <!-- DOC HUB -->
+    <div id="p-hub" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Upload any document and have AI analyze it. Supports PDFs, images, screenshots, Word docs, OFW transcripts, police reports, medical records, school records, attorney letters, and more. All documents stay in your browser.</p>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <input type="text" id="hubSearch" placeholder="Search all documents..." style="flex:1;min-width:200px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderHub()">
+        <select id="hubCat" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderHub()">
+          <option value="">All categories</option>
+          <option>OFW transcript</option>
+          <option>Court filing</option>
+          <option>Police/investigation report</option>
+          <option>Medical record</option>
+          <option>School record</option>
+          <option>Attorney correspondence</option>
+          <option>Text message</option>
+          <option>Email</option>
+          <option>Photo/screenshot</option>
+          <option>Financial record</option>
+          <option>Other</option>
+        </select>
+        <select id="hubSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderHub()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name">Name A-Z</option>
+          <option value="category">Category</option>
+        </select>
+      </div>
+      <div class="card">
+        <h3>Add a document</h3>
+        <div class="fr">
+          <div>
+            <label>Category</label>
+            <select id="hubCatIn"><option value="">Select...</option><option>OFW transcript</option><option>Court filing</option><option>Police/investigation report</option><option>Medical record</option><option>School record</option><option>Attorney correspondence</option><option>Text message</option><option>Email</option><option>Photo/screenshot</option><option>Financial record</option><option>Other</option></select>
+          </div>
+          <div><label>Date of document</label><input type="date" id="hubDate"></div>
+        </div>
+        <label>Title / description</label>
+        <input type="text" id="hubTitle" placeholder="e.g. OFW transcript Jan 15 2025 - Ethan call">
+        <label>Upload file (optional - PDF or image for AI analysis)</label>
+        <div class="uz" onclick="document.getElementById('hubFile').click()" id="hubDrop" style="padding:1rem">
+          <div class="uzi" style="font-size:18px">&#128228;</div>
+          <p class="uzp" style="font-size:12px">Drop file or click to browse</p>
+          <div class="fmts"><span class="fmt">PDF</span><span class="fmt">PNG/JPG</span><span class="fmt">Text</span></div>
+        </div>
+        <input type="file" id="hubFile" accept=".pdf,image/*,.txt,.doc,.docx" style="display:none" onchange="onHubFile(this)">
+        <div id="hubFileInfo" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+        <label>Your notes / key points</label>
+        <textarea id="hubNotes" placeholder="e.g. Contains Doug asking what we had for dinner 3 times. Ethan seems coached. See timestamp 4:32."></textarea>
+        <label>Ask AI to analyze this document (optional)</label>
+        <input type="text" id="hubQuestion" placeholder="e.g. Flag any questions asked about mother home or activities. Identify coaching language.">
+        <div style="display:flex;gap:8px">
+          <button class="btn btnp" onclick="addHubDoc()">+ Add document</button>
+          <button class="btn" onclick="analyzeHubDoc()" id="hubAnalyzeBtn" style="display:none">&#10022; Analyze with AI</button>
+        </div>
+        <div id="hubAnalysisResult" style="margin-top:8px"></div>
+      </div>
+      <div id="hubList"><div class="empty">No documents yet. Upload OFW transcripts, reports, correspondence, and any other relevant documents.</div></div>
+      <div class="es"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportHub()">&#128196; Document index</button>
+      </div></div>
+    </div>
+
   </div>
 </div>
 <div class="modalbg" id="editModal">
@@ -353,17 +425,17 @@ let API_KEY=null,GEMINI_KEY=null,onBreak=false;
 const WS=7.5,WE=16,WD=[1,2,3,4,5];
 let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
 let nrE=[],rlE=[],durE=[],docE=[],clState={};
-let aMF='all',mVM={},vTr={};
+let aMF='all',mVM={},vTr={},mSort='date-desc',mSearch='';
 const selNR=new Set();
 let editCtx=null;
 
 // PERSISTENCE
-function save(){try{localStorage.setItem('eo',JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,v:3}));showSave();}catch(e){console.error(e);}}
-function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON.parse(r);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;if(onBreak&&document.getElementById('brk'))document.getElementById('brk').checked=true;}catch(e){console.error(e);}}
+function save(){try{localStorage.setItem('eo',JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,hubDocs,autoCallLog,clState,onBreak,v:4}));showSave();}catch(e){console.error(e);}}
+function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON.parse(r);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;if(onBreak&&document.getElementById('brk'))document.getElementById('brk').checked=true;}catch(e){console.error(e);}}
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
-function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();}
+function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();}
 
 // KEY
 function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();rAll();renderHourGrid([]);}
@@ -513,6 +585,9 @@ Watch the ENTIRE video carefully. Return a JSON object with these fields:
 - background_incidents: array of [{timestamp_approx, who, what, court_plain}]
   Log EVERY instance of: adults visible or audible in background, adults entering frame, adults speaking to children during call
 
+- interrogation_incidents: array of [{timestamp_approx, asked_by, child_targeted, question_asked, court_plain, pre_tdvro}]
+  CRITICAL - Log EVERY instance where Doug Rhodes or any adult asks children questions about: what they ate, what was for dinner/lunch/breakfast, what they did today, what activities they did, where they went, who they saw, what time they went to bed, what their mother did, what happened at mother's house, or ANY question designed to gather information about Respondent home or activities. These are information-gathering questions that constitute surveillance of the other parent's home. pre_tdvro should be true if call date appears to be before May 19 2025.
+
 - refusal_incidents: array of [{timestamp_approx, child, exact_words_or_description, refusal_type, court_plain}]
   refusal_type options: "refuses_to_talk"|"says_doesnt_want_to_talk"|"ends_call"|"one_word_answers"|"silence"|"redirected_by_adult"|"other"
   Log EVERY instance where any child says they don't want to talk, goes silent, ends call, or is redirected away from talking to Respondent (mother)
@@ -572,6 +647,14 @@ function renderML(){
   if(aMF==='Work hours')f=allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent));
   else if(aMF==='Late night')f=allMsgs.filter(m=>isEx(m.sender)&&isLN(m.timestamp_sent));
   else if(aMF!=='all')f=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(aMF));
+  // Search filter
+  if(mSearch){const q=mSearch.toLowerCase();f=f.filter(m=>(m.body||'').toLowerCase().includes(q)||(m.sender||'').toLowerCase().includes(q)||(m.court_summary||'').toLowerCase().includes(q)||(m.subject||'').toLowerCase().includes(q));}
+  // Sort
+  const sev={high:0,medium:1,low:2,neutral:3,pending:4};
+  if(mSort==='date-asc')f=[...f].sort((a,b)=>(parsTS(a.timestamp_sent)||0)-(parsTS(b.timestamp_sent)||0));
+  else if(mSort==='date-desc')f=[...f].sort((a,b)=>(parsTS(b.timestamp_sent)||0)-(parsTS(a.timestamp_sent)||0));
+  else if(mSort==='severity')f=[...f].sort((a,b)=>(sev[a.severity]||4)-(sev[b.severity]||4));
+  else if(mSort==='sender')f=[...f].sort((a,b)=>(a.sender||'').localeCompare(b.sender||''));
   document.getElementById('mList').innerHTML=f.length?f.map((m,i)=>{
     const mode=mVM[i]||'court';const ex=isEx(m.sender);const tacts=m.tactics_clinical||['Neutral'];
     const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
@@ -588,7 +671,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -600,7 +683,8 @@ function renderVids(){
   document.getElementById('vStats').style.display='grid';
   document.getElementById('vStats').innerHTML=`<div class="sc"><div class="sl">Recordings</div><div class="sv">${allVids.length}</div></div><div class="sc"><div class="sl">High flags</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">Background adults</div><div class="sv red">${bg}</div></div><div class="sc"><div class="sl">Distractions</div><div class="sv">${di}</div></div>`;
   const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};const FC={alienation:'high',background_adult:'bga',distraction:'dis',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
-  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div></div><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map(f=>`<div class="fi ${FC[f.category]||f.severity}"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.refusal_incidents?.length?`<div class="fi high" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128683; Refusals to talk (${v.refusal_incidents.length})</strong>${v.refusal_incidents.map(r=>`<div>[${r.timestamp_approx||'?'}] <strong>${r.child||'Child'}</strong>: ${r.court_plain}</div>`).join('')}</div>`:''}
+  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div></div><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map(f=>`<div class="fi ${FC[f.category]||f.severity}"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.interrogation_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128269; Information-gathering questions (${v.interrogation_incidents.length})${v.interrogation_incidents.some(i=>i.pre_tdvro)?' \u26a0\ufe0f includes pre-TDVRO':''}</strong>${v.interrogation_incidents.map(i=>`<div>[${i.timestamp_approx||'?'}] ${i.asked_by||'Adult'} asked ${i.child_targeted||'child'}: "${i.question_asked||''}" ${i.pre_tdvro?'<span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':''}</div>`).join('')}</div>`:''}
+      ${v.refusal_incidents?.length?`<div class="fi high" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128683; Refusals to talk (${v.refusal_incidents.length})</strong>${v.refusal_incidents.map(r=>`<div>[${r.timestamp_approx||'?'}] <strong>${r.child||'Child'}</strong>: ${r.court_plain}</div>`).join('')}</div>`:''}
       ${v.off_camera_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128064; Off-camera incidents (${v.off_camera_incidents.length})</strong>${v.off_camera_incidents.map(o=>`<div>[${o.timestamp_approx||'?'}] <strong>${o.child||'Child'}</strong>: ${o.court_plain}</div>`).join('')}</div>`:''}
       ${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
@@ -700,6 +784,112 @@ function exportTiming(){const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM
 function exportDurLog(){const all=[...durE,...autoCallLog];const{avgDad,avgMom}=getDurData();const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','',' -'.repeat(30)];if(avgDad&&avgMom)lines.push(`\nSummary: Petitioner calls avg ${avgDad.toFixed(1)}min. Respondent calls avg ${avgMom.toFixed(1)}min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);all.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Petitioner's call":e.type==='mom'?"Respondent's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`));dl(lines.join('\n'),'Call_Duration_Log.txt');}
 function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lines=['HEARING PREPARATION BRIEF - JULY 30, 2026',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','Dr. Kelley (custody evaluator) testifying','',' -'.repeat(30),`\nPrep checklist: ${done}/${CL.length} items complete`,`Messages analyzed: ${allMsgs.length}`,`Videos analyzed: ${allVids.length}`,`Non-response log entries: ${nrE.length}`,`Reluctance log entries: ${rlE.length}`,`Ethan-specific entries: ${rlE.filter(e=>e.child==='Ethan').length}`,`Work-hours violations: ${allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent)).length}`,'\n-- Dr. Kelley Findings Corroboration --','1. Signal behaviors - check video analysis for signal_behavior flags','2. Transition negativity (sorry) - check video analysis for transition_negativity flags','3. Language mirroring - check video analysis coaching flags and message analysis','4. Coached journals - check OFW messages for journal references','Ethan alienation - see reluctance log and Ethan-specific video analysis'];dl(lines.join('\n'),'Hearing_Prep_Brief_730.txt');}
 function copySum(){const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));const exM=allMsgs.filter(m=>isEx(m.sender));navigator.clipboard.writeText(`EVIDENCE SUMMARY\nMessages: ${allMsgs.length} - High severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours violations: ${exM.filter(m=>isDWH(m.timestamp_sent)).length}\nVideos: ${allVids.length}\nNon-response log: ${nrE.length}\nReluctance log: ${rlE.length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`- ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));}
+// DOC HUB
+let hubDocs=[];
+let hubFileData=null;
+let hubFileName=null;
+
+function onHubFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  hubFileName=file.name;
+  document.getElementById('hubFileInfo').textContent='Selected: '+file.name+' ('+(file.size/1024).toFixed(0)+'KB)';
+  document.getElementById('hubAnalyzeBtn').style.display='inline-flex';
+  if(file.type.startsWith('image/')||file.type==='application/pdf'){
+    const fr=new FileReader();
+    fr.onload=e=>{hubFileData={b64:e.target.result.split(',')[1],type:file.type,name:file.name};};
+    fr.readAsDataURL(file);
+  } else if(file.type==='text/plain'){
+    const fr=new FileReader();
+    fr.onload=e=>{hubFileData={text:e.target.result,name:file.name};};
+    fr.readAsText(file);
+  }
+}
+
+function addHubDoc(){
+  const title=document.getElementById('hubTitle').value.trim();
+  const cat=document.getElementById('hubCatIn').value;
+  const date=document.getElementById('hubDate').value;
+  const notes=document.getElementById('hubNotes').value.trim();
+  if(!title){alert('Please enter a title.');return;}
+  const doc={id:Date.now(),title,category:cat,date,notes,fileName:hubFileName,analysis:null,addedAt:new Date().toISOString()};
+  hubDocs.unshift(doc);
+  hubFileData=null;hubFileName=null;
+  ['hubTitle','hubDate','hubNotes','hubQuestion'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hubCatIn').value='';
+  document.getElementById('hubFileInfo').textContent='';
+  document.getElementById('hubAnalyzeBtn').style.display='none';
+  document.getElementById('hubAnalysisResult').innerHTML='';
+  save();renderHub();
+}
+
+async function analyzeHubDoc(){
+  if(!API_KEY){alert('Please connect your Anthropic API key first.');return;}
+  if(!hubFileData){alert('Please select a file first.');return;}
+  const question=document.getElementById('hubQuestion').value.trim();
+  const btn=document.getElementById('hubAnalyzeBtn');
+  btn.disabled=true;btn.innerHTML="<span class='sp'></span>Analyzing...";
+  document.getElementById('hubAnalysisResult').innerHTML='';
+  try{
+    let msgs;
+    const basePrompt=question||'Analyze this document for a custody case involving Petitioner Doug Rhodes and Respondent Chelsea Rhodes. Children: Ethan (oldest), Charlotte, Duke. Flag: any information-gathering about Respondent home or activities, coaching language, questions about what was for dinner or daily activities, any concerning patterns, and key statements relevant to the case.';
+    if(hubFileData.b64){
+      msgs=[{role:'user',content:[{type:hubFileData.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:hubFileData.type,data:hubFileData.b64}},{type:'text',text:basePrompt+' Respond with: 1) Summary 2) Key flags with quotes 3) Court-ready description 4) Recommended action'}]}];
+    } else {
+      msgs=[{role:'user',content:basePrompt+'\n\nDocument content:\n'+hubFileData.text}];
+    }
+    const result=await callAPI(msgs,2000);
+    document.getElementById('hubAnalysisResult').innerHTML='<div class="csb" style="margin-top:8px;white-space:pre-wrap">'+result+'</div>';
+    // Save analysis to most recent hubDoc if title matches
+    if(hubDocs.length&&!hubDocs[0].analysis){
+      // Will be saved when user clicks Add
+    }
+  }catch(e){
+    document.getElementById('hubAnalysisResult').innerHTML='<div class="err">Error: '+e.message+'</div>';
+  }
+  btn.disabled=false;btn.innerHTML='&#10022; Analyze with AI';
+}
+
+function renderHub(){
+  const search=(document.getElementById('hubSearch')?.value||'').toLowerCase();
+  const cat=document.getElementById('hubCat')?.value||'';
+  const sort=document.getElementById('hubSort')?.value||'newest';
+  let docs=[...hubDocs];
+  if(search)docs=docs.filter(d=>(d.title||'').toLowerCase().includes(search)||(d.notes||'').toLowerCase().includes(search)||(d.category||'').toLowerCase().includes(search)||(d.analysis||'').toLowerCase().includes(search));
+  if(cat)docs=docs.filter(d=>d.category===cat);
+  if(sort==='oldest')docs.sort((a,b)=>a.addedAt.localeCompare(b.addedAt));
+  else if(sort==='newest')docs.sort((a,b)=>b.addedAt.localeCompare(a.addedAt));
+  else if(sort==='name')docs.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  else if(sort==='category')docs.sort((a,b)=>(a.category||'').localeCompare(b.category||''));
+  document.getElementById('hubList').innerHTML=docs.length?docs.map((d,i)=>{
+    const origIdx=hubDocs.indexOf(d);
+    return`<div class="le" style="border-left:3px solid #378ADD"><div class="lh"><div><div class="ld">${d.title}</div><div style="font-size:11px;color:#999">${d.category||'Uncategorized'}${d.date?' - '+d.date:''}${d.fileName?' - '+d.fileName:''}</div></div><div class="abtn"><button class="btn btne" onclick="openEditHub(${origIdx})">Edit</button><button class="btn btnd" onclick="hubDocs.splice(${origIdx},1);save();renderHub()">Del</button></div></div>${d.notes?`<div class="lb">${d.notes}</div>`:''} ${d.analysis?`<div class="lp" style="margin-top:6px;white-space:pre-wrap;font-size:11px">${d.analysis}</div>`:''}</div>`;
+  }).join(''):"<div class='empty'>No documents match.</div>";
+}
+
+function openEditHub(i){
+  const d=hubDocs[i];editCtx={type:'hub',index:i};
+  document.getElementById('mTitle').textContent='Edit document';
+  document.getElementById('mBody').innerHTML=`<label>Title</label><input type="text" id="etitle" value="${d.title}"><label>Category</label><select id="ecat"><option value="">Select...</option><option>OFW transcript</option><option>Court filing</option><option>Police/investigation report</option><option>Medical record</option><option>School record</option><option>Attorney correspondence</option><option>Text message</option><option>Email</option><option>Photo/screenshot</option><option>Financial record</option><option>Other</option></select><label>Date</label><input type="date" id="ed" value="${d.date||''}"><label>Notes</label><textarea id="enotes">${d.notes||''}</textarea>`;
+  document.getElementById('ecat').value=d.category||'';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function exportHub(){
+  const lines=['DOCUMENT INDEX','Generated: '+new Date().toLocaleDateString(),'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','Total documents: '+hubDocs.length,'',' -'.repeat(30)];
+  hubDocs.forEach((d,i)=>{
+    lines.push(`\nDOCUMENT ${i+1}`);
+    lines.push('Title: '+d.title);
+    if(d.category)lines.push('Category: '+d.category);
+    if(d.date)lines.push('Date: '+d.date);
+    if(d.fileName)lines.push('File: '+d.fileName);
+    if(d.notes)lines.push('Notes: '+d.notes);
+    if(d.analysis)lines.push('\nAI Analysis:\n'+d.analysis);
+    lines.push('\n'+'-'.repeat(40));
+  });
+  dl(lines.join('\n'),'Document_Index.txt');
+}
+
 </script>
 </body>
 </html>
