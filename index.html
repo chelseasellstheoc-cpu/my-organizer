@@ -275,11 +275,30 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <p class="cp">Document every time you choose not to respond. Each entry generates court-ready language explaining your reasoning. Protects you from being characterized as uncooperative.</p>
         <div class="ib" style="margin-bottom:10px">Not responding to character attacks, baiting, and false accusations is a documented de-escalation strategy - not a failure to communicate.</div>
         <div class="fr"><div><label>Date</label><input type="date" id="nrd"></div><div><label>Time</label><input type="time" id="nrt"></div></div>
-        <label>Link to an analyzed OFW message (optional)</label>
-        <div style="position:relative;margin-bottom:8px">
-          <input type="text" id="nrMsgSearch" placeholder="Search your analyzed messages by keyword..." style="width:100%;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;box-sizing:border-box" oninput="searchNRMsg(this.value)">
-          <div id="nrMsgResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;z-index:100"></div>
+        <label>Attach evidence (optional)</label>
+        <div style="background:#f9f9f7;border:1px solid #e5e5e0;border-radius:8px;padding:12px;margin-bottom:8px">
+          <!-- Option 1: Pull from analyzed messages by date -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px">Option 1 — Pull from your analyzed OFW messages</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <input type="date" id="nrMsgDate" style="font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" onchange="loadNRMsgsByDate(this.value)">
+              <span style="font-size:12px;color:#999">or search:</span>
+              <input type="text" id="nrMsgSearch" placeholder="keyword..." style="flex:1;min-width:120px;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="searchNRMsg(this.value)">
+            </div>
+            <div id="nrMsgResults" style="display:none;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-height:180px;overflow-y:auto;margin-top:4px"></div>
+          </div>
+          <!-- Option 2: Upload screenshot -->
+          <div style="border-top:1px solid #e5e5e0;padding-top:10px">
+            <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px">Option 2 — Upload a screenshot or document</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btns" onclick="document.getElementById('nrScreenshot').click()" style="font-size:12px">&#128247; Upload screenshot</button>
+              <input type="file" id="nrScreenshot" accept="image/*,.pdf" style="display:none" onchange="onNRScreenshot(this)">
+              <input type="text" id="nrDriveLink" placeholder="or paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
+            </div>
+            <div id="nrScreenshotInfo" style="font-size:11px;color:#1a7a52;margin-top:4px"></div>
+          </div>
         </div>
+        <!-- Linked message display -->
         <div id="nrLinkedMsg" style="display:none;background:#f0f4ff;border:1px solid #c0d0f0;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div id="nrLinkedMsgText" style="flex:1;line-height:1.5"></div>
@@ -287,8 +306,8 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           </div>
         </div>
         <input type="hidden" id="nrLinkedMsgId">
-        <label>Or paste/summarize message (if not from OFW)</label>
-        <textarea id="nrm" placeholder="Paste message text or summarize if not from OFW..." style="min-height:60px"></textarea>
+        <label>Message summary / notes (optional)</label>
+        <textarea id="nrm" placeholder="Paste message text, add context, or leave blank if linked above..." style="min-height:50px"></textarea>
         <label>Reason (select all that apply)</label>
         <div class="rg">
           <button class="rb" onclick="togR(this,'boundary')">Boundary violation - responding would reinforce the behavior</button>
@@ -933,8 +952,8 @@ function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 const RP={boundary:'Respondent elected not to respond as doing so would have reinforced a pattern of boundary violations in communication.',attack:'The message constituted a character attack or false accusation not related to a legitimate co-parenting matter. Respondent was not obligated to respond to or correct accusations in this forum.',bait:'Respondent recognized the message as an attempt to provoke argument rather than address a child-related matter. Responding would have escalated rather than resolved the communication.',inaccurate:'The message contained inaccurate information. Respondent elected not to engage as OFW is not an appropriate forum for litigating factual disputes.',lastword:'Respondent recognized a pattern in which responses invite escalating contact and elected not to engage further.',info:'No response was required as the message did not contain child-related information requiring further action.'};
 const RL2={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
 function togR(btn,r){if(selNR.has(r)){selNR.delete(r);btn.classList.remove('sel');}else{selNR.add(r);btn.classList.add('sel');}}
-function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!selNR.size){alert('Fill in date and at least one reason.');return;}const entry={date:d,time:t,msg:m,notes:n,reasons:[...selNR]};const li=document.getElementById('nrLinkedMsgId');if(li&&li.value!==''&&allMsgs[parseInt(li.value)]){const lm=allMsgs[parseInt(li.value)];entry.linkedMsg={body:(lm.body||'').slice(0,300),sender:lm.sender,date:lm.timestamp_sent,tactics:lm.tactics_clinical||[],severity:lm.severity,courtSummary:lm.court_summary||''};}nrE.unshift(entry);['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
-function renderNR(){const nrSorted=nrSort==='asc'?[...nrE].reverse():nrE;document.getElementById('nrList').innerHTML=nrSorted.length?nrSorted.map((e)=>{const i=nrE.indexOf(e);return`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">${e.linkedMsg?`<div style="background:#f0f4ff;border:1px solid #c0d0f0;border-radius:6px;padding:5px 8px;margin-bottom:3px;font-size:11px"><span style="color:#888">[Linked OFW ${e.linkedMsg.date||"?"}]</span> ${(e.linkedMsg.body||"").slice(0,120)}${(e.linkedMsg.body||"").length>120?"...":""}</div>`:""}"${e.msg?`"${e.msg}"`:""}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
+function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!selNR.size){alert('Fill in date and at least one reason.');return;}const entry={date:d,time:t,msg:m,notes:n,reasons:[...selNR]};const li=document.getElementById('nrLinkedMsgId');if(li&&li.value!==''&&allMsgs[parseInt(li.value)]){const lm=allMsgs[parseInt(li.value)];entry.linkedMsg={body:(lm.body||'').slice(0,300),sender:lm.sender,date:lm.timestamp_sent,tactics:lm.tactics_clinical||[],severity:lm.severity,courtSummary:lm.court_summary||''};}const dl2=document.getElementById('nrDriveLink')?.value.trim();if(dl2)entry.driveLink=dl2;if(nrScreenshotData)entry.screenshot={name:nrScreenshotData.name};nrE.unshift(entry);['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();nrScreenshotData=null;['nrScreenshotInfo','nrDriveLink','nrMsgDate','nrMsgSearch'].forEach(function(id){var el=document.getElementById(id);if(el){if(id==='nrScreenshotInfo')el.textContent='';else el.value='';}});document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
+function renderNR(){const nrSorted=nrSort==='asc'?[...nrE].reverse():nrE;document.getElementById('nrList').innerHTML=nrSorted.length?nrSorted.map((e)=>{const i=nrE.indexOf(e);return`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">${e.linkedMsg?`<div style="background:#f0f4ff;border:1px solid #c0d0f0;border-radius:6px;padding:5px 8px;margin-bottom:3px;font-size:11px"><span style="color:#888">[Linked OFW ${e.linkedMsg.date||"?"}]</span> ${(e.linkedMsg.body||"").slice(0,120)}${(e.linkedMsg.body||"").length>120?"...":""}</div>`:""}"${e.msg?`"${e.msg}"`:""}"</div>${e.driveLink?`<a href="${e.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View in Drive</a>`:''} ${e.screenshot?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${e.screenshot.name}</div>`:''} ${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
 function openENR(i){const e=nrE[i];editCtx={type:'nr',index:i};document.getElementById('mTitle').textContent='Edit non-response entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>Message</label><textarea id="em">${e.msg}</textarea><label>Context</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // RELUCTANCE
@@ -2502,6 +2521,49 @@ function clearNRLink(){
   const li=document.getElementById('nrLinkedMsgId');if(li)li.value='';
   const lm=document.getElementById('nrLinkedMsg');if(lm)lm.style.display='none';
   const nm=document.getElementById('nrm');if(nm)nm.value='';
+}
+
+function loadNRMsgsByDate(dateStr){
+  const results = document.getElementById('nrMsgResults');
+  if(!dateStr){results.style.display='none';return;}
+  // Match messages from this date
+  const matches = allMsgs.filter(m=>{
+    if(!isEx(m.sender)) return false;
+    const d = parsTS(m.timestamp_sent);
+    if(!d) return false;
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    return key === dateStr;
+  });
+  if(!matches.length){
+    results.style.display='block';
+    results.innerHTML='<div style="padding:10px 12px;font-size:12px;color:#888">No analyzed messages found for this date. Try uploading this OFW export first, or use the screenshot option below.</div>';
+    return;
+  }
+  results.style.display='block';
+  results.innerHTML = matches.map(m=>{
+    const i = allMsgs.indexOf(m);
+    const preview = (m.body||'').slice(0,100);
+    const sev = m.severity==='high'?'<span style="color:#c0392b;font-size:10px;font-weight:600"> HIGH</span>':'';
+    const tacs = (m.tactics_clinical||[]).filter(t=>t!=='Neutral').slice(0,3).join(', ');
+    return `<div onclick="selectNRMsg(${i})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f0ea;font-size:12px" onmouseover="this.style.background='#f5f5f0'" onmouseout="this.style.background='#fff'">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:2px">
+        <span style="color:#888;font-size:10px">${m.timestamp_sent||''}</span>${sev}
+        ${tacs?`<span style="font-size:10px;color:#8e44ad">${tacs}</span>`:''}
+      </div>
+      <div>${preview}${preview.length===100?'...':''}</div>
+    </div>`;
+  }).join('');
+}
+
+let nrScreenshotData = null;
+
+function onNRScreenshot(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('nrScreenshotInfo').textContent = 'Attached: ' + file.name;
+  const fr = new FileReader();
+  fr.onload = e => {nrScreenshotData = {b64: e.target.result.split(',')[1], type: file.type, name: file.name};};
+  fr.readAsDataURL(file);
 }
 
 </script>
