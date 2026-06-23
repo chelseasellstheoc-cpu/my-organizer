@@ -206,11 +206,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('gaps')">&#9888; Order gaps</button>
       <button class="tab" onclick="sw('hearing')">&#128197; 7/30 Hearing</button>
       <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
-      <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
+      
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
       <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
       <button class="tab" onclick="sw('contacts')">&#128222; Contacts</button>
       <button class="tab" onclick="sw('evidence')">&#128274; Evidence</button>
+      <button class="tab" onclick="sw('master')">&#128269; All evidence</button>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
@@ -461,79 +462,142 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
     </div>
 
-    <!-- EVIDENCE -->
+    
+    <!-- EVIDENCE (unified: replaces Doc Hub + Evidence) -->
     <div id="p-evidence" class="panel">
-      <div class="hhead" style="background:linear-gradient(135deg,#4a1a1a,#8b2020)">
-        <h2>&#128274; Non-OFW Evidence</h2>
-        <p>Coercive control, abuse, and PTSD documentation outside of OFW</p>
+      <div class="hhead" style="background:linear-gradient(135deg,#2c1a4a,#5b2d8a)">
+        <h2>&#128274; Evidence</h2>
+        <p>All documents, declarations, photos, reports, and records. Upload for AI analysis or add by reference.</p>
       </div>
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;margin-top:1rem;line-height:1.5">Upload text messages, emails, photos, declarations, police reports, financial records, voicemails, and any other evidence establishing coercive control, abuse, and its impact on you. The AI will analyze each document for patterns of coercive control and connect findings to your case.</p>
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;gap:8px;margin:1rem 0;flex-wrap:wrap;align-items:center">
         <input type="text" id="evSearch" placeholder="Search evidence..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderEvidence()">
         <select id="evCatFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderEvidence()">
           <option value="">All types</option>
           <option>Therapist declaration</option>
-          <option>Text message</option>
-          <option>Email</option>
-          <option>Photo</option>
+          <option>Court filing</option>
           <option>Police/incident report</option>
+          <option>Text message/email</option>
+          <option>Photo/screenshot</option>
           <option>Financial record</option>
-          <option>Voicemail/audio</option>
           <option>Witness statement</option>
           <option>Medical record</option>
+          <option>School record</option>
+          <option>OFW transcript</option>
+          <option>Attorney correspondence</option>
           <option>Other</option>
         </select>
         <select id="evSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderEvidence()">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="date-desc">Newest first</option>
+          <option value="added">Recently added</option>
           <option value="type">By type</option>
         </select>
       </div>
       <div class="card">
         <h3>Add evidence</h3>
         <div class="fr">
-          <div><label>Type</label><select id="evType"><option value="">Select...</option><option>Therapist declaration</option><option>Text message</option><option>Email</option><option>Photo</option><option>Police/incident report</option><option>Financial record</option><option>Voicemail/audio</option><option>Witness statement</option><option>Medical record</option><option>Other</option></select></div>
+          <div><label>Type</label>
+            <select id="evType" onchange="onEvTypeChange()">
+              <option value="">Select type...</option>
+              <option>Therapist declaration</option>
+              <option>Court filing</option>
+              <option>Police/incident report</option>
+              <option>Text message/email</option>
+              <option>Photo/screenshot</option>
+              <option>Financial record</option>
+              <option>Witness statement</option>
+              <option>Medical record</option>
+              <option>School record</option>
+              <option>OFW transcript</option>
+              <option>Attorney correspondence</option>
+              <option>Other</option>
+            </select>
+          </div>
           <div><label>Date of incident/document</label><input type="date" id="evDate"></div>
         </div>
         <label>Title / description</label>
-        <input type="text" id="evTitle" placeholder="e.g. PTSD declaration by Dr. Smith, Text messages threatening custody, Bank records showing financial control">
+        <input type="text" id="evTitle" placeholder="e.g. PTSD declaration - Dr. Smith, Knife incident text messages, Bank records showing financial control">
         <label>Upload file for AI analysis (PDF or image)</label>
         <div class="uz" onclick="document.getElementById('evFile').click()" style="padding:1rem">
           <div class="uzi" style="font-size:18px">&#128228;</div>
           <p class="uzp" style="font-size:12px">Drop file or click to browse</p>
+          <div class="fmts"><span class="fmt">PDF</span><span class="fmt">PNG/JPG</span><span class="fmt">Text</span></div>
         </div>
         <input type="file" id="evFile" accept=".pdf,image/*,.txt" style="display:none" onchange="onEvFile(this)">
         <div id="evFileInfo" style="font-size:12px;color:#666;margin-bottom:4px"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:12px;color:#999">or</span>
-          <input type="text" id="evDriveLink" placeholder="Paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="if(this.value){document.getElementById('evAnalyzeBtn').style.display='inline-flex';document.getElementById('evFileInfo').textContent='Google Drive link saved'}">
+          <input type="text" id="evDriveLink" placeholder="Paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
         </div>
-        <label>Your description of what this shows</label>
-        <textarea id="evDesc" placeholder="e.g. Shows Doug threatening to take the children if I did not comply. This happened during the period when he controlled all finances."></textarea>
-        <label>Coercive control categories (check all that apply)</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc1"> Financial control/isolation</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc2"> Monitoring/surveillance</label>
-          <label style="display:flex;align-items:center;gap=6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc3"> Threats (explicit or implied)</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc4"> Isolation from support network</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc5"> Physical intimidation/abuse</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc6"> Emotional/psychological abuse</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc7"> Coercive parenting tactics</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc8"> Impact on Respondent (PTSD)</label>
+        <label>Your description / what this shows</label>
+        <textarea id="evDesc" placeholder="e.g. Shows Doug threatening to take the children. Knife incident - he held a knife while screaming at me. Financial records showing he controlled all accounts."></textarea>
+        <div id="evCCSection" style="display:none">
+          <label>Coercive control categories (check all that apply)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc1"> Financial control/isolation</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc2"> Monitoring/surveillance</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc3"> Threats (explicit or implied)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc4"> Isolation from support network</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc5"> Physical intimidation/abuse</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc6"> Emotional/psychological abuse</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc7"> Coercive parenting tactics</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc8"> Impact - PTSD/trauma</label>
+          </div>
         </div>
-        <div style="display:flex;gap:8px">
+        <label id="evAskLabel" style="display:none">Ask AI to analyze (optional - leave blank for default analysis)</label>
+        <input type="text" id="evQuestion" placeholder="e.g. How does this connect to the knife incident? What FC sections apply?" style="display:none">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn btnp" onclick="addEvidence()">+ Add evidence</button>
           <button class="btn" id="evAnalyzeBtn" style="display:none" onclick="analyzeEvidence()">&#10022; Analyze with AI</button>
         </div>
         <div id="evAnalysisResult" style="margin-top:8px"></div>
       </div>
-      <div id="evidenceList"></div>
-      <div class="es"><h3>Export</h3><div class="eo">
+      <div id="evidenceList" style="margin-top:1rem"></div>
+      <div class="es" style="margin-top:1rem"><h3>Export</h3><div class="eo">
         <button class="btn btns" onclick="exportEvidence()">&#128196; Evidence index</button>
       </div></div>
     </div>
 
-    <!-- CASE OVERVIEW -->
+    <!-- EVIDENCE MASTER -->
+    <div id="p-master" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#1a2a4a,#2a4a8a)">
+        <h2>&#128269; All Evidence</h2>
+        <p>Every piece of evidence across all tabs in one view. Select items to find AI connections.</p>
+      </div>
+      <div style="display:flex;gap:8px;margin:1rem 0;flex-wrap:wrap;align-items:center">
+        <input type="text" id="masterSearch" placeholder="Search all evidence..." style="flex:1;min-width:200px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderMaster()">
+        <select id="masterType" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderMaster()">
+          <option value="">All types</option>
+          <option value="message">OFW messages</option>
+          <option value="video">Video recordings</option>
+          <option value="reluctance">Reluctance/self-censorship</option>
+          <option value="nonresponse">Non-response decisions</option>
+          <option value="evidence">Documents/declarations</option>
+          <option value="calendar">Calendar events</option>
+        </select>
+        <select id="masterSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderMaster()">
+          <option value="date-asc">Oldest first</option>
+          <option value="date-desc">Newest first</option>
+        </select>
+      </div>
+      <div class="card" style="background:#f0f4ff;border-color:#c0d0f0">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <h3 style="margin-bottom:2px">AI Connections</h3>
+            <p class="cp" style="margin:0">Select items below then click to find patterns the AI sees across them. Works best with 3-10 items from different sources.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="masterSelCount" style="font-size:12px;color:#666">0 selected</span>
+            <button class="btn btns" onclick="selectAllMaster()">Select all</button>
+            <button class="btn btns" onclick="clearMasterSel()">Clear</button>
+            <button class="btn btnp" onclick="findConnections()" id="connectBtn">&#128269; Find connections</button>
+          </div>
+        </div>
+        <div id="connectResult" style="margin-top:10px"></div>
+      </div>
+      <div id="masterList" style="margin-top:1rem"></div>
+    </div>
+<!-- CASE OVERVIEW -->
     <div id="p-overview" class="panel">
       <div class="hhead" style="background:linear-gradient(135deg,#1a3a6b,#2a5fa8)">
         <h2>Case Overview &amp; Evidence Synthesis</h2>
@@ -567,74 +631,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
     </div>
 
-    <!-- DOC HUB -->
-    <div id="p-hub" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Your central document hub. Upload any document for AI analysis, or add reference entries with Google Drive links. Replaces the My Docs tab. Supports PDFs, images, screenshots, Word docs, OFW transcripts, police reports, medical records, school records, attorney letters, and more. All documents stay in your browser.</p>
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
-        <input type="text" id="hubSearch" placeholder="Search all documents..." style="flex:1;min-width:200px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderHub()">
-        <select id="hubCat" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderHub()">
-          <option value="">All categories</option>
-          <option>OFW transcript</option>
-          <option>Court filing</option>
-          <option>Police/investigation report</option>
-          <option>Medical record</option>
-          <option>School record</option>
-          <option>Attorney correspondence</option>
-          <option>Text message</option>
-          <option>Email</option>
-          <option>Photo/screenshot</option>
-          <option>Financial record</option>
-          <option>Other</option>
-        </select>
-        <select id="hubSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderHub()">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="name">Name A-Z</option>
-          <option value="category">Category</option>
-        </select>
-      </div>
-      <div class="card">
-        <h3>Add a document</h3>
-        <div class="fr">
-          <div>
-            <label>Category</label>
-            <select id="hubCatIn"><option value="">Select...</option><option>OFW transcript</option><option>Court filing</option><option>Police/investigation report</option><option>Medical record</option><option>School record</option><option>Attorney correspondence</option><option>Text message</option><option>Email</option><option>Photo/screenshot</option><option>Financial record</option><option>Other</option></select>
-          </div>
-          <div><label>Date of document</label><input type="date" id="hubDate"></div>
-        </div>
-        <label>Title / description</label>
-        <input type="text" id="hubTitle" placeholder="e.g. OFW transcript Jan 15 2025 - Ethan call">
-        <label>Upload file (optional - PDF or image for AI analysis)</label>
-        <div class="uz" onclick="document.getElementById('hubFile').click()" id="hubDrop" style="padding:1rem">
-          <div class="uzi" style="font-size:18px">&#128228;</div>
-          <p class="uzp" style="font-size:12px">Drop file or click to browse</p>
-          <div class="fmts"><span class="fmt">PDF</span><span class="fmt">PNG/JPG</span><span class="fmt">Text</span></div>
-        </div>
-        <input type="file" id="hubFile" accept=".pdf,image/*,.txt,.doc,.docx" style="display:none" onchange="onHubFile(this)">
-        <div id="hubFileInfo" style="font-size:12px;color:#666;margin-bottom:4px"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:12px;color:#999">or</span>
-          <input type="text" id="hubDriveLink" placeholder="Paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
-        </div>
-        <label>Your notes / key points</label>
-        <textarea id="hubNotes" placeholder="e.g. Contains Doug asking what we had for dinner 3 times. Ethan seems coached. See timestamp 4:32."></textarea>
-        <label>Ask AI to analyze this document (optional)</label>
-        <input type="text" id="hubQuestion" placeholder="e.g. Flag any questions asked about mother home or activities. Identify coaching language.">
-        <div style="display:flex;gap:8px">
-          <button class="btn btnp" onclick="addHubDoc()">+ Add document</button>
-          <button class="btn" onclick="analyzeHubDoc()" id="hubAnalyzeBtn" style="display:none">&#10022; Analyze with AI</button>
-        </div>
-        <div id="hubAnalysisResult" style="margin-top:8px"></div>
-      </div>
-      <div id="hubList"><div class="empty">No documents yet. Upload OFW transcripts, reports, correspondence, and any other relevant documents.</div></div>
-      <div class="es"><h3>Export</h3><div class="eo">
-        <button class="btn btns" onclick="exportHub()">&#128196; Document index</button>
-      </div></div>
-    </div>
-
-  </div>
-</div>
-<div class="modalbg" id="editModal">
+    <div class="modalbg" id="editModal">
   <div class="modal"><h3 id="mTitle">Edit entry</h3><div id="mBody"></div>
     <div class="mfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btnp" onclick="saveEdit()">Save changes</button></div>
   </div>
@@ -655,7 +652,7 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();}
 
 // KEY
 function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();rAll();renderHourGrid([]);}
@@ -1624,6 +1621,26 @@ function ctLoad(){
     const raw3 = localStorage.getItem('eo_ptsd');
     if(raw3) ptsdFindings = JSON.parse(raw3);
   }catch(e){}
+  // Migrate hubDocs into evidenceItems if not already done
+  try{
+    const hubRaw = localStorage.getItem('eo_hub_migrated');
+    if(!hubRaw){
+      const mainRaw = localStorage.getItem('eo');
+      if(mainRaw){
+        const d = JSON.parse(mainRaw);
+        if(d.hubDocs&&d.hubDocs.length){
+          const migrated = d.hubDocs.map(h=>({
+            id:'migrated_'+h.id,type:h.category||'Other',date:h.date||'',
+            title:h.title,desc:h.notes||'',categories:[],analysis:null,
+            fileName:h.fileName||null,driveLink:null,addedAt:h.addedAt||new Date().toISOString()
+          }));
+          const existIds = new Set(evidenceItems.map(e=>e.id));
+          migrated.forEach(m=>{if(!existIds.has(m.id))evidenceItems.push(m);});
+          localStorage.setItem('eo_hub_migrated','1');
+        }
+      }
+    }
+  }catch(e){}
 }
 
 function renderContacts(){
@@ -2084,6 +2101,288 @@ function exportPatternChart(){
   lines.push('Sent late night (after 9pm/before 7am): ' + exM.filter(m=>isLN(m.timestamp_sent)).length);
   lines.push('High severity messages: ' + allMsgs.filter(m=>m.severity==='high').length);
   dl(lines.join('\n'), 'Pattern_Analysis_Report.txt');
+}
+
+// EVIDENCE MASTER VIEW
+let masterSelected = new Set();
+
+function onEvTypeChange(){
+  const type = document.getElementById('evType').value;
+  const isAbuse = ['Therapist declaration','Police/incident report','Text message/email',
+    'Photo/screenshot','Financial record','Witness statement','Medical record'].includes(type);
+  document.getElementById('evCCSection').style.display = isAbuse ? 'block' : 'none';
+  document.getElementById('evAskLabel').style.display = isAbuse ? 'block' : 'none';
+  document.getElementById('evQuestion').style.display = isAbuse ? 'block' : 'none';
+}
+
+function buildMasterItems(){
+  const items = [];
+
+  // OFW Messages
+  allMsgs.forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    items.push({
+      id: 'msg_'+(m.id||m.timestamp_sent),
+      type: 'message',
+      date: d ? d.toISOString().slice(0,10) : null,
+      dateDisplay: m.timestamp_sent,
+      title: 'OFW message from ' + (m.sender||'unknown'),
+      summary: (m.body||'').slice(0,120),
+      severity: m.severity,
+      tags: m.tactics_clinical||[],
+      courtSummary: m.court_summary||'',
+      source: 'Messages tab'
+    });
+  });
+
+  // Videos
+  allVids.forEach(v => {
+    items.push({
+      id: 'vid_'+v.filename,
+      type: 'video',
+      date: v.call_date ? v.call_date.replace(/(\d{2})\/(\d{2})\/(\d{4})/,'$3-$1-$2') : null,
+      dateDisplay: v.call_date,
+      title: 'Video recording: ' + v.filename,
+      summary: v.court_summary||'',
+      severity: v.overall_severity,
+      tags: ['video',...(v.refusal_incidents?.length?['refusals']:[]),...(v.background_incidents?.length?['background adults']:[]),...(v.interrogation_incidents?.length?['interrogations']:[])],
+      courtSummary: v.court_summary||'',
+      source: 'Videos tab'
+    });
+  });
+
+  // Reluctance log
+  rlE.forEach((e,i) => {
+    items.push({
+      id: 'rl_'+i,
+      type: 'reluctance',
+      date: e.date,
+      dateDisplay: e.date,
+      title: (e.child||'Child') + ' reluctance/self-censorship',
+      summary: e.words || e.context || '',
+      severity: 'medium',
+      tags: ['alienation','self-censorship'],
+      courtSummary: '',
+      source: 'Reluctance tab'
+    });
+  });
+
+  // Non-response log
+  nrE.forEach((e,i) => {
+    items.push({
+      id: 'nr_'+i,
+      type: 'nonresponse',
+      date: e.date,
+      dateDisplay: e.date,
+      title: 'Non-response decision',
+      summary: (e.msg||'').slice(0,100),
+      severity: 'low',
+      tags: e.reasons||[],
+      courtSummary: '',
+      source: 'Non-response tab'
+    });
+  });
+
+  // Evidence documents
+  evidenceItems.forEach(e => {
+    items.push({
+      id: 'ev_'+e.id,
+      type: 'evidence',
+      date: e.date||null,
+      dateDisplay: e.date||'',
+      title: e.title,
+      summary: e.desc || (e.analysis||'').slice(0,120),
+      severity: e.type==='Therapist declaration'||e.type==='Police/incident report' ? 'high' : 'medium',
+      tags: e.categories||[e.type],
+      courtSummary: e.analysis ? e.analysis.slice(0,200) : '',
+      source: 'Evidence tab'
+    });
+  });
+
+  // Calendar events (non-custody, non-dinner)
+  calEvents.filter(e=>!e.preloaded||e.type==='event-court').forEach(e => {
+    items.push({
+      id: 'cal_'+e.id,
+      type: 'calendar',
+      date: e.date,
+      dateDisplay: e.date,
+      title: e.title,
+      summary: e.notes||'',
+      severity: e.type==='event-court' ? 'high' : 'low',
+      tags: [e.type],
+      courtSummary: e.notes||'',
+      source: 'Calendar tab'
+    });
+  });
+
+  return items;
+}
+
+function renderMaster(){
+  const search = (document.getElementById('masterSearch')?.value||'').toLowerCase();
+  const typeFilter = document.getElementById('masterType')?.value||'';
+  const sort = document.getElementById('masterSort')?.value||'date-asc';
+
+  let items = buildMasterItems();
+  if(search) items = items.filter(i =>
+    (i.title||'').toLowerCase().includes(search)||
+    (i.summary||'').toLowerCase().includes(search)||
+    (i.tags||[]).some(t=>t.toLowerCase().includes(search))
+  );
+  if(typeFilter) items = items.filter(i => i.type === typeFilter);
+  items = items.filter(i => i.date);
+  if(sort==='date-asc') items.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  else items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+
+  const TYPE_COLORS = {
+    message:'#378ADD',video:'#7F77DD',reluctance:'#c0392b',
+    nonresponse:'#e67e22',evidence:'#8e44ad',calendar:'#1D9E75'
+  };
+  const TYPE_LABELS = {
+    message:'OFW Message',video:'Video',reluctance:'Reluctance',
+    nonresponse:'Non-response',evidence:'Document',calendar:'Event'
+  };
+  const SEV_COLORS = {high:'#c0392b',medium:'#e67e22',low:'#888',neutral:'#aaa'};
+
+  const list = document.getElementById('masterList');
+  if(!items.length){
+    list.innerHTML="<div class='empty'>No evidence found. Analyze messages, log reluctance incidents, or upload documents to see everything here.</div>";
+    return;
+  }
+
+  list.innerHTML = '<p style="font-size:12px;color:#888;margin-bottom:8px">'+items.length+' items' + (search||typeFilter?' (filtered)':'') + '</p>' +
+  items.map(item => {
+    const color = TYPE_COLORS[item.type]||'#666';
+    const sel = masterSelected.has(item.id);
+    const sevColor = SEV_COLORS[item.severity]||'#888';
+    return `<div class="le" style="border-left:3px solid ${color};cursor:pointer;${sel?'background:#f0f4ff;box-shadow:0 0 0 2px #378ADD;':''}margin-bottom:6px" onclick="toggleMasterSel('${item.id}',this)">
+      <div class="lh">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="bg" style="background:${color};color:#fff;font-size:10px">${TYPE_LABELS[item.type]||item.type}</span>
+            ${item.severity&&item.severity!=='neutral'?`<span style="font-size:10px;color:${sevColor};font-weight:600">${item.severity.toUpperCase()}</span>`:''}
+            <span style="font-size:11px;color:#888">${item.dateDisplay||''}</span>
+          </div>
+          <div class="ld" style="margin-top:3px">${item.title}</div>
+          ${item.summary?`<div class="lb" style="font-size:11px;margin-top:2px">${item.summary.slice(0,150)}${item.summary.length>150?'...':''}</div>`:''}
+        </div>
+        <div style="flex-shrink:0;margin-left:8px">
+          <div style="width:20px;height:20px;border-radius:4px;border:2px solid ${sel?'#378ADD':'#ddd'};background:${sel?'#378ADD':'#fff'};display:flex;align-items:center;justify-content:center">
+            ${sel?'<span style="color:#fff;font-size:12px">&#10003;</span>':''}
+          </div>
+        </div>
+      </div>
+      ${(item.tags||[]).length?`<div class="bgs" style="margin-top:4px">${item.tags.slice(0,4).map(t=>`<span class="bg">${t}</span>`).join('')}</div>`:''}
+      <div style="font-size:10px;color:#bbb;margin-top:3px">${item.source}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMasterSel(id, el){
+  if(masterSelected.has(id)){
+    masterSelected.delete(id);
+    el.style.background = '';
+    el.style.boxShadow = '';
+  } else {
+    masterSelected.add(id);
+    el.style.background = '#f0f4ff';
+    el.style.boxShadow = '0 0 0 2px #378ADD';
+  }
+  document.getElementById('masterSelCount').textContent = masterSelected.size + ' selected';
+}
+
+function selectAllMaster(){
+  document.querySelectorAll('#masterList .le').forEach(el => {
+    const onclick = el.getAttribute('onclick');
+    const m = onclick&&onclick.match(/toggleMasterSel\('([^']+)'/);
+    if(m && !masterSelected.has(m[1])){
+      masterSelected.add(m[1]);
+      el.style.background = '#f0f4ff';
+      el.style.boxShadow = '0 0 0 2px #378ADD';
+    }
+  });
+  document.getElementById('masterSelCount').textContent = masterSelected.size + ' selected';
+}
+
+function clearMasterSel(){
+  masterSelected.clear();
+  document.querySelectorAll('#masterList .le').forEach(el=>{el.style.background='';el.style.boxShadow='';});
+  document.getElementById('masterSelCount').textContent = '0 selected';
+  document.getElementById('connectResult').innerHTML = '';
+}
+
+async function findConnections(){
+  if(!API_KEY){alert('Please connect your Anthropic API key first.');return;}
+  if(masterSelected.size < 2){alert('Select at least 2 items to find connections.');return;}
+
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true;
+  btn.innerHTML = "<span class='sp'></span>Finding connections...";
+  document.getElementById('connectResult').innerHTML = '';
+
+  const allItems = buildMasterItems();
+  const selected = allItems.filter(i => masterSelected.has(i.id));
+
+  const itemDescriptions = selected.map((item,i) =>
+    `ITEM ${i+1} [${item.dateDisplay||'date unknown'}] ${item.type.toUpperCase()}: ${item.title}\n${item.summary}${item.courtSummary?' Court summary: '+item.courtSummary:''}`
+  ).join('\n\n');
+
+  const prompt = `You are an expert family law paralegal and domestic violence advocate analyzing evidence for a custody hearing on July 30 2026.
+
+CASE: In re Rhodes Children
+Petitioner (father): Doug Rhodes
+Respondent (mother): Chelsea Rhodes - diagnosed with PTSD from coercive control during marriage, including a knife incident
+Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke
+TDVRO was in effect until May 19 2025. FC 3044 domestic violence presumption applies.
+Dr. Kelley (custody evaluator) documented 4 alienation methods by Petitioner.
+
+SELECTED EVIDENCE ITEMS:
+${itemDescriptions}
+
+TASK: Analyze these ${selected.length} pieces of evidence together and identify:
+
+1. CONNECTIONS: What patterns or themes connect these items? What story do they tell together that isn't visible from any single item?
+
+2. ESCALATION PATTERN: Do these show escalating behavior over time? Describe the arc.
+
+3. STRONGEST COMBINED ARGUMENT: How would you present these together to most effectively support Respondent's position at the July 30 hearing?
+
+4. GAPS THIS REVEALS: What additional evidence would strengthen this specific cluster of items?
+
+5. STATUTORY CONNECTIONS: Which California Family Code sections are most directly supported by this combination of evidence?
+
+6. WHAT YOUR ATTORNEY NEEDS TO KNOW: The 2-3 most important things to flag from this evidence cluster.
+
+Be specific. Reference actual items by number. This is for attorney review before a custody hearing.`;
+
+  try{
+    const result = await callAPI([{role:'user',content:prompt}], 3000);
+    document.getElementById('connectResult').innerHTML =
+      '<div style="background:#fff;border:1px solid #c0d0f0;border-radius:8px;padding:1rem;white-space:pre-wrap;font-size:12px;line-height:1.7;margin-top:8px">' +
+      '<div style="font-size:11px;color:#888;margin-bottom:8px">AI analysis of ' + selected.length + ' selected items &bull; ' + new Date().toLocaleDateString() + '</div>' +
+      result +
+      '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #e0e8f0;display:flex;gap:8px">' +
+      '<button class="btn btns" onclick="copyConnect()">&#128203; Copy</button>' +
+      '<button class="btn btns" onclick="exportConnect()">&#128196; Export</button>' +
+      '</div>' +
+      '</div>';
+    window._lastConnectResult = result;
+    window._lastConnectItems = selected;
+  }catch(e){
+    document.getElementById('connectResult').innerHTML = '<div class="err">Error: '+e.message+'</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '&#128269; Find connections';
+}
+
+function copyConnect(){
+  if(window._lastConnectResult) navigator.clipboard.writeText(window._lastConnectResult).then(()=>alert('Copied'));
+}
+
+function exportConnect(){
+  if(!window._lastConnectResult) return;
+  const items = (window._lastConnectItems||[]).map((i,n)=>`${n+1}. [${i.dateDisplay}] ${i.title}`).join('\n');
+  dl('AI CONNECTIONS ANALYSIS\nGenerated: '+new Date().toLocaleDateString()+'\nCase: In re Rhodes Children - Respondent: Chelsea Rhodes\n\nSELECTED ITEMS:\n'+items+'\n\nANALYSIS:\n'+window._lastConnectResult, 'AI_Connections_'+Date.now()+'.txt');
 }
 
 </script>
