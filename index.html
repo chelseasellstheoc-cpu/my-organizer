@@ -209,6 +209,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
       <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
+      <button class="tab" onclick="sw('ethan')">&#127860; Ethan dinners</button>
       <button class="tab" onclick="sw('contacts')">&#128222; Contacts</button>
       <button class="tab" onclick="sw('evidence')">&#128274; Evidence</button>
       <button class="tab" onclick="sw('master')">&#128269; All evidence</button>
@@ -475,6 +476,56 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div id="calEventList"></div>
     </div>
 
+    <!-- ETHAN DINNERS -->
+    <div id="p-ethan" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#4a2080,#7F77DD)">
+        <h2>&#127860; Ethan Court-Ordered Dinners</h2>
+        <p>Log every dinner visit. Document interference, missed visits, and compliance. This is direct evidence of contempt.</p>
+      </div>
+      <div class="ib" style="margin:1rem 0">Per FOAH paragraph 5: 1st, 3rd, 5th Sundays 5:30-7:00pm and 2nd, 4th Wednesdays 5:30-7:00pm. Baseball conflicts: parties shall work together. Any interference with these visits is contempt of a court order.</div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btns" id="ethanFilterAll" onclick="ethanFilter='all';renderEthan()" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a">All</button>
+          <button class="btn btns" id="ethanFilterHappened" onclick="ethanFilter='happened';renderEthan()">Happened &#10003;</button>
+          <button class="btn btns" id="ethanFilterMissed" onclick="ethanFilter='missed';renderEthan()">Missed/interfered &#9888;</button>
+          <button class="btn btns" id="ethanFilterUnlogged" onclick="ethanFilter='unlogged';renderEthan()">Not yet logged</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btns" onclick="exportEthan()">&#128196; Export for court</button>
+        </div>
+      </div>
+      <div id="ethanStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem"></div>
+      <div class="card">
+        <h3>Log a dinner visit</h3>
+        <div class="fr">
+          <div><label>Date</label><input type="date" id="ethanDate"></div>
+          <div><label>Status</label>
+            <select id="ethanStatus">
+              <option value="happened">Happened - on time</option>
+              <option value="happened_late">Happened - Ethan arrived late</option>
+              <option value="happened_short">Happened - ended early</option>
+              <option value="missed_noshowdoug">Missed - Doug did not bring Ethan</option>
+              <option value="missed_refusal">Missed - Ethan said he did not want to come</option>
+              <option value="missed_excuse">Missed - Doug gave excuse (baseball/other)</option>
+              <option value="interfered">Happened but Doug interfered</option>
+              <option value="pending">Upcoming - not yet occurred</option>
+            </select>
+          </div>
+        </div>
+        <label>What happened</label>
+        <textarea id="ethanNotes" placeholder="e.g. Ethan arrived 20 minutes late. Doug texted at 6:45pm saying Ethan wanted to leave early. Ethan seemed happy during dinner but looked at his phone frequently. I asked if he was okay and he said yes but seemed coached."></textarea>
+        <label>Upload screenshot / evidence (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btns" onclick="document.getElementById('ethanFile').click()" style="font-size:12px">&#128247; Upload</button>
+          <input type="file" id="ethanFile" accept="image/*,.pdf" style="display:none" onchange="onEthanFile(this)">
+          <input type="text" id="ethanDriveLink" placeholder="or Google Drive link..." style="flex:1;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
+        </div>
+        <div id="ethanFileInfo" style="font-size:11px;color:#1a7a52;margin-top:4px"></div>
+        <button class="btn btnp" style="margin-top:10px" onclick="addEthanDinner()">+ Log dinner</button>
+      </div>
+      <div id="ethanList" style="margin-top:1rem"></div>
+    </div>
+
     <!-- CONTACTS -->
     <div id="p-contacts" class="panel">
       <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Key contacts for your case. All fields are editable. Contact logs track attorney calls and therapy sessions.</p>
@@ -691,13 +742,13 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);if(n==='ethan')setTimeout(renderEthan,50);}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -928,19 +979,19 @@ function renderML(){
     const mode=mVM[i]||'court';const ex=isEx(m.sender);const tacts=m.tactics_clinical||['Neutral'];
     const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
     const idx=allMsgs.indexOf(m);
-    return`<div class="mc ${fl?'fl':wh?'wh':ln?'ln':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${idx})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
+    return`<div class="mc ${fl?'fl':wh?'wh':ln?'ln':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${idx})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
   }).join(''):"<div class='empty'>No messages match this filter.</div>";}
 function setMM(i,mode){mVM[i]=mode;renderML();}
 
 // EDIT MODAL
-function editMsg(i){const m=allMsgs[i];editCtx={type:'msg',index:i};document.getElementById('mTitle').textContent='Edit message analysis';document.getElementById('mBody').innerHTML=`<label>Court summary</label><textarea id="ecs" style="min-height:80px">${m.court_summary||''}</textarea><label>Severity</label><select id="esv"><option ${m.severity==='high'?'selected':''}>high</option><option ${m.severity==='medium'?'selected':''}>medium</option><option ${m.severity==='low'?'selected':''}>low</option><option ${m.severity==='neutral'?'selected':''}>neutral</option></select><label>Tactics (comma-separated)</label><input type="text" id="etc" value="${(m.tactics_clinical||[]).join(', ')}"><label>Notes to add</label><textarea id="ent" style="min-height:40px">${m.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
+function editMsg(i){const m=allMsgs[i];editCtx={type:'msg',index:i};document.getElementById('mTitle').textContent='Edit message analysis';document.getElementById('mBody').innerHTML=`<label>Court summary</label><textarea id="ecs" style="min-height:80px">${m.court_summary||''}</textarea><label>Severity</label><select id="esv"><option ${m.severity==='high'?'selected':''}>high</option><option ${m.severity==='medium'?'selected':''}>medium</option><option ${m.severity==='low'?'selected':''}>low</option><option ${m.severity==='neutral'?'selected':''}>neutral</option></select><label>Tactics (comma-separated)</label><input type="text" id="etc" value="${(m.tactics_clinical||[]).join(', ')}"><label>Your notes / context</label><textarea id="ent" style="min-height:60px" placeholder="Add context the AI wouldn't know - e.g. this message came after he missed a dinner visit, he sent this while I was at a doctor appointment...">${m.notes||''}</textarea><label>Screenshot / supporting document</label><div style='display:flex;gap:8px;align-items:center;margin-bottom:4px'><button class='btn btns' onclick="document.getElementById('emgScreenshot').click()" style='font-size:12px'>&#128247; Upload screenshot</button><input type='file' id='emgScreenshot' accept='image/*,.pdf' style='display:none' onchange='onMsgScreenshot(this)'><input type='text' id='emgDriveLink' placeholder='or paste Google Drive link...' value='${m.driveLink||''}' style='flex:1;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0'></div><div id='emgScreenshotInfo' style='font-size:11px;color:#1a7a52'>${m.screenshotName?'Attached: '+m.screenshotName:''}</div>`;document.getElementById('editModal').classList.add('open');}
 function saveEdit(){
   if(!editCtx)return;
-  if(editCtx.type==='msg'){const m=allMsgs[editCtx.index];m.court_summary=document.getElementById('ecs').value.trim();m.severity=document.getElementById('esv').value;m.tactics_clinical=document.getElementById('etc').value.split(',').map(s=>s.trim()).filter(Boolean);m.notes=document.getElementById('ent').value.trim();}
+  if(editCtx.type==='msg'){const m=allMsgs[editCtx.index];m.court_summary=document.getElementById('ecs').value.trim();m.severity=document.getElementById('esv').value;m.tactics_clinical=document.getElementById('etc').value.split(',').map(s=>s.trim()).filter(Boolean);m.notes=document.getElementById('ent').value.trim();const dl3=document.getElementById('emgDriveLink');if(dl3)m.driveLink=dl3.value.trim();if(window._msgScreenshotData){m.screenshotName=window._msgScreenshotData.name;window._msgScreenshotData=null;}}
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -2605,6 +2656,208 @@ function onNRScreenshot(input){
   const fr = new FileReader();
   fr.onload = e => {nrScreenshotData = {b64: e.target.result.split(',')[1], type: file.type, name: file.name};};
   fr.readAsDataURL(file);
+}
+
+function onMsgScreenshot(input){
+  const file = input.files[0];
+  if(!file) return;
+  window._msgScreenshotData = {name: file.name};
+  const info = document.getElementById('emgScreenshotInfo');
+  if(info) info.textContent = 'Attached: ' + file.name;
+}
+
+// ETHAN DINNERS
+let ethanDinners = [];
+let ethanFilter = 'all';
+let ethanFileData = null;
+
+const ETHAN_STATUS = {
+  happened: {label:'Happened', color:'#1D9E75', icon:'&#10003;'},
+  happened_late: {label:'Happened - late', color:'#e67e22', icon:'&#9200;'},
+  happened_short: {label:'Happened - ended early', color:'#e67e22', icon:'&#9200;'},
+  missed_noshowdoug: {label:'Missed - Doug no show', color:'#c0392b', icon:'&#9888;'},
+  missed_refusal: {label:'Missed - refusal (coached?)', color:'#c0392b', icon:'&#9888;'},
+  missed_excuse: {label:'Missed - excuse given', color:'#c0392b', icon:'&#9888;'},
+  interfered: {label:'Interfered with', color:'#8e44ad', icon:'&#9888;'},
+  pending: {label:'Upcoming', color:'#888', icon:'&#9711;'}
+};
+
+function onEthanFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  ethanFileData = {name: file.name};
+  document.getElementById('ethanFileInfo').textContent = 'Attached: ' + file.name;
+}
+
+function addEthanDinner(){
+  const date = document.getElementById('ethanDate').value;
+  const status = document.getElementById('ethanStatus').value;
+  const notes = document.getElementById('ethanNotes').value.trim();
+  const driveLink = document.getElementById('ethanDriveLink').value.trim();
+  if(!date){alert('Please enter a date.');return;}
+  const entry = {
+    id: 'ed_'+Date.now(), date, status, notes, driveLink,
+    fileName: ethanFileData?.name || null,
+    addedAt: new Date().toISOString()
+  };
+  ethanDinners.unshift(entry);
+  ethanFileData = null;
+  ['ethanDate','ethanNotes','ethanDriveLink'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ethanFileInfo').textContent='';
+  document.getElementById('ethanStatus').value='happened';
+  ethanSave(); renderEthan();
+}
+
+function ethanSave(){
+  try{localStorage.setItem('eo_ethan', JSON.stringify(ethanDinners));}catch(e){}
+  showSave();
+}
+
+function ethanLoad(){
+  try{
+    const raw = localStorage.getItem('eo_ethan');
+    if(raw) ethanDinners = JSON.parse(raw);
+  }catch(e){}
+}
+
+function renderEthan(){
+  // Get all court-ordered dinner dates from calendar preloaded events
+  const orderedDates = calEvents
+    .filter(e => e.preloaded && e.type === 'event-ethan' && e.date)
+    .map(e => e.date)
+    .sort();
+
+  // Build logged map
+  const loggedByDate = {};
+  ethanDinners.forEach(d => {loggedByDate[d.date] = d;});
+
+  // Stats
+  const total = orderedDates.filter(d => d <= new Date().toISOString().slice(0,10)).length;
+  const happened = ethanDinners.filter(d => d.status.startsWith('happened')).length;
+  const missed = ethanDinners.filter(d => d.status.startsWith('missed')||d.status==='interfered').length;
+  const unlogged = orderedDates.filter(d => d <= new Date().toISOString().slice(0,10) && !loggedByDate[d]).length;
+
+  document.getElementById('ethanStats').innerHTML = [
+    {label:'Court-ordered dinners (past)', val:total, color:'#1a1a1a'},
+    {label:'Logged as happened', val:happened, color:'#1D9E75'},
+    {label:'Missed or interfered', val:missed, color:'#c0392b'},
+    {label:'Not yet logged', val:unlogged, color:'#e67e22'},
+  ].map(s=>`<div style="background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:${s.color}">${s.val}</div><div style="font-size:11px;color:#666">${s.label}</div></div>`).join('');
+
+  // Get past ordered dates
+  const today = new Date().toISOString().slice(0,10);
+  const pastDates = orderedDates.filter(d => d <= today);
+
+  let items = [...pastDates].reverse().map(d => ({
+    date: d,
+    logged: loggedByDate[d] || null
+  }));
+
+  if(ethanFilter === 'happened') items = items.filter(i => i.logged?.status.startsWith('happened'));
+  else if(ethanFilter === 'missed') items = items.filter(i => i.logged?.status.startsWith('missed')||i.logged?.status==='interfered');
+  else if(ethanFilter === 'unlogged') items = items.filter(i => !i.logged);
+
+  const list = document.getElementById('ethanList');
+  if(!items.length){list.innerHTML='<div class="empty">No dinners match this filter.</div>';return;}
+
+  list.innerHTML = items.map(item => {
+    const dow = new Date(item.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    if(!item.logged){
+      return `<div class="le" style="border-left:3px solid #e67e22;opacity:0.7">
+        <div class="lh">
+          <div><div class="ld">${dow}</div><div style="font-size:11px;color:#e67e22">Not yet logged</div></div>
+          <button class="btn btns" style="font-size:11px" onclick="quickLogEthan('${item.date}')">+ Log this dinner</button>
+        </div>
+      </div>`;
+    }
+    const s = ETHAN_STATUS[item.logged.status] || {label:item.logged.status, color:'#888', icon:''};
+    const origIdx = ethanDinners.indexOf(item.logged);
+    return `<div class="le" style="border-left:3px solid ${s.color}">
+      <div class="lh">
+        <div>
+          <div class="ld">${dow}</div>
+          <div style="font-size:12px;color:${s.color};font-weight:500">${s.icon} ${s.label}</div>
+        </div>
+        <div class="abtn">
+          <button class="btn btne" onclick="openEditEthan(${origIdx})">Edit</button>
+          <button class="btn btnd" onclick="if(confirm('Delete?')){ethanDinners.splice(${origIdx},1);ethanSave();renderEthan()}">Del</button>
+        </div>
+      </div>
+      ${item.logged.notes?`<div class="lb">${item.logged.notes}</div>`:''}
+      ${item.logged.driveLink?`<a href="${item.logged.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8">&#128247; View evidence</a>`:''}
+      ${item.logged.fileName?`<div style="font-size:11px;color:#1a7a52">&#128247; ${item.logged.fileName}</div>`:''}
+      ${(item.logged.status.startsWith('missed')||item.logged.status==='interfered')?
+        `<div style="font-size:11px;color:#c0392b;background:#fdf0f0;padding:5px 8px;border-radius:4px;margin-top:6px">&#9888; This entry may constitute contempt of the April 14 2026 court order (FOAH paragraph 5)</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function quickLogEthan(date){
+  document.getElementById('ethanDate').value = date;
+  document.getElementById('ethanDate').scrollIntoView({behavior:'smooth'});
+}
+
+function openEditEthan(i){
+  const e = ethanDinners[i];
+  editCtx = {type:'ethan', index:i};
+  document.getElementById('mTitle').textContent = 'Edit dinner log';
+  document.getElementById('mBody').innerHTML = `
+    <label>Date</label><input type="date" id="eetDate" value="${e.date}">
+    <label>Status</label>
+    <select id="eetStatus">
+      <option value="happened" ${e.status==='happened'?'selected':''}>Happened - on time</option>
+      <option value="happened_late" ${e.status==='happened_late'?'selected':''}>Happened - Ethan arrived late</option>
+      <option value="happened_short" ${e.status==='happened_short'?'selected':''}>Happened - ended early</option>
+      <option value="missed_noshowdoug" ${e.status==='missed_noshowdoug'?'selected':''}>Missed - Doug did not bring Ethan</option>
+      <option value="missed_refusal" ${e.status==='missed_refusal'?'selected':''}>Missed - Ethan said he did not want to come</option>
+      <option value="missed_excuse" ${e.status==='missed_excuse'?'selected':''}>Missed - Doug gave excuse</option>
+      <option value="interfered" ${e.status==='interfered'?'selected':''}>Happened but Doug interfered</option>
+    </select>
+    <label>Notes</label><textarea id="eetNotes">${e.notes||''}</textarea>
+    <label>Google Drive link</label><input type="text" id="eetLink" value="${e.driveLink||''}">
+  `;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function exportEthan(){
+  const today = new Date().toISOString().slice(0,10);
+  const orderedDates = calEvents.filter(e=>e.preloaded&&e.type==='event-ethan'&&e.date&&e.date<=today).map(e=>e.date).sort();
+  const loggedByDate = {};
+  ethanDinners.forEach(d=>{loggedByDate[d.date]=d;});
+  const missed = ethanDinners.filter(d=>d.status.startsWith('missed')||d.status==='interfered');
+
+  const lines = [
+    'ETHAN RHODES COURT-ORDERED DINNER VISITS',
+    'Generated: ' + new Date().toLocaleDateString(),
+    'Case: 25D000590 - In re Rhodes Children - Respondent: Chelsea Rhodes',
+    'Authority: FOAH paragraph 5, April 14 2026, Judge Michele Bell',
+    'Order: 1st/3rd/5th Sundays and 2nd/4th Wednesdays, 5:30-7:00pm',
+    '',
+    'SUMMARY:',
+    'Total court-ordered dinners (past): ' + orderedDates.length,
+    'Logged as occurred: ' + ethanDinners.filter(d=>d.status.startsWith('happened')).length,
+    'Missed or interfered with: ' + missed.length,
+    'Not yet logged: ' + orderedDates.filter(d=>!loggedByDate[d]).length,
+    '',
+    missed.length ? 'WARNING: ' + missed.length + ' dinner visits were missed or interfered with. Each instance may constitute contempt of the April 14 2026 court order.' : '',
+    '',
+    '--- COMPLETE LOG ---'
+  ];
+
+  [...orderedDates].reverse().forEach((date,i) => {
+    const dow = new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const logged = loggedByDate[date];
+    const s = logged ? ETHAN_STATUS[logged.status]?.label || logged.status : 'NOT LOGGED';
+    lines.push('\n' + (i+1) + '. ' + dow);
+    lines.push('Status: ' + s);
+    if(logged?.notes) lines.push('Notes: ' + logged.notes);
+    if(logged?.driveLink) lines.push('Evidence: ' + logged.driveLink);
+    if(logged?.status.startsWith('missed')||logged?.status==='interfered'){
+      lines.push('CONTEMPT NOTE: This missed/interfered visit may violate FOAH paragraph 5.');
+    }
+  });
+
+  dl(lines.join('\n'), 'Ethan_Dinner_Log.txt');
 }
 
 </script>
