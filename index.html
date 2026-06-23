@@ -271,17 +271,35 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     <!-- NON-RESPONSE -->
     <div id="p-nonresponse" class="panel">
       <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="nrSort=this.value;renderNR()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
-      <div class="card"><h3>Log a non-response decision</h3><p class="cp">Document every time you choose not to respond. Protects you from being characterized as uncooperative. Edit any entry anytime. Saves automatically.</p>
+      <div class="card"><h3>Log a non-response decision</h3>
+        <p class="cp">Document every time you choose not to respond. Each entry generates court-ready language explaining your reasoning. Protects you from being characterized as uncooperative.</p>
+        <div class="ib" style="margin-bottom:10px">Not responding to character attacks, baiting, and false accusations is a documented de-escalation strategy - not a failure to communicate.</div>
         <div class="fr"><div><label>Date</label><input type="date" id="nrd"></div><div><label>Time</label><input type="time" id="nrt"></div></div>
-        <label>Message you chose not to respond to</label><textarea id="nrm" placeholder="Paste or summarize..."></textarea>
+        <label>Link to an analyzed OFW message (optional)</label>
+        <div style="position:relative;margin-bottom:8px">
+          <input type="text" id="nrMsgSearch" placeholder="Search your analyzed messages by keyword..." style="width:100%;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;box-sizing:border-box" oninput="searchNRMsg(this.value)">
+          <div id="nrMsgResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;z-index:100"></div>
+        </div>
+        <div id="nrLinkedMsg" style="display:none;background:#f0f4ff;border:1px solid #c0d0f0;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div id="nrLinkedMsgText" style="flex:1;line-height:1.5"></div>
+            <button onclick="clearNRLink()" style="background:none;border:none;cursor:pointer;color:#888;font-size:16px;padding:0;margin-left:8px">&#x2715;</button>
+          </div>
+        </div>
+        <input type="hidden" id="nrLinkedMsgId">
+        <label>Or paste/summarize message (if not from OFW)</label>
+        <textarea id="nrm" placeholder="Paste message text or summarize if not from OFW..." style="min-height:60px"></textarea>
         <label>Reason (select all that apply)</label>
         <div class="rg">
-          <button class="rb" onclick="togR(this,'boundary')">Boundary - responding would reinforce the behavior</button>
+          <button class="rb" onclick="togR(this,'boundary')">Boundary violation - responding would reinforce the behavior</button>
+          <button class="rb" onclick="togR(this,'attack')">Character attack or false accusation - not child-centered</button>
+          <button class="rb" onclick="togR(this,'bait')">Baiting - designed to provoke argument not resolve issue</button>
+          <button class="rb" onclick="togR(this,'inaccurate')">Contains inaccurate information - not obligated to correct</button>
+          <button class="rb" onclick="togR(this,'lastword')">Last-word pattern - response invites further escalation</button>
           <button class="rb" onclick="togR(this,'info')">No further child-related information needed</button>
-          <button class="rb" onclick="togR(this,'lastword')">Last-word pattern - response invites further contact</button>
-          <button class="rb" onclick="togR(this,'attack')">Message attacked character or not child-centered</button>
         </div>
-        <label>Optional context</label><textarea id="nrn" style="min-height:40px" placeholder="e.g. 4th message that day, I was at work..."></textarea>
+        <label>Additional context (optional)</label>
+        <textarea id="nrn" style="min-height:40px" placeholder="e.g. 4th message that day, followed week of boundary violations..."></textarea>
         <button class="btn btnp" onclick="addNR()">+ Add to log</button>
       </div>
       <div id="nrList"></div>
@@ -912,11 +930,11 @@ function renderVids(){
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 
 // NON-RESPONSE
-const RP={boundary:'Respondent did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',info:'No response was required because all necessary child-related information had already been communicated.',lastword:'Respondent has an established pattern of requiring the final message in every exchange regardless of content, and Respondent did not respond to avoid reinforcing this behavior.',attack:'Respondent did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a documented pattern of using OFW to harass rather than co-parent.'};
+const RP={boundary:'Respondent elected not to respond as doing so would have reinforced a pattern of boundary violations in communication.',attack:'The message constituted a character attack or false accusation not related to a legitimate co-parenting matter. Respondent was not obligated to respond to or correct accusations in this forum.',bait:'Respondent recognized the message as an attempt to provoke argument rather than address a child-related matter. Responding would have escalated rather than resolved the communication.',inaccurate:'The message contained inaccurate information. Respondent elected not to engage as OFW is not an appropriate forum for litigating factual disputes.',lastword:'Respondent recognized a pattern in which responses invite escalating contact and elected not to engage further.',info:'No response was required as the message did not contain child-related information requiring further action.'};
 const RL2={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
 function togR(btn,r){if(selNR.has(r)){selNR.delete(r);btn.classList.remove('sel');}else{selNR.add(r);btn.classList.add('sel');}}
-function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!m||!selNR.size){alert('Fill in date, message, and at least one reason.');return;}nrE.unshift({date:d,time:t,msg:m,notes:n,reasons:[...selNR]});['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
-function renderNR(){const nrSorted=nrSort==='asc'?[...nrE].reverse():nrE;document.getElementById('nrList').innerHTML=nrSorted.length?nrSorted.map((e)=>{const i=nrE.indexOf(e);return`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">"${e.msg}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
+function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!selNR.size){alert('Fill in date and at least one reason.');return;}const entry={date:d,time:t,msg:m,notes:n,reasons:[...selNR]};const li=document.getElementById('nrLinkedMsgId');if(li&&li.value!==''&&allMsgs[parseInt(li.value)]){const lm=allMsgs[parseInt(li.value)];entry.linkedMsg={body:(lm.body||'').slice(0,300),sender:lm.sender,date:lm.timestamp_sent,tactics:lm.tactics_clinical||[],severity:lm.severity,courtSummary:lm.court_summary||''};}nrE.unshift(entry);['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
+function renderNR(){const nrSorted=nrSort==='asc'?[...nrE].reverse():nrE;document.getElementById('nrList').innerHTML=nrSorted.length?nrSorted.map((e)=>{const i=nrE.indexOf(e);return`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">${e.linkedMsg?`<div style="background:#f0f4ff;border:1px solid #c0d0f0;border-radius:6px;padding:5px 8px;margin-bottom:3px;font-size:11px"><span style="color:#888">[Linked OFW ${e.linkedMsg.date||"?"}]</span> ${(e.linkedMsg.body||"").slice(0,120)}${(e.linkedMsg.body||"").length>120?"...":""}</div>`:""}"${e.msg?`"${e.msg}"`:""}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
 function openENR(i){const e=nrE[i];editCtx={type:'nr',index:i};document.getElementById('mTitle').textContent='Edit non-response entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>Message</label><textarea id="em">${e.msg}</textarea><label>Context</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // RELUCTANCE
@@ -2442,6 +2460,48 @@ function toggleStar(id, e){
   ctSave();
   renderEvidence();
   renderMaster();
+}
+
+// NR MESSAGE LINKING
+let nrLinkedMsgData = null;
+
+function searchNRMsg(query){
+  const results = document.getElementById('nrMsgResults');
+  if(!query||query.length<3){results.style.display='none';return;}
+  const q=query.toLowerCase();
+  const matches=allMsgs.filter(m=>isEx(m.sender)&&((m.body||'').toLowerCase().includes(q)||(m.court_summary||'').toLowerCase().includes(q))).slice(0,8);
+  if(!matches.length){results.style.display='none';return;}
+  results.style.display='block';
+  results.innerHTML=matches.map(m=>{
+    const i=allMsgs.indexOf(m);
+    const d=m.timestamp_sent?m.timestamp_sent.slice(0,10):'?';
+    const preview=(m.body||'').slice(0,80);
+    const sev=m.severity==='high'?'<span style="color:#c0392b;font-size:10px;font-weight:600"> HIGH</span>':'';
+    const tacs=(m.tactics_clinical||[]).filter(t=>t!=='Neutral').slice(0,2).join(', ');
+    return `<div onclick="selectNRMsg(${i})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f0ea;font-size:12px" onmouseover="this.style.background='#f5f5f0'" onmouseout="this.style.background='#fff'"><div style="color:#888;font-size:10px;margin-bottom:2px">${d}${sev} ${tacs}</div><div>${preview}${preview.length===80?'...':''}</div></div>`;
+  }).join('');
+}
+
+function selectNRMsg(idx){
+  const m=allMsgs[idx];if(!m)return;
+  nrLinkedMsgData=m;
+  document.getElementById('nrLinkedMsgId').value=idx;
+  document.getElementById('nrLinkedMsgText').innerHTML='<strong>'+(m.timestamp_sent||'')+' from '+(m.sender||'')+'</strong><br>'+(m.body||'').slice(0,200)+((m.body||'').length>200?'...':'')+(m.court_summary?'<br><em style="color:#666;font-size:11px">AI: '+m.court_summary.slice(0,100)+'</em>':'');
+  document.getElementById('nrLinkedMsg').style.display='block';
+  document.getElementById('nrMsgResults').style.display='none';
+  document.getElementById('nrMsgSearch').value='';
+  if(!document.getElementById('nrm').value) document.getElementById('nrm').value=(m.body||'').slice(0,300);
+  const tactics=m.tactics_clinical||[];
+  if(tactics.includes('Baiting')) document.querySelectorAll('.rb').forEach(b=>{if(b.onclick&&b.getAttribute('onclick')&&b.getAttribute('onclick').includes('bait'))b.click();});
+  if(tactics.some(t=>['DARVO','False accusation'].includes(t))) document.querySelectorAll('.rb').forEach(b=>{if(b.getAttribute&&b.getAttribute('onclick')&&b.getAttribute('onclick').includes('attack'))b.click();});
+  if(tactics.includes('Control attempt')) document.querySelectorAll('.rb').forEach(b=>{if(b.getAttribute&&b.getAttribute('onclick')&&b.getAttribute('onclick').includes('boundary'))b.click();});
+}
+
+function clearNRLink(){
+  nrLinkedMsgData=null;
+  const li=document.getElementById('nrLinkedMsgId');if(li)li.value='';
+  const lm=document.getElementById('nrLinkedMsg');if(lm)lm.style.display='none';
+  const nm=document.getElementById('nrm');if(nm)nm.value='';
 }
 
 </script>
