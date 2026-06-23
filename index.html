@@ -323,7 +323,19 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportTiming()">&#128196; Timing report</button><button class="btn btns" onclick="exportDurLog()">&#128196; Call duration log</button></div></div>
     </div>
     <!-- PATTERNS -->
-    <div id="p-patterns" class="panel"><div id="patList"><div class="empty">Analyze messages or videos first.</div></div></div>
+    <div id="p-patterns" class="panel">
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:6px">
+          <button class="btn btns" id="patViewList" onclick="setPatView('list')" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a">List view</button>
+          <button class="btn btns" id="patViewBar" onclick="setPatView('bar')">Bar chart</button>
+          <button class="btn btns" id="patViewTimeline" onclick="setPatView('timeline')">Timeline</button>
+        </div>
+        <button class="btn btns" onclick="exportPatternChart()">&#128196; Export report</button>
+      </div>
+      <div id="patChart" style="display:none;margin-bottom:1.5rem"></div>
+      <div id="patTimeline" style="display:none;margin-bottom:1.5rem"></div>
+      <div id="patList"><div class="empty">Analyze messages or videos first.</div></div>
+    </div>
     <!-- ORDER GAPS -->
     <div id="p-gaps" class="panel">
       <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Gaps in your current order with proposed plain-language replacement language for your attorney.</p>
@@ -374,9 +386,8 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:12px;border-radius:2px;background:#378ADD;display:inline-block"></span>Event</span>
         </div>
       </div>
-      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:1rem"></div>
-      <!-- Event form -->
-      <div class="card" id="calEventForm" style="display:none">
+      <!-- Event form - shown as overlay at top when editing -->
+      <div id="calEventForm" style="display:none;background:#fff;border:2px solid #1a1a1a;border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 4px 20px rgba(0,0,0,0.15)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <h3 id="calFormTitle">Add event</h3>
           <button class="btn btns" onclick="closeCalForm()">&#x2715; Close</button>
@@ -414,6 +425,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <button class="btn btnp" onclick="saveCalEvent()">Save event</button>
         <button class="btn btnd" id="calDelBtn" style="display:none;margin-left:8px" onclick="deleteCalEvent()">Delete event</button>
       </div>
+      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:1rem"></div>
       <!-- Event list below calendar -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;margin-bottom:.5rem">
         <p class="stitle" style="margin:0">Events this month</p>
@@ -1416,7 +1428,7 @@ function openCalDay(dateKey){
   document.getElementById('calDelBtn').style.display = 'none';
   document.getElementById('calFormTitle').textContent = 'Add event - ' + new Date(dateKey+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   document.getElementById('calEventForm').style.display = 'block';
-  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth'});
+  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function openCalEvent(id){
@@ -1434,7 +1446,7 @@ function openCalEvent(id){
   document.getElementById('calDelBtn').style.display = 'inline-flex';
   document.getElementById('calFormTitle').textContent = 'Edit event';
   document.getElementById('calEventForm').style.display = 'block';
-  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth'});
+  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function saveCalEvent(){
@@ -1915,6 +1927,163 @@ function exportEvidence(){
   });
 
   dl(lines.join('\n'), 'Coercive_Control_Evidence_Index.txt');
+}
+
+// PATTERN CHARTS
+let patView = 'list';
+
+function setPatView(view){
+  patView = view;
+  ['list','bar','timeline'].forEach(v => {
+    const btn = document.getElementById('patView'+v.charAt(0).toUpperCase()+v.slice(1));
+    if(btn) btn.style = v===view ? 'background:#1a1a1a;color:#fff;border-color:#1a1a1a' : '';
+  });
+  document.getElementById('patList').style.display = view==='list' ? 'block' : 'none';
+  document.getElementById('patChart').style.display = view==='bar' ? 'block' : 'none';
+  document.getElementById('patTimeline').style.display = view==='timeline' ? 'block' : 'none';
+  if(view==='bar') renderPatternBar();
+  if(view==='timeline') renderPatternTimeline();
+}
+
+function getPatternData(){
+  const t = {};
+  allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));
+  allVids.forEach(v=>(v.segments||[]).forEach(s=>(s.flags||[]).forEach(f=>{if(f.category&&f.category!=='positive')t[f.category]=(t[f.category]||0)+1;})));
+  const exM = allMsgs.filter(m=>isEx(m.sender));
+  const wc = exM.filter(m=>isDWH(m.timestamp_sent)).length;
+  const lc = exM.filter(m=>isLN(m.timestamp_sent)).length;
+  if(wc) t['Work-hours messaging'] = wc;
+  if(lc) t['Late-night messaging'] = lc;
+  // Add refusals from videos
+  const refusals = allVids.reduce((n,v)=>(v.refusal_incidents||[]).length+n,0);
+  const interrogations = allVids.reduce((n,v)=>(v.interrogation_incidents||[]).length+n,0);
+  if(refusals) t['Child refusals to talk'] = refusals;
+  if(interrogations) t['Information-gathering questions'] = interrogations;
+  return Object.entries(t).sort((a,b)=>b[1]-a[1]);
+}
+
+function renderPatternBar(){
+  const data = getPatternData();
+  if(!data.length){document.getElementById('patChart').innerHTML='<div class="empty">Analyze messages or videos first.</div>';return;}
+
+  const COLORS = {
+    'DARVO':'#c0392b','Blame-shifting':'#e67e22','False accusation':'#c0392b',
+    'Control attempt':'#8e44ad','Gaslighting':'#c0522b','Monitoring':'#8e44ad',
+    'Baiting':'#c0392b','Excessive contact':'#8e44ad','Minimizing':'#7f8c8d',
+    'Work-hours messaging':'#e67e22','Late-night messaging':'#7F77DD',
+    'alienation':'#c0392b','background_adult':'#8e44ad','distraction':'#D85A30',
+    'coaching':'#c0392b','transition_negativity':'#e67e22','self_censorship':'#c0392b',
+    'signal_behavior':'#c0392b','bribery':'#e67e22',
+    'Child refusals to talk':'#c0392b','Information-gathering questions':'#8e44ad'
+  };
+
+  const maxVal = data[0][1];
+  const LABELS = {
+    'alienation':'Alienation behaviors','background_adult':'Background adults in calls',
+    'distraction':'Distractions during calls','coaching':'Coaching',
+    'transition_negativity':'Transition negativity','self_censorship':'Child self-censorship',
+    'signal_behavior':'Signal behaviors','bribery':'Bribery'
+  };
+
+  const html = '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem">' +
+    '<h3 style="font-size:14px;font-weight:600;margin-bottom:4px">Documented behavior patterns</h3>' +
+    '<p style="font-size:11px;color:#888;margin-bottom:1rem">Based on ' + allMsgs.length + ' messages and ' + allVids.length + ' video recordings analyzed</p>' +
+    data.map(([k,v]) => {
+      const label = LABELS[k] || k;
+      const color = COLORS[k] || '#378ADD';
+      const pct = Math.round((v/maxVal)*100);
+      const isHigh = v >= 5;
+      return '<div style="margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">' +
+        '<span style="font-size:12px;font-weight:' + (isHigh?'600':'400') + ';color:' + (isHigh?color:'#555') + '">' + label + '</span>' +
+        '<span style="font-size:12px;font-weight:600;color:' + color + '">' + v + ' instance' + (v!==1?'s':'') + '</span>' +
+        '</div>' +
+        '<div style="height:8px;background:#f0f0ea;border-radius:4px;overflow:hidden">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:4px;transition:width 0.5s ease"></div>' +
+        '</div>' +
+        '</div>';
+    }).join('') +
+    '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0ea;font-size:11px;color:#888">Each instance represents a documented, analyzed occurrence. Work-hours and late-night messaging counts reflect messages sent during Respondent documented work hours (Mon-Fri 7:30am-4pm) and after 9pm/before 7am.</div>' +
+    '</div>';
+
+  document.getElementById('patChart').innerHTML = html;
+}
+
+function renderPatternTimeline(){
+  const el = document.getElementById('patTimeline');
+  if(!allMsgs.length){el.innerHTML='<div class="empty">Analyze messages first.</div>';return;}
+
+  // Group messages by month and count tactics
+  const monthly = {};
+  allMsgs.forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    if(!d) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if(!monthly[key]) monthly[key] = {total:0, high:0, workHours:0, tactics:{}};
+    monthly[key].total++;
+    if(m.severity==='high') monthly[key].high++;
+    if(isEx(m.sender) && isDWH(m.timestamp_sent)) monthly[key].workHours++;
+    (m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')monthly[key].tactics[t]=(monthly[key].tactics[t]||0)+1;});
+  });
+
+  const months = Object.keys(monthly).sort();
+  if(!months.length){el.innerHTML='<div class="empty">No dated messages found.</div>';return;}
+
+  const maxTotal = Math.max(...months.map(k=>monthly[k].total));
+
+  const html = '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem">' +
+    '<h3 style="font-size:14px;font-weight:600;margin-bottom:4px">Communication pattern timeline</h3>' +
+    '<p style="font-size:11px;color:#888;margin-bottom:1rem">Monthly volume of messages from Petitioner. Red = high severity. Orange = sent during your work hours.</p>' +
+    '<div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #e5e5e0">' +
+    months.map(k => {
+      const d = monthly[k];
+      const h = Math.round((d.total/maxTotal)*100);
+      const hiH = Math.round((d.high/maxTotal)*100);
+      const whH = Math.round((d.workHours/maxTotal)*100);
+      const label = k.slice(5) + '/' + k.slice(2,4);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px" title="' + k + ': ' + d.total + ' messages, ' + d.high + ' high severity, ' + d.workHours + ' work hours">' +
+        '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:110px;gap:1px">' +
+        (hiH ? '<div style="width:100%;height:' + hiH + 'px;background:#c0392b;border-radius:2px 2px 0 0;min-height:2px"></div>' : '') +
+        (whH ? '<div style="width:100%;height:' + Math.max(0,whH-hiH) + 'px;background:#e67e22;min-height:' + (d.workHours?'2':'0') + 'px"></div>' : '') +
+        '<div style="width:100%;height:' + Math.max(0,h-hiH-Math.max(0,whH-hiH)) + 'px;background:#ddd;min-height:2px"></div>' +
+        '</div>' +
+        '<div style="font-size:8px;color:#888;transform:rotate(-45deg);margin-top:4px;white-space:nowrap">' + label + '</div>' +
+        '</div>';
+    }).join('') +
+    '</div>' +
+    '<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#c0392b;border-radius:2px;display:inline-block"></span>High severity</span>' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#e67e22;border-radius:2px;display:inline-block"></span>Work-hours messages</span>' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#ddd;border-radius:2px;display:inline-block"></span>Other messages</span>' +
+    '</div>' +
+    '</div>';
+
+  el.innerHTML = html;
+}
+
+function exportPatternChart(){
+  const data = getPatternData();
+  const lines = [
+    'BEHAVIOR PATTERN ANALYSIS',
+    'Generated: ' + new Date().toLocaleDateString(),
+    'Case: In re Rhodes Children - Petitioner: Doug Rhodes - Respondent: Chelsea Rhodes',
+    'Based on: ' + allMsgs.length + ' messages analyzed, ' + allVids.length + ' video recordings analyzed',
+    '',
+    '--- DOCUMENTED BEHAVIOR PATTERNS (by frequency) ---',
+    ''
+  ];
+  data.forEach(([k,v],i) => {
+    const LABELS = {alienation:'Alienation behaviors',background_adult:'Background adults in calls',distraction:'Distractions during calls',coaching:'Coaching language',transition_negativity:'Transition negativity',self_censorship:'Child self-censorship',signal_behavior:'Signal behaviors',bribery:'Bribery'};
+    lines.push((i+1) + '. ' + (LABELS[k]||k) + ': ' + v + ' documented instance' + (v!==1?'s':''));
+  });
+  const exM = allMsgs.filter(m=>isEx(m.sender));
+  lines.push('');
+  lines.push('--- TIMING ANALYSIS ---');
+  lines.push('Total messages from Petitioner: ' + exM.length);
+  lines.push('Sent during Respondent work hours: ' + exM.filter(m=>isDWH(m.timestamp_sent)).length);
+  lines.push('Sent late night (after 9pm/before 7am): ' + exM.filter(m=>isLN(m.timestamp_sent)).length);
+  lines.push('High severity messages: ' + allMsgs.filter(m=>m.severity==='high').length);
+  dl(lines.join('\n'), 'Pattern_Analysis_Report.txt');
 }
 
 </script>
