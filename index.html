@@ -208,6 +208,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('docs')">&#128193; My docs</button>
       <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
+      <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
@@ -355,6 +356,70 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="docList"></div>
     </div>
+    <!-- CALENDAR -->
+    <div id="p-calendar" class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn" onclick="calPrev()">&#8592;</button>
+          <h2 id="calTitle" style="font-size:16px;font-weight:600;min-width:160px;text-align:center"></h2>
+          <button class="btn" onclick="calNext()">&#8594;</button>
+          <button class="btn btns" onclick="calToday()">Today</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:12px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Your time</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:12px;border-radius:2px;background:#c0392b;display:inline-block"></span>His time</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:12px;border-radius:2px;background:#7F77DD;display:inline-block"></span>Ethan dinner</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:12px;border-radius:2px;background:#378ADD;display:inline-block"></span>Event</span>
+        </div>
+      </div>
+      <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:1rem"></div>
+      <!-- Event form -->
+      <div class="card" id="calEventForm" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 id="calFormTitle">Add event</h3>
+          <button class="btn btns" onclick="closeCalForm()">&#x2715; Close</button>
+        </div>
+        <div class="fr">
+          <div><label>Date</label><input type="date" id="calEvDate"></div>
+          <div><label>Type</label>
+            <select id="calEvType">
+              <option value="event-school">School event</option>
+              <option value="event-medical">Medical/dental appointment</option>
+              <option value="event-extra">Extracurricular</option>
+              <option value="event-court">Court date</option>
+              <option value="event-attorney">Attorney meeting</option>
+              <option value="event-ethan">Ethan dinner</option>
+              <option value="event-exchange">Custody exchange</option>
+              <option value="event-other">Other</option>
+            </select>
+          </div>
+        </div>
+        <label>Title</label>
+        <input type="text" id="calEvTitle" placeholder="e.g. Charlotte spring concert, Ethan dentist, IEP meeting">
+        <label>Notes / outcome</label>
+        <textarea id="calEvNotes" style="min-height:50px" placeholder="e.g. I attended. Doug did not. Teacher confirmed I am primary contact."></textarea>
+        <label>Google Drive photo link (optional)</label>
+        <input type="text" id="calEvLink" placeholder="https://drive.google.com/...">
+        <label>Children present</label>
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:#1a1a1a"><input type="checkbox" id="calChEthan"> Ethan</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:#1a1a1a"><input type="checkbox" id="calChCharlotte"> Charlotte</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:#1a1a1a"><input type="checkbox" id="calChDuke"> Duke</label>
+        </div>
+        <button class="btn btnp" onclick="saveCalEvent()">Save event</button>
+        <button class="btn btnd" id="calDelBtn" style="display:none;margin-left:8px" onclick="deleteCalEvent()">Delete event</button>
+      </div>
+      <!-- Event list below calendar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;margin-bottom:.5rem">
+        <p class="stitle" style="margin:0">Events this month</p>
+        <div style="display:flex;gap:6px">
+          <button class="btn btns" onclick="exportCalMonth()">&#128196; Export month</button>
+          <button class="btn btns" onclick="exportCalAll()">&#128196; Export all events</button>
+        </div>
+      </div>
+      <div id="calEventList"></div>
+    </div>
+
     <!-- CASE OVERVIEW -->
     <div id="p-overview" class="panel">
       <div class="hhead" style="background:linear-gradient(135deg,#1a3a6b,#2a5fa8)">
@@ -473,10 +538,10 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();if(document.getElementById('p-calendar'))renderCalendar();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
 function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');}
@@ -1079,6 +1144,316 @@ function exportOverview(){
 function copyOverview(){
   if(!overviewText){alert('Generate the overview first.');return;}
   navigator.clipboard.writeText(overviewText).then(()=>alert('Copied to clipboard'));
+}
+
+// CALENDAR
+const CUSTODY_SCHEDULE = {"2025-01-23": "chelsea", "2025-01-24": "doug", "2025-01-25": "doug", "2025-01-26": "doug", "2025-01-27": "chelsea", "2025-01-28": "chelsea", "2025-01-29": "doug", "2025-01-30": "doug", "2025-01-31": "chelsea", "2025-02-01": "chelsea", "2025-02-02": "chelsea", "2025-02-03": "chelsea", "2025-02-04": "chelsea", "2025-02-05": "doug", "2025-02-06": "chelsea", "2025-02-07": "doug", "2025-02-08": "doug", "2025-02-09": "doug", "2025-02-10": "chelsea", "2025-02-11": "chelsea", "2025-02-12": "doug", "2025-02-13": "doug", "2025-02-14": "chelsea", "2025-02-15": "chelsea", "2025-02-16": "chelsea", "2025-02-17": "chelsea", "2025-02-18": "chelsea", "2025-02-19": "doug", "2025-02-20": "chelsea", "2025-02-21": "doug", "2025-02-22": "doug", "2025-02-23": "doug", "2025-02-24": "chelsea", "2025-02-25": "chelsea", "2025-02-26": "doug", "2025-02-27": "doug", "2025-02-28": "chelsea", "2025-03-01": "chelsea", "2025-03-02": "chelsea", "2025-03-03": "chelsea", "2025-03-04": "chelsea", "2025-03-05": "doug", "2025-03-06": "chelsea", "2025-03-07": "doug", "2025-03-08": "doug", "2025-03-09": "doug", "2025-03-10": "chelsea", "2025-03-11": "chelsea", "2025-03-12": "doug", "2025-03-13": "doug", "2025-03-14": "chelsea", "2025-03-15": "chelsea", "2025-03-16": "chelsea", "2025-03-17": "chelsea", "2025-03-18": "chelsea", "2025-03-19": "doug", "2025-03-20": "chelsea", "2025-03-21": "doug", "2025-03-22": "doug", "2025-03-23": "doug", "2025-03-24": "chelsea", "2025-03-25": "chelsea", "2025-03-26": "doug", "2025-03-27": "doug", "2025-03-28": "chelsea", "2025-03-29": "chelsea", "2025-03-30": "chelsea", "2025-03-31": "chelsea", "2025-04-01": "chelsea", "2025-04-02": "doug", "2025-04-03": "chelsea", "2025-04-04": "doug", "2025-04-05": "doug", "2025-04-06": "doug", "2025-04-07": "chelsea", "2025-04-08": "chelsea", "2025-04-09": "doug", "2025-04-10": "doug", "2025-04-11": "chelsea", "2025-04-12": "chelsea", "2025-04-13": "chelsea", "2025-04-14": "chelsea", "2025-04-15": "chelsea", "2025-04-16": "doug", "2025-04-17": "chelsea", "2025-04-18": "doug", "2025-04-19": "doug", "2025-04-20": "doug", "2025-04-21": "chelsea", "2025-04-22": "chelsea", "2025-04-23": "doug", "2025-04-24": "doug", "2025-04-25": "chelsea", "2025-04-26": "chelsea", "2025-04-27": "chelsea", "2025-04-28": "chelsea", "2025-04-29": "chelsea", "2025-04-30": "doug", "2025-05-01": "chelsea", "2025-05-02": "doug", "2025-05-03": "doug", "2025-05-04": "doug", "2025-05-05": "chelsea", "2025-05-06": "chelsea", "2025-05-07": "doug", "2025-05-08": "doug", "2025-05-09": "chelsea", "2025-05-10": "chelsea", "2025-05-11": "chelsea", "2025-05-12": "chelsea", "2025-05-13": "chelsea", "2025-05-14": "doug", "2025-05-15": "chelsea", "2025-05-16": "doug", "2025-05-17": "doug", "2025-05-18": "doug", "2025-05-19": "chelsea", "2025-05-20": "chelsea", "2025-05-21": "doug", "2025-05-22": "doug", "2025-05-23": "chelsea", "2025-05-24": "chelsea", "2025-05-25": "chelsea", "2025-05-26": "chelsea", "2025-05-27": "chelsea", "2025-05-28": "doug", "2025-05-29": "chelsea", "2025-05-30": "doug", "2025-05-31": "doug", "2025-06-01": "doug", "2025-06-02": "chelsea", "2025-06-03": "chelsea", "2025-06-04": "doug", "2025-06-05": "doug", "2025-06-06": "chelsea", "2025-06-07": "chelsea", "2025-06-08": "chelsea", "2025-06-09": "chelsea", "2025-06-10": "chelsea", "2025-06-11": "doug", "2025-06-12": "chelsea", "2025-06-13": "doug", "2025-06-14": "doug", "2025-06-15": "doug", "2025-06-16": "chelsea", "2025-06-17": "chelsea", "2025-06-18": "doug", "2025-06-19": "doug", "2025-06-20": "chelsea", "2025-06-21": "chelsea", "2025-06-22": "chelsea", "2025-06-23": "chelsea", "2025-06-24": "chelsea", "2025-06-25": "doug", "2025-06-26": "chelsea", "2025-06-27": "doug", "2025-06-28": "doug", "2025-06-29": "doug", "2025-06-30": "chelsea", "2025-07-01": "chelsea", "2025-07-02": "doug", "2025-07-03": "doug", "2025-07-04": "chelsea", "2025-07-05": "chelsea", "2025-07-06": "chelsea", "2025-07-07": "chelsea", "2025-07-08": "chelsea", "2025-07-09": "doug", "2025-07-10": "chelsea", "2025-07-11": "doug", "2025-07-12": "doug", "2025-07-13": "doug", "2025-07-14": "chelsea", "2025-07-15": "chelsea", "2025-07-16": "doug", "2025-07-17": "doug", "2025-07-18": "chelsea", "2025-07-19": "chelsea", "2025-07-20": "chelsea", "2025-07-21": "chelsea", "2025-07-22": "chelsea", "2025-07-23": "doug", "2025-07-24": "chelsea", "2025-07-25": "doug", "2025-07-26": "doug", "2025-07-27": "doug", "2025-07-28": "chelsea", "2025-07-29": "chelsea", "2025-07-30": "doug", "2025-07-31": "doug", "2025-08-01": "chelsea", "2025-08-02": "chelsea", "2025-08-03": "chelsea", "2025-08-04": "chelsea", "2025-08-05": "chelsea", "2025-08-06": "doug", "2025-08-07": "chelsea", "2025-08-08": "doug", "2025-08-09": "doug", "2025-08-10": "doug", "2025-08-11": "chelsea", "2025-08-12": "chelsea", "2025-08-13": "doug", "2025-08-14": "doug", "2025-08-15": "chelsea", "2025-08-16": "chelsea", "2025-08-17": "chelsea", "2025-08-18": "chelsea", "2025-08-19": "chelsea", "2025-08-20": "doug", "2025-08-21": "chelsea", "2025-08-22": "doug", "2025-08-23": "doug", "2025-08-24": "doug", "2025-08-25": "chelsea", "2025-08-26": "chelsea", "2025-08-27": "doug", "2025-08-28": "doug", "2025-08-29": "chelsea", "2025-08-30": "chelsea", "2025-08-31": "chelsea", "2025-09-01": "chelsea", "2025-09-02": "chelsea", "2025-09-03": "doug", "2025-09-04": "chelsea", "2025-09-05": "doug", "2025-09-06": "doug", "2025-09-07": "doug", "2025-09-08": "chelsea", "2025-09-09": "chelsea", "2025-09-10": "doug", "2025-09-11": "doug", "2025-09-12": "chelsea", "2025-09-13": "chelsea", "2025-09-14": "chelsea", "2025-09-15": "chelsea", "2025-09-16": "chelsea", "2025-09-17": "doug", "2025-09-18": "chelsea", "2025-09-19": "doug", "2025-09-20": "doug", "2025-09-21": "doug", "2025-09-22": "chelsea", "2025-09-23": "chelsea", "2025-09-24": "doug", "2025-09-25": "doug", "2025-09-26": "chelsea", "2025-09-27": "chelsea", "2025-09-28": "chelsea", "2025-09-29": "chelsea", "2025-09-30": "chelsea", "2025-10-01": "doug", "2025-10-02": "chelsea", "2025-10-03": "doug", "2025-10-04": "doug", "2025-10-05": "doug", "2025-10-06": "chelsea", "2025-10-07": "chelsea", "2025-10-08": "doug", "2025-10-09": "doug", "2025-10-10": "chelsea", "2025-10-11": "chelsea", "2025-10-12": "chelsea", "2025-10-13": "chelsea", "2025-10-14": "chelsea", "2025-10-15": "doug", "2025-10-16": "chelsea", "2025-10-17": "doug", "2025-10-18": "doug", "2025-10-19": "doug", "2025-10-20": "chelsea", "2025-10-21": "chelsea", "2025-10-22": "doug", "2025-10-23": "doug", "2025-10-24": "chelsea", "2025-10-25": "chelsea", "2025-10-26": "chelsea", "2025-10-27": "chelsea", "2025-10-28": "chelsea", "2025-10-29": "doug", "2025-10-30": "chelsea", "2025-10-31": "doug", "2025-11-01": "doug", "2025-11-02": "doug", "2025-11-03": "chelsea", "2025-11-04": "chelsea", "2025-11-05": "doug", "2025-11-06": "doug", "2025-11-07": "chelsea", "2025-11-08": "chelsea", "2025-11-09": "chelsea", "2025-11-10": "chelsea", "2025-11-11": "chelsea", "2025-11-12": "doug", "2025-11-13": "chelsea", "2025-11-14": "doug", "2025-11-15": "doug", "2025-11-16": "doug", "2025-11-17": "chelsea", "2025-11-18": "chelsea", "2025-11-19": "doug", "2025-11-20": "doug", "2025-11-21": "chelsea", "2025-11-22": "chelsea", "2025-11-23": "chelsea", "2025-11-24": "chelsea", "2025-11-25": "chelsea", "2025-11-26": "doug", "2025-11-27": "chelsea", "2025-11-28": "doug", "2025-11-29": "doug", "2025-11-30": "doug", "2025-12-01": "chelsea", "2025-12-02": "chelsea", "2025-12-03": "doug", "2025-12-04": "doug", "2025-12-05": "chelsea", "2025-12-06": "chelsea", "2025-12-07": "chelsea", "2025-12-08": "chelsea", "2025-12-09": "chelsea", "2025-12-10": "doug", "2025-12-11": "chelsea", "2025-12-12": "doug", "2025-12-13": "doug", "2025-12-14": "doug", "2025-12-15": "chelsea", "2025-12-16": "chelsea", "2025-12-17": "doug", "2025-12-18": "doug", "2025-12-19": "chelsea", "2025-12-20": "chelsea", "2025-12-21": "chelsea", "2025-12-22": "chelsea", "2025-12-23": "chelsea", "2025-12-24": "doug", "2025-12-25": "chelsea", "2025-12-26": "doug", "2025-12-27": "doug", "2025-12-28": "doug", "2025-12-29": "chelsea", "2025-12-30": "chelsea", "2025-12-31": "doug", "2026-01-01": "doug", "2026-01-02": "chelsea", "2026-01-03": "chelsea", "2026-01-04": "chelsea", "2026-01-05": "chelsea", "2026-01-06": "chelsea", "2026-01-07": "doug", "2026-01-08": "chelsea", "2026-01-09": "doug", "2026-01-10": "doug", "2026-01-11": "doug", "2026-01-12": "chelsea", "2026-01-13": "chelsea", "2026-01-14": "doug", "2026-01-15": "doug", "2026-01-16": "chelsea", "2026-01-17": "chelsea", "2026-01-18": "chelsea", "2026-01-19": "chelsea", "2026-01-20": "chelsea", "2026-01-21": "doug", "2026-01-22": "chelsea", "2026-01-23": "doug", "2026-01-24": "doug", "2026-01-25": "doug", "2026-01-26": "chelsea", "2026-01-27": "chelsea", "2026-01-28": "doug", "2026-01-29": "doug", "2026-01-30": "chelsea", "2026-01-31": "chelsea", "2026-02-01": "chelsea", "2026-02-02": "chelsea", "2026-02-03": "chelsea", "2026-02-04": "doug", "2026-02-05": "chelsea", "2026-02-06": "doug", "2026-02-07": "doug", "2026-02-08": "doug", "2026-02-09": "chelsea", "2026-02-10": "chelsea", "2026-02-11": "doug", "2026-02-12": "doug", "2026-02-13": "chelsea", "2026-02-14": "chelsea", "2026-02-15": "chelsea", "2026-02-16": "chelsea", "2026-02-17": "chelsea", "2026-02-18": "doug", "2026-02-19": "chelsea", "2026-02-20": "doug", "2026-02-21": "doug", "2026-02-22": "doug", "2026-02-23": "chelsea", "2026-02-24": "chelsea", "2026-02-25": "doug", "2026-02-26": "doug", "2026-02-27": "chelsea", "2026-02-28": "chelsea", "2026-03-01": "chelsea", "2026-03-02": "chelsea", "2026-03-03": "chelsea", "2026-03-04": "doug", "2026-03-05": "chelsea", "2026-03-06": "doug", "2026-03-07": "doug", "2026-03-08": "doug", "2026-03-09": "chelsea", "2026-03-10": "chelsea", "2026-03-11": "doug", "2026-03-12": "doug", "2026-03-13": "chelsea", "2026-03-14": "chelsea", "2026-03-15": "chelsea", "2026-03-16": "chelsea", "2026-03-17": "chelsea", "2026-03-18": "doug", "2026-03-19": "chelsea", "2026-03-20": "doug", "2026-03-21": "doug", "2026-03-22": "doug", "2026-03-23": "chelsea", "2026-03-24": "chelsea", "2026-03-25": "doug", "2026-03-26": "doug", "2026-03-27": "chelsea", "2026-03-28": "chelsea", "2026-03-29": "chelsea", "2026-03-30": "chelsea", "2026-03-31": "chelsea", "2026-04-01": "doug", "2026-04-02": "chelsea", "2026-04-03": "doug", "2026-04-04": "doug", "2026-04-05": "doug", "2026-04-06": "chelsea", "2026-04-07": "chelsea", "2026-04-08": "doug", "2026-04-09": "doug", "2026-04-10": "chelsea", "2026-04-11": "chelsea", "2026-04-12": "chelsea", "2026-04-13": "chelsea", "2026-04-14": "chelsea", "2026-04-15": "doug", "2026-04-16": "chelsea", "2026-04-17": "doug", "2026-04-18": "doug", "2026-04-19": "doug", "2026-04-20": "chelsea", "2026-04-21": "chelsea", "2026-04-22": "doug", "2026-04-23": "doug", "2026-04-24": "chelsea", "2026-04-25": "chelsea", "2026-04-26": "chelsea", "2026-04-27": "chelsea", "2026-04-28": "chelsea", "2026-04-29": "doug", "2026-04-30": "chelsea", "2026-05-01": "doug", "2026-05-02": "doug", "2026-05-03": "doug", "2026-05-04": "chelsea", "2026-05-05": "chelsea", "2026-05-06": "doug", "2026-05-07": "doug", "2026-05-08": "chelsea", "2026-05-09": "chelsea", "2026-05-10": "chelsea", "2026-05-11": "chelsea", "2026-05-12": "chelsea", "2026-05-13": "doug", "2026-05-14": "chelsea", "2026-05-15": "doug", "2026-05-16": "doug", "2026-05-17": "doug", "2026-05-18": "chelsea", "2026-05-19": "chelsea", "2026-05-20": "doug", "2026-05-21": "doug", "2026-05-22": "chelsea", "2026-05-23": "chelsea", "2026-05-24": "chelsea", "2026-05-25": "chelsea", "2026-05-26": "chelsea", "2026-05-27": "doug", "2026-05-28": "chelsea", "2026-05-29": "doug", "2026-05-30": "doug", "2026-05-31": "doug", "2026-06-01": "chelsea", "2026-06-02": "chelsea", "2026-06-03": "doug", "2026-06-04": "doug", "2026-06-05": "chelsea", "2026-06-06": "chelsea", "2026-06-07": "chelsea", "2026-06-08": "chelsea", "2026-06-09": "chelsea", "2026-06-10": "doug", "2026-06-11": "chelsea", "2026-06-12": "doug", "2026-06-13": "doug", "2026-06-14": "doug", "2026-06-15": "chelsea", "2026-06-16": "chelsea", "2026-06-17": "doug", "2026-06-18": "doug", "2026-06-19": "chelsea", "2026-06-20": "chelsea", "2026-06-21": "chelsea", "2026-06-22": "chelsea", "2026-06-23": "chelsea", "2026-06-24": "doug", "2026-06-25": "chelsea", "2026-06-26": "doug", "2026-06-27": "doug", "2026-06-28": "doug", "2026-06-29": "chelsea", "2026-06-30": "chelsea", "2026-07-01": "doug", "2026-07-02": "doug", "2026-07-03": "chelsea", "2026-07-04": "chelsea", "2026-07-05": "chelsea", "2026-07-06": "chelsea", "2026-07-07": "chelsea", "2026-07-08": "doug", "2026-07-09": "chelsea", "2026-07-10": "doug", "2026-07-11": "doug", "2026-07-12": "doug", "2026-07-13": "chelsea", "2026-07-14": "chelsea", "2026-07-15": "doug", "2026-07-16": "doug", "2026-07-17": "chelsea", "2026-07-18": "chelsea", "2026-07-19": "chelsea", "2026-07-20": "chelsea", "2026-07-21": "chelsea", "2026-07-22": "doug", "2026-07-23": "chelsea", "2026-07-24": "doug", "2026-07-25": "doug", "2026-07-26": "doug", "2026-07-27": "chelsea", "2026-07-28": "chelsea", "2026-07-29": "doug", "2026-07-30": "doug", "2026-07-31": "chelsea", "2026-08-01": "chelsea", "2026-08-02": "chelsea", "2026-08-03": "chelsea", "2026-08-04": "chelsea", "2026-08-05": "doug", "2026-08-06": "chelsea", "2026-08-07": "doug", "2026-08-08": "doug", "2026-08-09": "doug", "2026-08-10": "chelsea", "2026-08-11": "chelsea", "2026-08-12": "doug", "2026-08-13": "doug", "2026-08-14": "chelsea", "2026-08-15": "chelsea", "2026-08-16": "chelsea", "2026-08-17": "chelsea", "2026-08-18": "chelsea", "2026-08-19": "doug", "2026-08-20": "chelsea", "2026-08-21": "doug", "2026-08-22": "doug", "2026-08-23": "doug", "2026-08-24": "chelsea", "2026-08-25": "chelsea", "2026-08-26": "doug", "2026-08-27": "doug", "2026-08-28": "chelsea", "2026-08-29": "chelsea", "2026-08-30": "chelsea", "2026-08-31": "chelsea", "2026-09-01": "chelsea", "2026-09-02": "doug", "2026-09-03": "chelsea", "2026-09-04": "doug", "2026-09-05": "doug", "2026-09-06": "doug", "2026-09-07": "chelsea", "2026-09-08": "chelsea", "2026-09-09": "doug", "2026-09-10": "doug", "2026-09-11": "chelsea", "2026-09-12": "chelsea", "2026-09-13": "chelsea", "2026-09-14": "chelsea", "2026-09-15": "chelsea", "2026-09-16": "doug", "2026-09-17": "chelsea", "2026-09-18": "doug", "2026-09-19": "doug", "2026-09-20": "doug", "2026-09-21": "chelsea", "2026-09-22": "chelsea", "2026-09-23": "doug", "2026-09-24": "doug", "2026-09-25": "chelsea", "2026-09-26": "chelsea", "2026-09-27": "chelsea", "2026-09-28": "chelsea", "2026-09-29": "chelsea", "2026-09-30": "doug", "2026-10-01": "chelsea"};
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calEvents = [];
+let calEditId = null;
+
+const CAL_COLORS = {
+  chelsea: '#1D9E75',
+  doug: '#c0392b',
+  'event-ethan': '#7F77DD',
+  'event-school': '#378ADD',
+  'event-medical': '#e67e22',
+  'event-extra': '#27ae60',
+  'event-court': '#8e44ad',
+  'event-attorney': '#2980b9',
+  'event-exchange': '#c0392b',
+  'event-other': '#666'
+};
+
+const CAL_LABELS = {
+  'event-ethan': 'Ethan dinner',
+  'event-school': 'School event',
+  'event-medical': 'Medical/dental',
+  'event-extra': 'Extracurricular',
+  'event-court': 'Court date',
+  'event-attorney': 'Attorney meeting',
+  'event-exchange': 'Exchange',
+  'event-other': 'Event'
+};
+
+function calSave(){
+  try{localStorage.setItem('eo_cal', JSON.stringify(calEvents));}catch(e){}
+  showSave();
+}
+
+const PRELOADED_EVENTS = [{"id": "ethan_dinner_2025-02-02", "date": "2025-02-02", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-02-12", "date": "2025-02-12", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-02-16", "date": "2025-02-16", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-02-26", "date": "2025-02-26", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-03-02", "date": "2025-03-02", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-03-12", "date": "2025-03-12", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-03-16", "date": "2025-03-16", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-03-26", "date": "2025-03-26", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-03-30", "date": "2025-03-30", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-04-06", "date": "2025-04-06", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-04-09", "date": "2025-04-09", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-04-20", "date": "2025-04-20", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-04-23", "date": "2025-04-23", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-05-04", "date": "2025-05-04", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-05-14", "date": "2025-05-14", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-05-18", "date": "2025-05-18", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-05-28", "date": "2025-05-28", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-06-01", "date": "2025-06-01", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-06-11", "date": "2025-06-11", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-06-15", "date": "2025-06-15", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-06-25", "date": "2025-06-25", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-06-29", "date": "2025-06-29", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-07-06", "date": "2025-07-06", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-07-09", "date": "2025-07-09", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-07-20", "date": "2025-07-20", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-07-23", "date": "2025-07-23", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-08-03", "date": "2025-08-03", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-08-13", "date": "2025-08-13", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-08-17", "date": "2025-08-17", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-08-27", "date": "2025-08-27", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-08-31", "date": "2025-08-31", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-09-07", "date": "2025-09-07", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-09-10", "date": "2025-09-10", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-09-21", "date": "2025-09-21", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-09-24", "date": "2025-09-24", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-10-05", "date": "2025-10-05", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-10-08", "date": "2025-10-08", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-10-19", "date": "2025-10-19", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-10-22", "date": "2025-10-22", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-11-02", "date": "2025-11-02", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-11-12", "date": "2025-11-12", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-11-16", "date": "2025-11-16", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-11-26", "date": "2025-11-26", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-11-30", "date": "2025-11-30", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-12-07", "date": "2025-12-07", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-12-10", "date": "2025-12-10", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-12-21", "date": "2025-12-21", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2025-12-24", "date": "2025-12-24", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-01-04", "date": "2026-01-04", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-01-14", "date": "2026-01-14", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-01-18", "date": "2026-01-18", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-01-28", "date": "2026-01-28", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-02-01", "date": "2026-02-01", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-02-11", "date": "2026-02-11", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-02-15", "date": "2026-02-15", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-02-25", "date": "2026-02-25", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-03-01", "date": "2026-03-01", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-03-11", "date": "2026-03-11", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-03-15", "date": "2026-03-15", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-03-25", "date": "2026-03-25", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-03-29", "date": "2026-03-29", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-04-05", "date": "2026-04-05", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-04-08", "date": "2026-04-08", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-04-19", "date": "2026-04-19", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-04-22", "date": "2026-04-22", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-05-03", "date": "2026-05-03", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-05-13", "date": "2026-05-13", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-05-17", "date": "2026-05-17", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-05-27", "date": "2026-05-27", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-05-31", "date": "2026-05-31", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-06-07", "date": "2026-06-07", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-06-10", "date": "2026-06-10", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-06-21", "date": "2026-06-21", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-06-24", "date": "2026-06-24", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-07-05", "date": "2026-07-05", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-07-08", "date": "2026-07-08", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-07-19", "date": "2026-07-19", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-07-22", "date": "2026-07-22", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-08-02", "date": "2026-08-02", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-08-12", "date": "2026-08-12", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-08-16", "date": "2026-08-16", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-08-26", "date": "2026-08-26", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-08-30", "date": "2026-08-30", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-09-06", "date": "2026-09-06", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-09-09", "date": "2026-09-09", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-09-20", "date": "2026-09-20", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "ethan_dinner_2026-09-23", "date": "2026-09-23", "title": "Ethan dinner 5:30-7:00pm", "type": "event-ethan", "notes": "Court-ordered dinner visit per FOAH paragraph 5. 5:30pm - 7:00pm.", "link": "", "ethan": true, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "court_apr14_2026", "date": "2026-04-14", "title": "Hearing - Judge Bell Dept C-17", "type": "event-court", "notes": "FOAH issued. Ethan dinners ordered. Therapy ordered. DV and RFO trailing.", "link": "", "ethan": false, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "court_apr30_2026", "date": "2026-04-30", "title": "Status Conference - Dept C-17 10:30am", "type": "event-court", "notes": "Status conference - Petitioner DV trailing, Respondent DV trailing, Petitioner RFO trailing. Counsel only, remote appearance authorized.", "link": "", "ethan": false, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}, {"id": "court_jul30_2026", "date": "2026-07-30", "title": "CUSTODY HEARING - Dept C-17", "type": "event-court", "notes": "MAIN CUSTODY HEARING. Dr. Kelley (custody evaluator) testifying. Focus: custody modification.", "link": "", "ethan": false, "charlotte": false, "duke": false, "added": "2025-01-23T00:00:00.000Z", "preloaded": true}];
+
+function calLoad(){
+  try{
+    const raw = localStorage.getItem('eo_cal');
+    if(raw){
+      const saved = JSON.parse(raw);
+      // Merge preloaded with saved - preloaded fill gaps, saved takes priority
+      const savedIds = new Set(saved.map(e=>e.id));
+      const merged = [...saved, ...PRELOADED_EVENTS.filter(e=>!savedIds.has(e.id))];
+      calEvents = merged;
+    } else {
+      calEvents = [...PRELOADED_EVENTS];
+      calSave();
+    }
+  }catch(e){calEvents=[...PRELOADED_EVENTS];}
+}
+
+function getDateKey(year, month, day){
+  return year + '-' + String(month+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+}
+
+function getCustody(dateKey){
+  return CUSTODY_SCHEDULE[dateKey] || null;
+}
+
+function getEventsForDate(dateKey){
+  return calEvents.filter(e => e.date === dateKey);
+}
+
+function renderCalendar(){
+  calLoad();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent = months[calMonth] + ' ' + calYear;
+
+  const grid = document.getElementById('calGrid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  let html = days.map(d => `<div style="text-align:center;font-size:11px;font-weight:600;color:#888;padding:4px">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  const todayKey = getDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Empty cells before first day
+  for(let i=0; i<firstDay; i++){
+    html += '<div style="min-height:70px;background:#f9f9f7;border-radius:4px"></div>';
+  }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateKey = getDateKey(calYear, calMonth, day);
+    const custody = getCustody(dateKey);
+    const events = getEventsForDate(dateKey);
+    const isToday = dateKey === todayKey;
+
+    const custodyColor = custody === 'chelsea' ? '#1D9E75' : custody === 'doug' ? '#c0392b' : '#eee';
+    const custodyBg = custody === 'chelsea' ? 'rgba(29,158,117,0.08)' : custody === 'doug' ? 'rgba(192,57,43,0.06)' : '#fff';
+    const custodyLabel = custody === 'chelsea' ? 'Your night' : custody === 'doug' ? 'His night' : '';
+
+    const eventDots = events.slice(0,4).map(e =>
+      `<div style="font-size:9px;padding:1px 4px;border-radius:3px;background:${CAL_COLORS[e.type]||'#378ADD'};color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${e.title||CAL_LABELS[e.type]||'Event'}</div>`
+    ).join('');
+
+    html += `<div onclick="openCalDay('${dateKey}')" style="min-height:70px;border-radius:4px;padding:4px;cursor:pointer;border:${isToday?'2px solid #1a1a1a':'1px solid #e5e5e0'};background:${custodyBg};position:relative" onmouseover="this.style.background='#f0f0ea'" onmouseout="this.style.background='${custodyBg}'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:13px;font-weight:${isToday?'700':'400'}">${day}</span>
+        ${custody?`<span style="font-size:8px;padding:1px 4px;border-radius:8px;background:${custodyColor};color:#fff">${custodyLabel}</span>`:''}
+      </div>
+      ${eventDots}
+      ${events.length>4?`<div style="font-size:9px;color:#888">+${events.length-4} more</div>`:''}
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  renderCalEventList();
+}
+
+function renderCalEventList(){
+  const monthEvents = calEvents
+    .filter(e => e.date && e.date.startsWith(calYear+'-'+String(calMonth+1).padStart(2,'0')))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  const list = document.getElementById('calEventList');
+  if(!monthEvents.length){list.innerHTML="<div class='empty'>No events this month. Click any day to add one.</div>";return;}
+
+  list.innerHTML = monthEvents.map(e => {
+    const dow = new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const children = [e.ethan&&'Ethan',e.charlotte&&'Charlotte',e.duke&&'Duke'].filter(Boolean).join(', ');
+    return `<div class="le" style="border-left:3px solid ${CAL_COLORS[e.type]||'#378ADD'};cursor:pointer" onclick="openCalEvent('${e.id}')">
+      <div class="lh">
+        <div>
+          <div class="ld">${dow} - ${e.title||CAL_LABELS[e.type]||'Event'}</div>
+          <div style="font-size:11px;color:#999">${CAL_LABELS[e.type]||'Event'}${children?' - '+children:''}</div>
+        </div>
+        <span class="bg" style="background:${CAL_COLORS[e.type]||'#378ADD'};color:#fff;font-size:10px">${CAL_LABELS[e.type]||'Event'}</span>
+      </div>
+      ${e.notes?`<div class="lb">${e.notes}</div>`:''}
+      ${e.link?`<a href="${e.link}" target="_blank" style="font-size:11px;color:#1a5fa8">&#128247; View photos</a>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openCalDay(dateKey){
+  calEditId = null;
+  document.getElementById('calEvDate').value = dateKey;
+  document.getElementById('calEvTitle').value = '';
+  document.getElementById('calEvNotes').value = '';
+  document.getElementById('calEvLink').value = '';
+  document.getElementById('calEvType').value = 'event-school';
+  document.getElementById('calChEthan').checked = false;
+  document.getElementById('calChCharlotte').checked = false;
+  document.getElementById('calChDuke').checked = false;
+  document.getElementById('calDelBtn').style.display = 'none';
+  document.getElementById('calFormTitle').textContent = 'Add event - ' + new Date(dateKey+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('calEventForm').style.display = 'block';
+  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth'});
+}
+
+function openCalEvent(id){
+  const ev = calEvents.find(e => e.id === id);
+  if(!ev) return;
+  calEditId = id;
+  document.getElementById('calEvDate').value = ev.date;
+  document.getElementById('calEvTitle').value = ev.title || '';
+  document.getElementById('calEvNotes').value = ev.notes || '';
+  document.getElementById('calEvLink').value = ev.link || '';
+  document.getElementById('calEvType').value = ev.type || 'event-other';
+  document.getElementById('calChEthan').checked = !!ev.ethan;
+  document.getElementById('calChCharlotte').checked = !!ev.charlotte;
+  document.getElementById('calChDuke').checked = !!ev.duke;
+  document.getElementById('calDelBtn').style.display = 'inline-flex';
+  document.getElementById('calFormTitle').textContent = 'Edit event';
+  document.getElementById('calEventForm').style.display = 'block';
+  document.getElementById('calEventForm').scrollIntoView({behavior:'smooth'});
+}
+
+function saveCalEvent(){
+  const date = document.getElementById('calEvDate').value;
+  const title = document.getElementById('calEvTitle').value.trim();
+  const type = document.getElementById('calEvType').value;
+  if(!date || !title){alert('Please enter a date and title.');return;}
+
+  const ev = {
+    id: calEditId || 'ev_'+Date.now(),
+    date, title, type,
+    notes: document.getElementById('calEvNotes').value.trim(),
+    link: document.getElementById('calEvLink').value.trim(),
+    ethan: document.getElementById('calChEthan').checked,
+    charlotte: document.getElementById('calChCharlotte').checked,
+    duke: document.getElementById('calChDuke').checked,
+    added: new Date().toISOString()
+  };
+
+  if(calEditId){
+    const idx = calEvents.findIndex(e => e.id === calEditId);
+    if(idx >= 0) calEvents[idx] = ev;
+  } else {
+    calEvents.push(ev);
+  }
+
+  calSave();
+  closeCalForm();
+  renderCalendar();
+}
+
+function deleteCalEvent(){
+  if(!calEditId) return;
+  if(!confirm('Delete this event?')) return;
+  calEvents = calEvents.filter(e => e.id !== calEditId);
+  calSave();
+  closeCalForm();
+  renderCalendar();
+}
+
+function closeCalForm(){
+  document.getElementById('calEventForm').style.display = 'none';
+  calEditId = null;
+}
+
+function calPrev(){
+  calMonth--;
+  if(calMonth < 0){calMonth=11;calYear--;}
+  renderCalendar();
+}
+
+function calNext(){
+  calMonth++;
+  if(calMonth > 11){calMonth=0;calYear++;}
+  renderCalendar();
+}
+
+function calToday(){
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+function exportCalMonth(){
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const monthEvents = calEvents
+    .filter(e => e.date && e.date.startsWith(calYear+'-'+String(calMonth+1).padStart(2,'0')))
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  const lines = [
+    'CUSTODY CALENDAR - ' + months[calMonth] + ' ' + calYear,
+    'Generated: ' + new Date().toLocaleDateString(),
+    'Case: In re Rhodes Children - Respondent: Chelsea Rhodes',
+    '',
+    '--- CUSTODY SCHEDULE ---'
+  ];
+
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  for(let day=1; day<=daysInMonth; day++){
+    const dateKey = getDateKey(calYear, calMonth, day);
+    const custody = getCustody(dateKey);
+    const evs = getEventsForDate(dateKey);
+    const dow = new Date(dateKey+'T12:00:00').toLocaleDateString('en-US',{weekday:'short'});
+    const custodyLabel = custody === 'chelsea' ? 'RESPONDENT' : custody === 'doug' ? 'PETITIONER' : '';
+    if(evs.length){
+      lines.push('\n' + dow + ' ' + dateKey + ' [' + custodyLabel + ']');
+      evs.forEach(e => {
+        lines.push('  - ' + (CAL_LABELS[e.type]||'Event') + ': ' + e.title);
+        if(e.notes) lines.push('    Notes: ' + e.notes);
+        if(e.link) lines.push('    Photos: ' + e.link);
+      });
+    }
+  }
+
+  lines.push('\n--- EVENTS THIS MONTH ---');
+  if(!monthEvents.length) lines.push('No events logged');
+  monthEvents.forEach((e,i) => {
+    const dow = new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const children = [e.ethan&&'Ethan',e.charlotte&&'Charlotte',e.duke&&'Duke'].filter(Boolean).join(', ');
+    lines.push('\n'+(i+1)+'. '+dow);
+    lines.push('Type: '+(CAL_LABELS[e.type]||'Event'));
+    lines.push('Title: '+e.title);
+    if(children) lines.push('Children: '+children);
+    if(e.notes) lines.push('Notes: '+e.notes);
+    if(e.link) lines.push('Photos: '+e.link);
+  });
+
+  dl(lines.join('\n'), 'Calendar_'+months[calMonth]+'_'+calYear+'.txt');
+}
+
+function exportCalAll(){
+  const allSorted = [...calEvents].sort((a,b) => a.date.localeCompare(b.date));
+  const lines = [
+    'COMPLETE EVENT LOG - CHELSEA RHODES',
+    'Generated: ' + new Date().toLocaleDateString(),
+    'Case: In re Rhodes Children - Respondent: Chelsea Rhodes',
+    'This log documents Respondent attendance and involvement at events, medical appointments, school activities, and custody schedule from January 23 2025 onward.',
+    'Total events logged: ' + allSorted.length,
+    '',
+    '--- ALL EVENTS CHRONOLOGICAL ---'
+  ];
+
+  allSorted.forEach((e,i) => {
+    const dow = new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const custody = getCustody(e.date);
+    const custodyLabel = custody === 'chelsea' ? 'Respondent custody day' : custody === 'doug' ? 'Petitioner custody day' : '';
+    const children = [e.ethan&&'Ethan',e.charlotte&&'Charlotte',e.duke&&'Duke'].filter(Boolean).join(', ');
+    lines.push('\n'+(i+1)+'. '+dow+' ['+custodyLabel+']');
+    lines.push('Type: '+(CAL_LABELS[e.type]||'Event'));
+    lines.push('Title: '+e.title);
+    if(children) lines.push('Children present: '+children);
+    if(e.notes) lines.push('Notes: '+e.notes);
+    if(e.link) lines.push('Photo documentation: '+e.link);
+  });
+
+  dl(lines.join('\n'), 'Complete_Event_Log.txt');
 }
 
 </script>
