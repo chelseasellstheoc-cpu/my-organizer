@@ -658,7 +658,7 @@ function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').
 function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -891,7 +891,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -1904,7 +1904,7 @@ function renderEvidence(){
           <div style="font-size:11px;color:#999">${e.type}${e.date?' - '+e.date:''}${e.fileName?' - '+e.fileName:''}</div>
         </div>
         <div class="abtn">
-          <button class="btn btnd" onclick="evidenceItems.splice(${origIdx},1);ctSave();renderEvidence()">Del</button>
+          <button class="btn btne" onclick="openEditEvidence(${origIdx})">Edit</button><button class="btn btnd" onclick="if(confirm('Delete?')){evidenceItems.splice(${origIdx},1);ctSave();renderEvidence()}">Del</button>
         </div>
       </div>
       ${cats?`<div class="bgs" style="margin-top:4px">${cats}</div>`:''}
@@ -2399,6 +2399,34 @@ function toggleEvAnalysis(id){
     el.dataset.expanded='1';
     btn.textContent='Collapse';
   }
+}
+
+function openEditEvidence(i){
+  const e = evidenceItems[i];
+  if(!e) return;
+  editCtx = {type:'evidence', index:i};
+  document.getElementById('mTitle').textContent = 'Edit evidence';
+  document.getElementById('mBody').innerHTML = `
+    <label>Type</label>
+    <select id="eevType">
+      <option>Therapist declaration</option><option>Court filing</option>
+      <option>Police/incident report</option><option>Text message/email</option>
+      <option>Photo/screenshot</option><option>Financial record</option>
+      <option>Witness statement</option><option>Medical record</option>
+      <option>School record</option><option>OFW transcript</option>
+      <option>Attorney correspondence</option><option>Other</option>
+    </select>
+    <label>Date</label><input type="date" id="eevDate" value="${e.date||''}">
+    <label>Title</label><input type="text" id="eevTitle" value="${e.title||''}">
+    <label>Your description / what this shows</label>
+    <textarea id="eevDesc">${e.desc||''}</textarea>
+    <label>Google Drive link</label>
+    <input type="text" id="eevLink" value="${e.driveLink||''}" placeholder="https://drive.google.com/...">
+    <label>Additional notes (add to analysis)</label>
+    <textarea id="eevNotes" placeholder="Add new observations, connections, or context...">${e.notes||''}</textarea>
+  `;
+  document.getElementById('eevType').value = e.type || 'Other';
+  document.getElementById('editModal').classList.add('open');
 }
 
 </script>
