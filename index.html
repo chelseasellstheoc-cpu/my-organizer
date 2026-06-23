@@ -1910,7 +1910,7 @@ function renderEvidence(){
       ${cats?`<div class="bgs" style="margin-top:4px">${cats}</div>`:''}
       ${e.desc?`<div class="lb">${e.desc}</div>`:''}
       ${e.driveLink?`<a href="${e.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:4px">&#128247; View in Google Drive</a>`:''}
-      ${e.analysis?`<div class="lp" style="white-space:pre-wrap;font-size:11px;margin-top:6px">${e.analysis.slice(0,400)}${e.analysis.length>400?'...':''}</div>`:''}
+      ${e.analysis?`<div><div class="lp" style="white-space:pre-wrap;font-size:11px;margin-top:6px" id="evana_${e.id}">${e.analysis.slice(0,400)}${e.analysis.length>400?'...':''}</div>${e.analysis.length>400?`<button onclick="toggleEvAnalysis('${e.id}')" id="evbtn_${e.id}" style="font-size:11px;color:#1a5fa8;background:none;border:none;cursor:pointer;padding:2px 0">Show full analysis</button>`:''}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -2383,6 +2383,22 @@ function exportConnect(){
   if(!window._lastConnectResult) return;
   const items = (window._lastConnectItems||[]).map((i,n)=>`${n+1}. [${i.dateDisplay}] ${i.title}`).join('\n');
   dl('AI CONNECTIONS ANALYSIS\nGenerated: '+new Date().toLocaleDateString()+'\nCase: In re Rhodes Children - Respondent: Chelsea Rhodes\n\nSELECTED ITEMS:\n'+items+'\n\nANALYSIS:\n'+window._lastConnectResult, 'AI_Connections_'+Date.now()+'.txt');
+}
+
+function toggleEvAnalysis(id){
+  const el = document.getElementById('evana_'+id);
+  const btn = document.getElementById('evbtn_'+id);
+  const ev = evidenceItems.find(e=>e.id===id);
+  if(!el || !ev) return;
+  if(el.dataset.expanded==='1'){
+    el.textContent = ev.analysis.slice(0,400)+'...';
+    el.dataset.expanded='0';
+    btn.textContent='Show full analysis';
+  } else {
+    el.textContent = ev.analysis;
+    el.dataset.expanded='1';
+    btn.textContent='Collapse';
+  }
 }
 
 </script>
