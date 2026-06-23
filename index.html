@@ -207,9 +207,11 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
       <button class="tab" onclick="sw('docs')">&#128193; My docs</button>
       <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
+      <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
+      <div class="togrow"><div class="toglbl">Hide invoices &amp; appointments <span class="togsub">Filter out OFW billing and scheduling messages to focus on communication</span></div><label class="tog"><input type="checkbox" id="hideInvoices" onchange="hideInv=this.checked;save();if(allMsgs.length)renderMsgs()"><span class="togs"></span></label></div>
       <div class="togrow"><div class="toglbl">Summer break mode <span class="togsub">6/25-7/20/26 - suspends work-hours flagging</span></div><label class="tog"><input type="checkbox" id="brk" onchange="onBreak=this.checked;save();if(allMsgs.length)renderMsgs()"><span class="togs"></span></label></div>
       <div class="card"><h3>Upload OFW messages</h3><p class="cp">PDF, ZIP, or screenshots. Work-hours messages (Mon-Fri 7:30am-4pm) flagged automatically. All data saves between sessions automatically.</p>
         <div class="uz" onclick="document.getElementById('mIn').click()" id="mDrop"><div class="uzi">&#128228;</div><p class="uzp">Drop files here or click to browse</p><div class="fmts"><span class="fmt">&#128196; PDF</span><span class="fmt">&#128476; ZIP</span><span class="fmt">&#128444; PNG/JPG</span></div></div>
@@ -264,6 +266,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- NON-RESPONSE -->
     <div id="p-nonresponse" class="panel">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="nrSort=this.value;renderNR()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
       <div class="card"><h3>Log a non-response decision</h3><p class="cp">Document every time you choose not to respond. Protects you from being characterized as uncooperative. Edit any entry anytime. Saves automatically.</p>
         <div class="fr"><div><label>Date</label><input type="date" id="nrd"></div><div><label>Time</label><input type="time" id="nrt"></div></div>
         <label>Message you chose not to respond to</label><textarea id="nrm" placeholder="Paste or summarize..."></textarea>
@@ -282,6 +285,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- RELUCTANCE -->
     <div id="p-reluctance" class="panel">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="rlSort=this.value;renderRL()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
       <div class="card"><h3>Log reluctance or self-censorship</h3><p class="cp">Approximate dates are fine and more credible than precise dates entered before a hearing. Edit any entry anytime.</p>
         <div class="fr"><div><label>Date (approximate okay)</label><input type="date" id="rld"></div><div><label>Time</label><input type="time" id="rlt"></div></div>
         <label>Child</label><select id="rlc"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
@@ -351,6 +355,40 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="docList"></div>
     </div>
+    <!-- CASE OVERVIEW -->
+    <div id="p-overview" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#1a3a6b,#2a5fa8)">
+        <h2>Case Overview &amp; Evidence Synthesis</h2>
+        <p>AI analysis of all your evidence cross-referenced against Dr. Kelley findings and your July 30 hearing</p>
+      </div>
+      <div class="card">
+        <h3>Generate comprehensive case analysis</h3>
+        <p class="cp">The AI will analyze everything in your app - messages, video logs, reluctance entries, non-response log, duration patterns, and uploaded documents - and produce a structured narrative tied to your hearing arguments. Takes 30-60 seconds.</p>
+        <div class="ib"><strong>Tip:</strong> The more evidence logged before running this, the more comprehensive the output. Run again after adding new evidence.</div>
+        <label>Focus area (optional)</label>
+        <select id="ovFocus" style="margin-bottom:8px">
+          <option value="">Full case overview</option>
+          <option value="kelley">Dr. Kelley findings corroboration only</option>
+          <option value="ethan">Ethan alienation specifically</option>
+          <option value="pattern">Communication pattern analysis</option>
+          <option value="primary">Primary parent evidence</option>
+          <option value="tdvro">TDVRO and domestic violence evidence</option>
+        </select>
+        <label>Additional context for AI (optional)</label>
+        <textarea id="ovContext" style="min-height:60px" placeholder="e.g. Focus especially on Ethan off-camera incidents. Hearing is July 30 2026. Dr. Kelley will testify."></textarea>
+        <button class="btn btnp" onclick="generateOverview()" id="ovBtn">Generate case overview</button>
+        <div style="font-size:12px;color:#999;margin-top:6px" id="ovStatus"></div>
+      </div>
+      <div id="ovResult"></div>
+      <div class="es" id="ovExp" style="display:none">
+        <h3>Export</h3>
+        <div class="eo">
+          <button class="btn btns" onclick="exportOverview()">&#128196; Export full analysis</button>
+          <button class="btn btns" onclick="copyOverview()">&#128203; Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+
     <!-- DOC HUB -->
     <div id="p-hub" class="panel">
       <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Upload any document and have AI analyze it. Supports PDFs, images, screenshots, Word docs, OFW transcripts, police reports, medical records, school records, attorney letters, and more. All documents stay in your browser.</p>
@@ -425,16 +463,16 @@ let API_KEY=null,GEMINI_KEY=null,onBreak=false;
 const WS=7.5,WE=16,WD=[1,2,3,4,5];
 let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
 let nrE=[],rlE=[],durE=[],docE=[],clState={};
-let aMF='all',mVM={},vTr={},mSort='date-desc',mSearch='';
+let aMF='all',mVM={},vTr={},mSort='date-desc',mSearch='',hideInv=false,nrSort='desc',rlSort='desc',durSort='desc';
 const selNR=new Set();
 let editCtx=null;
 
 // PERSISTENCE
-function save(){try{localStorage.setItem('eo',JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,hubDocs,autoCallLog,clState,onBreak,v:4}));showSave();}catch(e){console.error(e);}}
-function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON.parse(r);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;if(onBreak&&document.getElementById('brk'))document.getElementById('brk').checked=true;}catch(e){console.error(e);}}
+function save(){try{localStorage.setItem('eo',JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,hubDocs,autoCallLog,clState,onBreak,hideInv,v:5}));showSave();}catch(e){console.error(e);}}
+function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON.parse(r);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;if(onBreak&&document.getElementById('brk'))document.getElementById('brk').checked=true;}catch(e){console.error(e);}}
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
-function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
+function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
 function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();}
 
 // KEY
@@ -647,6 +685,8 @@ function renderML(){
   if(aMF==='Work hours')f=allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent));
   else if(aMF==='Late night')f=allMsgs.filter(m=>isEx(m.sender)&&isLN(m.timestamp_sent));
   else if(aMF!=='all')f=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(aMF));
+  // Invoice/appointment filter
+  if(hideInv){const invKeys=['invoice','payment','appointment','billing','receipt','paid','due','balance','schedule','appointment','reminder'];f=f.filter(m=>{const body=(m.body||'').toLowerCase();const subj=(m.subject||'').toLowerCase();return!invKeys.some(k=>body.startsWith(k)||subj.includes(k)||body.includes('invoice #')||body.includes('appointment on'));});}
   // Search filter
   if(mSearch){const q=mSearch.toLowerCase();f=f.filter(m=>(m.body||'').toLowerCase().includes(q)||(m.sender||'').toLowerCase().includes(q)||(m.court_summary||'').toLowerCase().includes(q)||(m.subject||'').toLowerCase().includes(q));}
   // Sort
@@ -694,12 +734,12 @@ const RP={boundary:'Respondent did not respond in order to maintain a documented
 const RL2={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
 function togR(btn,r){if(selNR.has(r)){selNR.delete(r);btn.classList.remove('sel');}else{selNR.add(r);btn.classList.add('sel');}}
 function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!m||!selNR.size){alert('Fill in date, message, and at least one reason.');return;}nrE.unshift({date:d,time:t,msg:m,notes:n,reasons:[...selNR]});['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
-function renderNR(){document.getElementById('nrList').innerHTML=nrE.length?nrE.map((e,i)=>`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">"${e.msg}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`).join(''):"<div class='empty'>No entries yet.</div>";}
+function renderNR(){const nrSorted=nrSort==='asc'?[...nrE].reverse():nrE;document.getElementById('nrList').innerHTML=nrSorted.length?nrSorted.map((e)=>{const i=nrE.indexOf(e);return`<div class="le bl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span>${e.reasons.map(r=>`<span class="bg bb">${RL2[r]||r}</span>`).join('')}</div><div class="abtn"><button class="btn btne" onclick="openENR(${i})">Edit</button><button class="btn btnd" onclick="nrE.splice(${i},1);save();renderNR()">Del</button></div></div><div class="lb">"${e.msg}"</div>${e.notes?`<div class="lb" style="color:#bbb">Context: ${e.notes}</div>`:''}<div class="lp">${e.reasons.map(r=>RP[r]||'').join(' ')}</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
 function openENR(i){const e=nrE[i];editCtx={type:'nr',index:i};document.getElementById('mTitle').textContent='Edit non-response entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>Message</label><textarea id="em">${e.msg}</textarea><label>Context</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // RELUCTANCE
 function addRL(){const d=document.getElementById('rld').value,t=document.getElementById('rlt').value,c=document.getElementById('rlc').value,w=document.getElementById('rlw').value.trim(),ty=document.getElementById('rlty').value,ctx=document.getElementById('rlctx').value.trim();if(!d||!c||!w){alert('Fill in date, child, and what happened.');return;}rlE.unshift({date:d,time:t,child:c,words:w,type:ty,context:ctx});['rld','rlt','rlw','rlctx'].forEach(id=>document.getElementById(id).value='');document.getElementById('rlc').value='';document.getElementById('rlty').value='';save();renderRL();}
-function renderRL(){const CC={Charlotte:'bg2',Duke:'bp',Ethan:'br'};document.getElementById('rlList').innerHTML=rlE.length?rlE.map((e,i)=>`<div class="le pl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span><span class="bg ${CC[e.child]||'bgr'}">${e.child}</span>${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}</div><div class="abtn"><button class="btn btne" onclick="openERL(${i})">Edit</button><button class="btn btnd" onclick="rlE.splice(${i},1);save();renderRL()">Del</button></div></div><div class="lb">"${e.words}"</div>${e.context?`<div class="lb" style="color:#bbb">Context: ${e.context}</div>`:''}<div class="lp">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'"':''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div></div>`).join(''):"<div class='empty'>No entries yet.</div>";}
+function renderRL(){const CC={Charlotte:'bg2',Duke:'bp',Ethan:'br'};const rlSorted=rlSort==='asc'?[...rlE].reverse():rlE;document.getElementById('rlList').innerHTML=rlSorted.length?rlSorted.map((e)=>{const i=rlE.indexOf(e);return `<div class="le pl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span><span class="bg ${CC[e.child]||'bgr'}">${e.child}</span>${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}</div><div class="abtn"><button class="btn btne" onclick="openERL(${i})">Edit</button><button class="btn btnd" onclick="rlE.splice(${i},1);save();renderRL()">Del</button></div></div><div class="lb">"${e.words}"</div>${e.context?`<div class="lb" style="color:#bbb">Context: ${e.context}</div>`:''}<div class="lp">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'"':''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
 function openERL(i){const e=rlE[i];editCtx={type:'rl',index:i};document.getElementById('mTitle').textContent='Edit reluctance entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>What happened</label><textarea id="ew">${e.words}</textarea><label>Context</label><textarea id="ectx" style="min-height:40px">${e.context||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // DURATION
@@ -888,6 +928,157 @@ function exportHub(){
     lines.push('\n'+'-'.repeat(40));
   });
   dl(lines.join('\n'),'Document_Index.txt');
+}
+
+// CASE OVERVIEW
+let overviewText = '';
+
+function buildEvidenceSummary(){
+  const exM = allMsgs.filter(m=>isEx(m.sender));
+  const wh = exM.filter(m=>isDWH(m.timestamp_sent));
+  const ln = exM.filter(m=>isLN(m.timestamp_sent));
+  const hiMsg = allMsgs.filter(m=>m.severity==='high');
+  const tactics = {};
+  allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')tactics[t]=(tactics[t]||0)+1;}));
+
+  // Build message summaries (sample high severity + work hours)
+  const samples = [...hiMsg.slice(0,15), ...wh.slice(0,10)];
+  const msgSamples = [...new Set(samples)].slice(0,20).map(m=>
+    `[${m.timestamp_sent||'?'}] From ${m.sender}: "${(m.body||'').slice(0,120)}..." Court summary: ${m.court_summary||'pending'}`
+  ).join('\n');
+
+  // NR entries
+  const nrSamples = nrE.slice(0,10).map(e=>`[${e.date}] Non-response to: "${(e.msg||'').slice(0,80)}" Reasons: ${e.reasons.join(', ')}`).join('\n');
+
+  // RL entries  
+  const rlSamples = rlE.slice(0,15).map(e=>`[${e.date}] ${e.child}: "${e.words}" Type: ${e.type||'reluctance'} Context: ${e.context||'none'}`).join('\n');
+
+  // Duration data
+  const {avgDad,avgMom} = getDurData();
+  const durSummary = avgDad && avgMom ? `His calls avg ${avgDad.toFixed(1)}min vs your calls avg ${avgMom.toFixed(1)}min (${(avgDad/avgMom).toFixed(1)}x disparity across ${durE.length+autoCallLog.length} logged calls)` : `${durE.length+autoCallLog.length} calls logged`;
+
+  // Video summaries
+  const vidSummaries = allVids.slice(0,10).map(v=>
+    `[${v.call_date||'?'}] ${v.filename}: ${v.court_summary||''} Refusals: ${(v.refusal_incidents||[]).length}. Background adults: ${(v.background_incidents||[]).length}. Interrogations: ${(v.interrogation_incidents||[]).length}.`
+  ).join('\n');
+
+  // Hub docs
+  const hubSummaries = hubDocs.slice(0,15).map(d=>`[${d.date||'?'}] ${d.category||'doc'}: ${d.title}. Notes: ${(d.notes||'').slice(0,100)}`).join('\n');
+
+  return {
+    stats: {
+      totalMsgs: allMsgs.length, highSeverity: hiMsg.length,
+      workHours: wh.length, lateNight: ln.length,
+      nrCount: nrE.length, rlCount: rlE.length,
+      ethanRL: rlE.filter(e=>e.child==='Ethan').length,
+      vidCount: allVids.length, hubCount: hubDocs.length,
+      tactics, durSummary
+    },
+    msgSamples, nrSamples, rlSamples, vidSummaries, hubSummaries
+  };
+}
+
+async function generateOverview(){
+  if(!API_KEY){alert('Please connect your Anthropic API key first.');return;}
+  const btn=document.getElementById('ovBtn');
+  btn.disabled=true;btn.innerHTML="<span class='sp'></span>Analyzing all evidence...";
+  document.getElementById('ovStatus').textContent='Building evidence summary...';
+  document.getElementById('ovResult').innerHTML='';
+
+  const focus = document.getElementById('ovFocus').value;
+  const extraContext = document.getElementById('ovContext').value.trim();
+  const ev = buildEvidenceSummary();
+
+  const focusInstructions = {
+    kelley: 'Focus specifically on corroborating Dr. Kelley four documented alienation methods: (1) thumb up/down signals during calls, (2) saying sorry when children go to mother home, (3) children using father exact language/phrases, (4) coached journal entries. Show how the evidence supports each finding.',
+    ethan: 'Focus specifically on Ethan alienation. He is the oldest child who has been living with the father for approximately 6 months after documented intimidation. He once started to say I miss and stopped himself. Analyze all evidence relating to Ethan self-censorship, reluctance, and alienation from his mother.',
+    pattern: 'Focus on the communication pattern analysis. Show the pattern of harassment through OFW, work-hours violations, response patterns, and how the messaging pattern itself constitutes a control tactic.',
+    primary: 'Focus on evidence establishing Chelsea Rhodes as the primary parent. Look for evidence of her greater involvement in education, medical care, daily activities, emotional attunement, and the children seeking her out.',
+    tdvro: 'Focus on domestic violence and TDVRO evidence. The TDVRO was in effect until May 19 2025. Analyze pre-TDVRO interrogation of children about mother home and activities, and post-TDVRO continuation of coercive behaviors through different means.',
+    '': 'Provide a comprehensive overview covering all aspects of the case.'
+  };
+
+  const prompt = `You are an expert family law paralegal analyzing evidence for a custody hearing on July 30 2026.
+
+CASE: In re Rhodes Children
+Petitioner (father): Doug Rhodes  
+Respondent (mother): Chelsea Rhodes
+Children: Ethan (oldest, living with father ~6 months after documented intimidation), Charlotte, Duke
+Custody evaluator: Dr. Kelley (testifying July 30) - documented 4 alienation methods
+TDVRO was in effect until May 19 2025
+Respondent works Mon-Fri 7:30am-4pm
+
+DR. KELLEY DOCUMENTED ALIENATION METHODS:
+1. Thumb up/down signals during video calls to report on mother home
+2. Saying "sorry" when children have to go to mother home  
+3. Children using father exact language/phrases (coaching)
+4. Coached journal entries with dates beyond developmental capacity
+
+EVIDENCE STATISTICS:
+- Total OFW messages analyzed: ${ev.stats.totalMsgs}
+- High severity messages: ${ev.stats.highSeverity}
+- Messages during work hours (boundary violations): ${ev.stats.workHours}
+- Late night messages: ${ev.stats.lateNight}
+- Non-response log entries: ${ev.stats.nrCount}
+- Reluctance/self-censorship entries: ${ev.stats.rlCount} (${ev.stats.ethanRL} Ethan-specific)
+- Video recordings analyzed: ${ev.stats.vidCount}
+- Additional documents uploaded: ${ev.stats.hubCount}
+- Call duration: ${ev.stats.durSummary}
+- Documented behavior patterns: ${JSON.stringify(ev.stats.tactics)}
+
+SAMPLE HIGH-SEVERITY MESSAGES:
+${ev.msgSamples||'None yet logged'}
+
+RELUCTANCE AND SELF-CENSORSHIP LOG:
+${ev.rlSamples||'None yet logged'}
+
+NON-RESPONSE DECISIONS:
+${ev.nrSamples||'None yet logged'}
+
+VIDEO ANALYSIS SUMMARIES:
+${ev.vidSummaries||'None yet analyzed'}
+
+ADDITIONAL DOCUMENTS:
+${ev.hubSummaries||'None yet uploaded'}
+
+${extraContext ? 'ADDITIONAL CONTEXT FROM RESPONDENT:\n'+extraContext : ''}
+
+TASK: ${focusInstructions[focus]||focusInstructions['']}
+
+Produce a comprehensive structured analysis with these sections:
+1. EXECUTIVE SUMMARY (3-4 sentences for attorney briefing)
+2. STRONGEST EVIDENCE (top 5-7 specific documented incidents with dates where available)
+3. DR. KELLEY FINDINGS - CORROBORATION (for each of the 4 methods, show what evidence supports it)
+4. PATTERNS AND THEMES (recurring behaviors that establish pattern not isolated incidents)
+5. TIMELINE OF ESCALATION (chronological narrative of how the situation developed)
+6. GAPS IN EVIDENCE (what is missing that would strengthen the case)
+7. RECOMMENDED ACTIONS BEFORE JULY 30 (specific steps to take in the next 38 days)
+8. STATUTORY FRAMEWORK (which FC sections are most supported by this evidence)
+
+Write in plain language suitable for sharing with an attorney. Be specific and reference actual evidence. Do not use clinical labels like DARVO in sections intended for court - use behavioral descriptions instead.`;
+
+  try{
+    document.getElementById('ovStatus').textContent='Generating analysis (this may take 30-60 seconds)...';
+    const result = await callAPI([{role:'user',content:prompt}], 4000);
+    overviewText = result;
+    document.getElementById('ovResult').innerHTML = '<div class="card" style="white-space:pre-wrap;font-size:13px;line-height:1.8;color:#1a1a1a">'+result+'</div>';
+    document.getElementById('ovExp').style.display='block';
+    document.getElementById('ovStatus').textContent='Analysis complete. Export or copy below.';
+  }catch(e){
+    document.getElementById('ovResult').innerHTML='<div class="err">Error: '+e.message+'</div>';
+    document.getElementById('ovStatus').textContent='';
+  }
+  btn.disabled=false;btn.innerHTML='Regenerate analysis';
+}
+
+function exportOverview(){
+  if(!overviewText){alert('Generate the overview first.');return;}
+  dl('CASE OVERVIEW AND EVIDENCE SYNTHESIS\nGenerated: '+new Date().toLocaleDateString()+'\nCase: In re Rhodes Children - Respondent: Chelsea Rhodes\nHearing: July 30 2026\n\n'+overviewText,'Case_Overview_'+new Date().toISOString().slice(0,10)+'.txt');
+}
+
+function copyOverview(){
+  if(!overviewText){alert('Generate the overview first.');return;}
+  navigator.clipboard.writeText(overviewText).then(()=>alert('Copied to clipboard'));
 }
 
 </script>
