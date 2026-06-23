@@ -880,7 +880,17 @@ Reply ONLY with valid JSON. No markdown, no explanation.`;
 function autoLog(v){(v.segments||[]).forEach(seg=>{if(!seg.duration_seconds||seg.duration_seconds<30)return;const isDad=seg.speaker_on_call?.toLowerCase().includes('doug');const isMom=seg.speaker_on_call?.toLowerCase().includes('chelsea');const isEt=seg.speaker_on_call?.toLowerCase().includes('ethan');const type=isDad?'dad':isMom?'mom':isEt?'ethan':null;if(!type)return;autoCallLog.push({date:v.call_date||'Unknown',type,mins:Math.round(seg.duration_seconds/60*10)/10,ender:'Unknown',source:v.filename||'',auto:true});});}
 
 // TIMING
-function parsTS(ts){if(!ts)return null;const m=ts.match(/(\d{2})\/(\d{2})\/(\d{4})\s+at\s+(\d{2}):(\d{2})\s+(AM|PM)/i);if(!m)return null;let h=parseInt(m[4]);const mn=parseInt(m[5]);const ap=m[6].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,mn);}
+function parsTS(ts){
+  if(!ts)return null;
+  // Try new OFW format: "06/21/2026 7:06 PM" (no "at")
+  let m=ts.match(/(\d{1,2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s+(AM|PM)/i);
+  // Try old OFW format: "01/15/2025 at 3:42 PM"
+  if(!m)m=ts.match(/(\d{1,2})\/(\d{2})\/(\d{4})\s+at\s+(\d{1,2}):(\d{2})\s+(AM|PM)/i);
+  if(!m)return null;
+  let h=parseInt(m[4]);const mn=parseInt(m[5]);const ap=m[6].toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;
+  return new Date(parseInt(m[3]),parseInt(m[1])-1,parseInt(m[2]),h,mn);
+}
 function isDWH(ts){if(onBreak)return false;const d=parsTS(ts);if(!d)return false;if(!WD.includes(d.getDay()))return false;const f=d.getHours()+(d.getMinutes()/60);return f>=WS&&f<WE;}
 function isLN(ts){const d=parsTS(ts);if(!d)return false;const h=d.getHours();return h>=21||h<7;}
 function getH(ts){const d=parsTS(ts);return d?d.getHours():null;}
