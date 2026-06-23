@@ -206,7 +206,6 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('gaps')">&#9888; Order gaps</button>
       <button class="tab" onclick="sw('hearing')">&#128197; 7/30 Hearing</button>
       <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
-      <button class="tab" onclick="sw('docs')">&#128193; My docs</button>
       <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
       <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
@@ -401,8 +400,11 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <input type="text" id="calEvTitle" placeholder="e.g. Charlotte spring concert, Ethan dentist, IEP meeting">
         <label>Notes / outcome</label>
         <textarea id="calEvNotes" style="min-height:50px" placeholder="e.g. I attended. Doug did not. Teacher confirmed I am primary contact."></textarea>
-        <label>Google Drive photo link (optional)</label>
-        <input type="text" id="calEvLink" placeholder="https://drive.google.com/...">
+        <label>Google Drive photo/document link (optional)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="calEvLink" placeholder="https://drive.google.com/..." style="flex:1;margin-bottom:0">
+          <a id="calEvLinkOpen" href="#" target="_blank" onclick="this.href=document.getElementById('calEvLink').value" class="btn btns" style="flex-shrink:0;font-size:11px">Open</a>
+        </div><div style="height:8px"></div>
         <label>Children present</label>
         <div style="display:flex;gap:10px;margin-bottom:8px">
           <label style="display:flex;align-items:center;gap:4px;font-size:13px;color:#1a1a1a"><input type="checkbox" id="calChEthan"> Ethan</label>
@@ -489,7 +491,11 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <p class="uzp" style="font-size:12px">Drop file or click to browse</p>
         </div>
         <input type="file" id="evFile" accept=".pdf,image/*,.txt" style="display:none" onchange="onEvFile(this)">
-        <div id="evFileInfo" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+        <div id="evFileInfo" style="font-size:12px;color:#666;margin-bottom:4px"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:12px;color:#999">or</span>
+          <input type="text" id="evDriveLink" placeholder="Paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="if(this.value){document.getElementById('evAnalyzeBtn').style.display='inline-flex';document.getElementById('evFileInfo').textContent='Google Drive link saved'}">
+        </div>
         <label>Your description of what this shows</label>
         <textarea id="evDesc" placeholder="e.g. Shows Doug threatening to take the children if I did not comply. This happened during the period when he controlled all finances."></textarea>
         <label>Coercive control categories (check all that apply)</label>
@@ -551,7 +557,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 
     <!-- DOC HUB -->
     <div id="p-hub" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Upload any document and have AI analyze it. Supports PDFs, images, screenshots, Word docs, OFW transcripts, police reports, medical records, school records, attorney letters, and more. All documents stay in your browser.</p>
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Your central document hub. Upload any document for AI analysis, or add reference entries with Google Drive links. Replaces the My Docs tab. Supports PDFs, images, screenshots, Word docs, OFW transcripts, police reports, medical records, school records, attorney letters, and more. All documents stay in your browser.</p>
       <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
         <input type="text" id="hubSearch" placeholder="Search all documents..." style="flex:1;min-width:200px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderHub()">
         <select id="hubCat" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderHub()">
@@ -593,7 +599,11 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <div class="fmts"><span class="fmt">PDF</span><span class="fmt">PNG/JPG</span><span class="fmt">Text</span></div>
         </div>
         <input type="file" id="hubFile" accept=".pdf,image/*,.txt,.doc,.docx" style="display:none" onchange="onHubFile(this)">
-        <div id="hubFileInfo" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+        <div id="hubFileInfo" style="font-size:12px;color:#666;margin-bottom:4px"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:12px;color:#999">or</span>
+          <input type="text" id="hubDriveLink" placeholder="Paste Google Drive link..." style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
+        </div>
         <label>Your notes / key points</label>
         <textarea id="hubNotes" placeholder="e.g. Contains Doug asking what we had for dinner 3 times. Ethan seems coached. See timestamp 4:32."></textarea>
         <label>Ask AI to analyze this document (optional)</label>
@@ -1351,7 +1361,7 @@ function renderCalendar(){
     const custodyLabel = custody === 'chelsea' ? 'Your night' : custody === 'doug' ? 'His night' : '';
 
     const eventDots = events.slice(0,4).map(e =>
-      `<div style="font-size:9px;padding:1px 4px;border-radius:3px;background:${CAL_COLORS[e.type]||'#378ADD'};color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${e.title||CAL_LABELS[e.type]||'Event'}</div>`
+      `<div onclick="event.stopPropagation();openCalEvent('${e.id}')" style="font-size:9px;padding:1px 4px;border-radius:3px;background:${CAL_COLORS[e.type]||'#378ADD'};color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;cursor:pointer">${e.title||CAL_LABELS[e.type]||'Event'}</div>`
     ).join('');
 
     html += `<div onclick="openCalDay('${dateKey}')" style="min-height:70px;border-radius:4px;padding:4px;cursor:pointer;border:${isToday?'2px solid #1a1a1a':'1px solid #e5e5e0'};background:${custodyBg};position:relative" onmouseover="this.style.background='#f0f0ea'" onmouseout="this.style.background='${custodyBg}'">
@@ -1730,11 +1740,12 @@ function addEvidence(){
     categories: getSelectedCC(),
     analysis: null,
     fileName: evFileData?.name || null,
+    driveLink: document.getElementById('evDriveLink')?.value.trim() || null,
     addedAt: new Date().toISOString()
   };
   evidenceItems.unshift(ev);
   evFileData = null;
-  ['evTitle','evDate','evDesc'].forEach(id=>document.getElementById(id).value='');
+  ['evTitle','evDate','evDesc','evDriveLink'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('evType').value = '';
   document.getElementById('evFileInfo').textContent = '';
   document.getElementById('evAnalyzeBtn').style.display = 'none';
@@ -1869,6 +1880,7 @@ function renderEvidence(){
       </div>
       ${cats?`<div class="bgs" style="margin-top:4px">${cats}</div>`:''}
       ${e.desc?`<div class="lb">${e.desc}</div>`:''}
+      ${e.driveLink?`<a href="${e.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:4px">&#128247; View in Google Drive</a>`:''}
       ${e.analysis?`<div class="lp" style="white-space:pre-wrap;font-size:11px;margin-top:6px">${e.analysis.slice(0,400)}${e.analysis.length>400?'...':''}</div>`:''}
     </div>`;
   }).join('');
