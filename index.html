@@ -2070,17 +2070,16 @@ function renderPatternTimeline(){
   const el = document.getElementById('patTimeline');
   if(!allMsgs.length){el.innerHTML='<div class="empty">Analyze messages first.</div>';return;}
 
-  // Group messages by month and count tactics
+  // Group messages by month
   const monthly = {};
   allMsgs.forEach(m => {
     const d = parsTS(m.timestamp_sent);
     if(!d) return;
     const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    if(!monthly[key]) monthly[key] = {total:0, high:0, workHours:0, tactics:{}};
+    if(!monthly[key]) monthly[key] = {total:0, high:0, workHours:0};
     monthly[key].total++;
     if(m.severity==='high') monthly[key].high++;
     if(isEx(m.sender) && isDWH(m.timestamp_sent)) monthly[key].workHours++;
-    (m.tactics_clinical||[]).forEach(t=>{if(t!=='Neutral')monthly[key].tactics[t]=(monthly[key].tactics[t]||0)+1;});
   });
 
   const months = Object.keys(monthly).sort();
@@ -2088,30 +2087,62 @@ function renderPatternTimeline(){
 
   const maxTotal = Math.max(...months.map(k=>monthly[k].total));
 
+  // Build court date markers from calendar events
+  const courtDates = calEvents
+    .filter(e => e.type === 'event-court' && e.date)
+    .map(e => e.date.slice(0,7)); // YYYY-MM
+
+  // Build exchange/holiday markers - find months with Ethan dinner entries
+  const ethanMonths = new Set(calEvents
+    .filter(e => e.type === 'event-ethan' && e.date)
+    .map(e => e.date.slice(0,7)));
+
+  // Key events from calendar (non-preloaded, non-custody, non-dinner)
+  const keyEventsByMonth = {};
+  calEvents
+    .filter(e => e.date && !e.preloaded && e.type !== 'event-ethan')
+    .forEach(e => {
+      const k = e.date.slice(0,7);
+      if(!keyEventsByMonth[k]) keyEventsByMonth[k] = [];
+      keyEventsByMonth[k].push(e.title);
+    });
+
   const html = '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem">' +
-    '<h3 style="font-size:14px;font-weight:600;margin-bottom:4px">Communication pattern timeline</h3>' +
-    '<p style="font-size:11px;color:#888;margin-bottom:1rem">Monthly volume of messages from Petitioner. Red = high severity. Orange = sent during your work hours.</p>' +
-    '<div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #e5e5e0">' +
+    '<h3 style="font-size:14px;font-weight:600;margin-bottom:2px">Communication pattern timeline</h3>' +
+    '<p style="font-size:11px;color:#888;margin-bottom:1rem">Monthly message volume with court dates and key events marked. Spikes near court dates or exchanges may indicate intentional escalation.</p>' +
+    '<div style="display:flex;align-items:flex-end;gap:3px;height:140px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #e5e5e0;position:relative">' +
     months.map(k => {
       const d = monthly[k];
-      const h = Math.round((d.total/maxTotal)*100);
-      const hiH = Math.round((d.high/maxTotal)*100);
-      const whH = Math.round((d.workHours/maxTotal)*100);
+      const h = Math.max(4, Math.round((d.total/maxTotal)*110));
+      const hiH = Math.round((d.high/maxTotal)*110);
+      const whH = Math.round((d.workHours/maxTotal)*110);
       const label = k.slice(5) + '/' + k.slice(2,4);
-      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px" title="' + k + ': ' + d.total + ' messages, ' + d.high + ' high severity, ' + d.workHours + ' work hours">' +
-        '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:110px;gap:1px">' +
-        (hiH ? '<div style="width:100%;height:' + hiH + 'px;background:#c0392b;border-radius:2px 2px 0 0;min-height:2px"></div>' : '') +
-        (whH ? '<div style="width:100%;height:' + Math.max(0,whH-hiH) + 'px;background:#e67e22;min-height:' + (d.workHours?'2':'0') + 'px"></div>' : '') +
-        '<div style="width:100%;height:' + Math.max(0,h-hiH-Math.max(0,whH-hiH)) + 'px;background:#ddd;min-height:2px"></div>' +
+      const isCourt = courtDates.includes(k);
+      const hasEvents = keyEventsByMonth[k];
+      const isEthan = ethanMonths.has(k);
+      const tooltipParts = [`${d.total} messages`,d.high?`${d.high} high severity`:'',d.workHours?`${d.workHours} work-hours`:'',isCourt?'COURT DATE':'',(hasEvents||[]).slice(0,2).join(', ')].filter(Boolean);
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative" title="' + k + ': ' + tooltipParts.join(' | ') + '">' +
+        (isCourt ? '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:#8e44ad;font-weight:700;white-space:nowrap;background:#f8f0ff;padding:1px 3px;border-radius:3px">COURT</div>' : '') +
+        (hasEvents ? '<div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:#1D9E75;font-weight:600;white-space:nowrap" title="'+hasEvents.join(', ')+'">&#9733;</div>' : '') +
+        '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:110px;gap:1px' + (isCourt?';border:1px solid #8e44ad;border-bottom:none;background:rgba(142,68,173,0.04)':'') + '">' +
+        (hiH ? '<div style="width:100%;height:'+Math.min(hiH,110)+'px;background:#c0392b;border-radius:2px 2px 0 0;min-height:2px"></div>' : '') +
+        (whH ? '<div style="width:100%;height:'+Math.max(0,Math.min(whH,110)-hiH)+'px;background:#e67e22;min-height:'+(d.workHours?'2':'0')+'px"></div>' : '') +
+        '<div style="width:100%;height:'+Math.max(0,h-hiH-Math.max(0,whH-hiH))+'px;background:#ddd;min-height:2px"></div>' +
         '</div>' +
-        '<div style="font-size:8px;color:#888;transform:rotate(-45deg);margin-top:4px;white-space:nowrap">' + label + '</div>' +
+        '<div style="font-size:8px;color:' + (isCourt?'#8e44ad':'#888') + ';transform:rotate(-45deg);margin-top:4px;white-space:nowrap;font-weight:'+(isCourt?'700':'400')+'">' + label + '</div>' +
         '</div>';
     }).join('') +
     '</div>' +
-    '<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">' +
+    '<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;align-items:center">' +
     '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#c0392b;border-radius:2px;display:inline-block"></span>High severity</span>' +
     '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#e67e22;border-radius:2px;display:inline-block"></span>Work-hours messages</span>' +
     '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#ddd;border-radius:2px;display:inline-block"></span>Other messages</span>' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;border:1px solid #8e44ad;background:rgba(142,68,173,0.04);display:inline-block"></span>Court date month</span>' +
+    '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="color:#1D9E75;font-size:12px">&#9733;</span>Calendar event</span>' +
+    '</div>' +
+    '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0ea">' +
+    '<p style="font-size:11px;color:#888;margin-bottom:6px"><strong>Key observation:</strong> Hover over any bar to see details. Spikes in high-severity messages (red) or work-hours messages (orange) immediately before court dates (purple) may indicate intentional escalation designed to provoke a response before hearings.</p>' +
+    (courtDates.length ? '<p style="font-size:11px;color:#8e44ad">Court dates in this period: ' + courtDates.join(', ') + '</p>' : '') +
     '</div>' +
     '</div>';
 
