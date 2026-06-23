@@ -209,6 +209,8 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('hub')">&#128228; Doc hub</button>
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
       <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
+      <button class="tab" onclick="sw('contacts')">&#128222; Contacts</button>
+      <button class="tab" onclick="sw('evidence')">&#128274; Evidence</button>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
@@ -311,7 +313,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="durList"></div>
       <p class="stitle">&#128336; Message timing patterns</p>
-      <p style="font-size:12px;color:#666;margin-bottom:.75rem;line-height:1.5">Petitioner has repeatedly requested no non-urgent contact during work hours (Mon-Fri 7:30am-4pm). This section documents that pattern.</p>
+      <p style="font-size:12px;color:#666;margin-bottom:.75rem;line-height:1.5">Respondent has repeatedly requested no non-urgent contact during work hours (Mon-Fri 7:30am-4pm). This section documents that pattern.</p>
       <div id="timingStats"><div class="empty">Analyze messages first.</div></div>
       <p class="stitle" style="margin-top:1rem">&#128202; His messages by hour</p>
       <p style="font-size:11px;color:#888;margin-bottom:6px">Orange = your work hours (7:30am-4pm)</p>
@@ -418,6 +420,98 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         </div>
       </div>
       <div id="calEventList"></div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div id="p-contacts" class="panel">
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Key contacts for your case. All fields are editable. Contact logs track attorney calls and therapy sessions.</p>
+      <div id="contactList"></div>
+      <div class="card" style="margin-top:1rem">
+        <h3>Add a contact</h3>
+        <div class="fr">
+          <div><label>Role</label><select id="ctRole"><option>My attorney</option><option>Opposing attorney</option><option>Ethan attorney</option><option>Judge</option><option>Therapist (Ethan)</option><option>My therapist</option><option>Custody evaluator</option><option>Court-appointed expert</option><option>Witness</option><option>Other</option></select></div>
+          <div><label>Name</label><input type="text" id="ctName" placeholder="Full name"></div>
+        </div>
+        <div class="fr">
+          <div><label>Firm / Practice</label><input type="text" id="ctFirm" placeholder="Firm or practice name"></div>
+          <div><label>Phone</label><input type="text" id="ctPhone" placeholder="(xxx) xxx-xxxx"></div>
+        </div>
+        <div class="fr">
+          <div><label>Email</label><input type="text" id="ctEmail" placeholder="email@example.com"></div>
+          <div><label>Address</label><input type="text" id="ctAddress" placeholder="Street, City, State ZIP"></div>
+        </div>
+        <label>Notes</label>
+        <textarea id="ctNotes" style="min-height:50px" placeholder="e.g. Appointed by court per FOAH para 6. Commenced sessions April 2026."></textarea>
+        <button class="btn btnp" onclick="addContact()">+ Add contact</button>
+      </div>
+    </div>
+
+    <!-- EVIDENCE -->
+    <div id="p-evidence" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#4a1a1a,#8b2020)">
+        <h2>&#128274; Non-OFW Evidence</h2>
+        <p>Coercive control, abuse, and PTSD documentation outside of OFW</p>
+      </div>
+      <p style="font-size:13px;color:#666;margin-bottom:1rem;margin-top:1rem;line-height:1.5">Upload text messages, emails, photos, declarations, police reports, financial records, voicemails, and any other evidence establishing coercive control, abuse, and its impact on you. The AI will analyze each document for patterns of coercive control and connect findings to your case.</p>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <input type="text" id="evSearch" placeholder="Search evidence..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderEvidence()">
+        <select id="evCatFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderEvidence()">
+          <option value="">All types</option>
+          <option>Therapist declaration</option>
+          <option>Text message</option>
+          <option>Email</option>
+          <option>Photo</option>
+          <option>Police/incident report</option>
+          <option>Financial record</option>
+          <option>Voicemail/audio</option>
+          <option>Witness statement</option>
+          <option>Medical record</option>
+          <option>Other</option>
+        </select>
+        <select id="evSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderEvidence()">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="type">By type</option>
+        </select>
+      </div>
+      <div class="card">
+        <h3>Add evidence</h3>
+        <div class="fr">
+          <div><label>Type</label><select id="evType"><option value="">Select...</option><option>Therapist declaration</option><option>Text message</option><option>Email</option><option>Photo</option><option>Police/incident report</option><option>Financial record</option><option>Voicemail/audio</option><option>Witness statement</option><option>Medical record</option><option>Other</option></select></div>
+          <div><label>Date of incident/document</label><input type="date" id="evDate"></div>
+        </div>
+        <label>Title / description</label>
+        <input type="text" id="evTitle" placeholder="e.g. PTSD declaration by Dr. Smith, Text messages threatening custody, Bank records showing financial control">
+        <label>Upload file for AI analysis (PDF or image)</label>
+        <div class="uz" onclick="document.getElementById('evFile').click()" style="padding:1rem">
+          <div class="uzi" style="font-size:18px">&#128228;</div>
+          <p class="uzp" style="font-size:12px">Drop file or click to browse</p>
+        </div>
+        <input type="file" id="evFile" accept=".pdf,image/*,.txt" style="display:none" onchange="onEvFile(this)">
+        <div id="evFileInfo" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+        <label>Your description of what this shows</label>
+        <textarea id="evDesc" placeholder="e.g. Shows Doug threatening to take the children if I did not comply. This happened during the period when he controlled all finances."></textarea>
+        <label>Coercive control categories (check all that apply)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc1"> Financial control/isolation</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc2"> Monitoring/surveillance</label>
+          <label style="display:flex;align-items:center;gap=6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc3"> Threats (explicit or implied)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc4"> Isolation from support network</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc5"> Physical intimidation/abuse</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc6"> Emotional/psychological abuse</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc7"> Coercive parenting tactics</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1a1a1a"><input type="checkbox" id="cc8"> Impact on Respondent (PTSD)</label>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btnp" onclick="addEvidence()">+ Add evidence</button>
+          <button class="btn" id="evAnalyzeBtn" style="display:none" onclick="analyzeEvidence()">&#10022; Analyze with AI</button>
+        </div>
+        <div id="evAnalysisResult" style="margin-top:8px"></div>
+      </div>
+      <div id="evidenceList"></div>
+      <div class="es"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportEvidence()">&#128196; Evidence index</button>
+      </div></div>
     </div>
 
     <!-- CASE OVERVIEW -->
@@ -538,10 +632,10 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();if(document.getElementById('p-calendar'))renderCalendar();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();renderHub();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
 function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');}
@@ -595,7 +689,7 @@ async function analyzeMsgs(){
   else document.getElementById('mErr').innerHTML="<div class='err'>Could not extract messages.</div>";
 }
 
-const VP=`You are analyzing a full OFW video call for a domestic abuse case. Respondent (father): Doug Rhodes. Children: Ethan (oldest, living with father after documented intimidation - recently started to say he missed mom and stopped mid-sentence), Charlotte, Duke. Petitioner (mother): Chelsea.
+const VP=`You are analyzing a full OFW video call for a domestic abuse case. Respondent (father): Doug Rhodes. Children: Ethan (oldest, living with father after documented intimidation - recently started to say he missed mom and stopped mid-sentence), Charlotte, Duke. Respondent (mother): Chelsea.
 Single recording may have multiple speakers/handoffs. Auto-detect everything.
 Return JSON: total_duration_seconds,speakers_detected,date_context,call_date(MM/DD/YYYY),segments:[{speaker_on_call,start_approx,end_approx,duration_seconds,handoff_type,handoff_note,flags:[{category,severity,timestamp_approx,observation,court_plain}],transcript_key}],background_incidents:[{timestamp_approx,who,what,effect_on_child,court_plain}],distraction_incidents:[{timestamp_approx,child,distraction_type,court_plain}],ethan_indicators:{eye_contact,off_screen_presence,affection_expressions,self_censorship_moments,affect,who_ended},court_summary(4-5 sentences plain third person no clinical labels),overall_severity(high|medium|low|neutral).
 Reply ONLY with valid JSON.`;
@@ -751,7 +845,7 @@ function renderML(){
   else if(aMF==='Late night')f=allMsgs.filter(m=>isEx(m.sender)&&isLN(m.timestamp_sent));
   else if(aMF!=='all')f=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(aMF));
   // Invoice/appointment filter
-  if(hideInv){const invKeys=['invoice','payment','appointment','billing','receipt','paid','due','balance','schedule','appointment','reminder'];f=f.filter(m=>{const body=(m.body||'').toLowerCase();const subj=(m.subject||'').toLowerCase();return!invKeys.some(k=>body.startsWith(k)||subj.includes(k)||body.includes('invoice #')||body.includes('appointment on'));});}
+  if(hideInv){f=f.filter(m=>{const body=(m.body||'').toLowerCase();const subj=(m.subject||'').toLowerCase();const combined=body+' '+subj;return!(combined.includes('invoice')||combined.includes('payment')||combined.includes('billing')||combined.includes('receipt')||combined.includes(' paid')||combined.includes('amount due')||combined.includes('balance')||combined.includes('appointment')||combined.includes('reminder')||combined.includes('scheduled visit')||combined.includes('visit reminder')||combined.includes('session')||subj.startsWith('invoice')||subj.startsWith('appointment')||subj.startsWith('payment'));});}
   // Search filter
   if(mSearch){const q=mSearch.toLowerCase();f=f.filter(m=>(m.body||'').toLowerCase().includes(q)||(m.sender||'').toLowerCase().includes(q)||(m.court_summary||'').toLowerCase().includes(q)||(m.subject||'').toLowerCase().includes(q));}
   // Sort
@@ -776,7 +870,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -795,7 +889,7 @@ function renderVids(){
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 
 // NON-RESPONSE
-const RP={boundary:'Respondent did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',info:'No response was required because all necessary child-related information had already been communicated.',lastword:'Respondent has an established pattern of requiring the final message in every exchange regardless of content, and Petitioner did not respond to avoid reinforcing this behavior.',attack:'Petitioner did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a documented pattern of using OFW to harass rather than co-parent.'};
+const RP={boundary:'Respondent did not respond in order to maintain a documented communication boundary consistent with avoiding escalation.',info:'No response was required because all necessary child-related information had already been communicated.',lastword:'Respondent has an established pattern of requiring the final message in every exchange regardless of content, and Respondent did not respond to avoid reinforcing this behavior.',attack:'Respondent did not respond because the message was not child-centered and contained personal criticism or unfounded accusations, consistent with a documented pattern of using OFW to harass rather than co-parent.'};
 const RL2={boundary:'Boundary',info:'No info needed',lastword:'Last-word pattern',attack:'Not child-centered'};
 function togR(btn,r){if(selNR.has(r)){selNR.delete(r);btn.classList.remove('sel');}else{selNR.add(r);btn.classList.add('sel');}}
 function addNR(){const d=document.getElementById('nrd').value,t=document.getElementById('nrt').value,m=document.getElementById('nrm').value.trim(),n=document.getElementById('nrn').value.trim();if(!d||!m||!selNR.size){alert('Fill in date, message, and at least one reason.');return;}nrE.unshift({date:d,time:t,msg:m,notes:n,reasons:[...selNR]});['nrd','nrt','nrm','nrn'].forEach(id=>document.getElementById(id).value='');selNR.clear();document.querySelectorAll('.rb').forEach(b=>b.classList.remove('sel'));save();renderNR();}
@@ -804,7 +898,7 @@ function openENR(i){const e=nrE[i];editCtx={type:'nr',index:i};document.getEleme
 
 // RELUCTANCE
 function addRL(){const d=document.getElementById('rld').value,t=document.getElementById('rlt').value,c=document.getElementById('rlc').value,w=document.getElementById('rlw').value.trim(),ty=document.getElementById('rlty').value,ctx=document.getElementById('rlctx').value.trim();if(!d||!c||!w){alert('Fill in date, child, and what happened.');return;}rlE.unshift({date:d,time:t,child:c,words:w,type:ty,context:ctx});['rld','rlt','rlw','rlctx'].forEach(id=>document.getElementById(id).value='');document.getElementById('rlc').value='';document.getElementById('rlty').value='';save();renderRL();}
-function renderRL(){const CC={Charlotte:'bg2',Duke:'bp',Ethan:'br'};const rlSorted=rlSort==='asc'?[...rlE].reverse():rlE;document.getElementById('rlList').innerHTML=rlSorted.length?rlSorted.map((e)=>{const i=rlE.indexOf(e);return `<div class="le pl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span><span class="bg ${CC[e.child]||'bgr'}">${e.child}</span>${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}</div><div class="abtn"><button class="btn btne" onclick="openERL(${i})">Edit</button><button class="btn btnd" onclick="rlE.splice(${i},1);save();renderRL()">Del</button></div></div><div class="lb">"${e.words}"</div>${e.context?`<div class="lb" style="color:#bbb">Context: ${e.context}</div>`:''}<div class="lp">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'"':''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
+function renderRL(){const CC={Charlotte:'bg2',Duke:'bp',Ethan:'br'};const rlSorted=rlSort==='asc'?[...rlE].reverse():rlE;document.getElementById('rlList').innerHTML=rlSorted.length?rlSorted.map((e)=>{const i=rlE.indexOf(e);return `<div class="le pl"><div class="lh"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="ld">${e.date}${e.time?' at '+e.time:''}</span><span class="bg ${CC[e.child]||'bgr'}">${e.child}</span>${e.type?`<span style="font-size:11px;color:#bbb">${e.type}</span>`:''}</div><div class="abtn"><button class="btn btne" onclick="openERL(${i})">Edit</button><button class="btn btnd" onclick="rlE.splice(${i},1);save();renderRL()">Del</button></div></div><div class="lb">"${e.words}"</div>${e.context?`<div class="lb" style="color:#bbb">Context: ${e.context}</div>`:''}<div class="lp">On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Respondent'}. ${e.words?'"'+e.words+'"':''} ${e.context||''} This is consistent with a documented pattern of alienation affecting the children's willingness to maintain natural contact with the mother.</div></div>`;}).join(''):"<div class='empty'>No entries yet.</div>";}
 function openERL(i){const e=rlE[i];editCtx={type:'rl',index:i};document.getElementById('mTitle').textContent='Edit reluctance entry';document.getElementById('mBody').innerHTML=`<div class="fr"><div><label>Date</label><input type="date" id="ed" value="${e.date}"></div><div><label>Time</label><input type="time" id="et" value="${e.time||''}"></div></div><label>What happened</label><textarea id="ew">${e.words}</textarea><label>Context</label><textarea id="ectx" style="min-height:40px">${e.context||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // DURATION
@@ -833,7 +927,7 @@ function renderPatterns(){
   const exM=allMsgs.filter(m=>isEx(m.sender));const wc=exM.filter(m=>isDWH(m.timestamp_sent)).length;const lc=exM.filter(m=>isLN(m.timestamp_sent)).length;
   if(wc)t['Work-hours messaging']=wc;if(lc)t['Late-night messaging']=lc;
   const sorted=Object.entries(t).sort((a,b)=>b[1]-a[1]);
-  const D={DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.','Blame-shifting':'Respondent consistently redirected responsibility for problems back to Petitioner, avoiding accountability.','False accusation':'Respondent made accusations without evidence, appearing designed to create a defensive dynamic.','Control attempt':"Respondent attempted to direct or monitor Petitioner's decisions beyond what co-parenting requires.",'Gaslighting':"Respondent contradicted Petitioner's account of events or implied her perception was incorrect.",'Monitoring':"Respondent tracked Petitioner's actions in ways not required for child welfare.",'Baiting':'Respondent sent provocative messages likely designed to elicit an emotional response.','Excessive contact':'Respondent sent messages disproportionate to the child-related matter at hand.','alienation':"Respondent engaged in behaviors designed to undermine the children's relationship with Petitioner.",'background_adult':"An adult was audible or present during the children's calls with Petitioner.",'distraction':'Children were distracted or occupied during calls with Petitioner.','coaching':"Respondent appeared to direct or influence children's responses.",'transition_negativity':"Respondent expressed negativity about children returning to Petitioner's home.",'self_censorship':'A child appeared to stop themselves from expressing natural affection toward Petitioner.','bribery':"Respondent offered rewards conditional on children's behavior.",'signal_behavior':"Respondent arranged signals for children to communicate about conditions at Petitioner's home.",'Work-hours messaging':"Respondent sent messages during Petitioner's documented work hours (Mon-Fri 7:30am-4pm) despite repeated requests to stop.",'Late-night messaging':"Respondent sent messages after 9pm or before 7am during Petitioner's parenting time."};
+  const D={DARVO:'Respondent denied responsibility, then turned accusations back on Petitioner, then claimed to be the real victim.','Blame-shifting':'Respondent consistently redirected responsibility for problems back to Petitioner, avoiding accountability.','False accusation':'Respondent made accusations without evidence, appearing designed to create a defensive dynamic.','Control attempt':"Respondent attempted to direct or monitor Respondent's decisions beyond what co-parenting requires.",'Gaslighting':"Respondent contradicted Respondent's account of events or implied her perception was incorrect.",'Monitoring':"Respondent tracked Respondent's actions in ways not required for child welfare.",'Baiting':'Respondent sent provocative messages likely designed to elicit an emotional response.','Excessive contact':'Respondent sent messages disproportionate to the child-related matter at hand.','alienation':"Respondent engaged in behaviors designed to undermine the children's relationship with Respondent.",'background_adult':"An adult was audible or present during the children's calls with Respondent.",'distraction':'Children were distracted or occupied during calls with Respondent.','coaching':"Respondent appeared to direct or influence children's responses.",'transition_negativity':"Respondent expressed negativity about children returning to Respondent's home.",'self_censorship':'A child appeared to stop themselves from expressing natural affection toward Respondent.','bribery':"Respondent offered rewards conditional on children's behavior.",'signal_behavior':"Respondent arranged signals for children to communicate about conditions at Respondent's home.",'Work-hours messaging':"Respondent sent messages during Respondent's documented work hours (Mon-Fri 7:30am-4pm) despite repeated requests to stop.",'Late-night messaging':"Respondent sent messages after 9pm or before 7am during Respondent's parenting time."};
   document.getElementById('patList').innerHTML=sorted.length?sorted.map(([tc,c])=>`<div class="pc"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div style="font-size:13px;font-weight:600">${tc}</div><span class="bg br">${c} instance${c!==1?'s':''}</span></div><div style="font-size:12px;color:#666;line-height:1.6">${D[tc]||''}</div></div>`).join(''):"<div class='empty'>Analyze messages or videos first.</div>";}
 
 // ORDER GAPS
@@ -845,11 +939,11 @@ function renderChecklist(){const d=new Date('2026-07-30');const now=new Date();c
 function togCL(id){clState[id]=!clState[id];save();renderChecklist();}
 function renderHearing(){
   const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent)).length;
-  document.getElementById('hearingEv').innerHTML=`<div class="stcard"><h4>Signal behaviors during calls</h4><div class="cite">Corroborates Dr. Kelley Finding 1</div><div class="body2">Dr. Kelley documented Respondent arranged thumb signals for children during calls to report on conditions at Petitioner home.</div><div class="rel">Your video analysis will flag signal behaviors. ${allVids.length?allVids.length+' recording(s) analyzed.':'Upload recordings in Videos tab.'}</div></div><div class="stcard"><h4>Transition language (sorry)</h4><div class="cite">Corroborates Dr. Kelley Finding 2</div><div class="body2">Dr. Kelley documented Respondent saying sorry when children had to go to Petitioner home, creating a negative association.</div><div class="rel">Video analysis flags transition negativity in handoff moments.</div></div><div class="stcard"><h4>Children using Respondent exact language</h4><div class="cite">Corroborates Dr. Kelley Finding 3</div><div class="body2">Dr. Kelley noted children used the same specific language and complaints as Respondent, indicating coaching.</div><div class="rel">Video analysis flags language mirroring. Message analysis identifies messages designed to plant narratives. ${allMsgs.length?allMsgs.length+' messages analyzed.':'Upload messages in Messages tab.'}</div></div><div class="stcard"><h4>Coached journal entries</h4><div class="cite">Corroborates Dr. Kelley Finding 4</div><div class="body2">Dr. Kelley found Respondent suggested children keep journals reflecting his narrative with dates beyond developmental capacity.</div><div class="rel">Check OFW messages for journal references.</div></div><div class="stcard"><h4>Ethan alienation from Petitioner</h4><div class="cite">Corroborates Dr. Kelley intimidation findings</div><div class="body2">Dr. Kelley documented Ethan was intimidated by Respondent and saw Petitioner as the primary parent. Ethan has been residing with Respondent approximately 6 months.</div><div class="rel">Reluctance log and goodnight call analysis directly support this. ${rlE.filter(e=>e.child==='Ethan').length} Ethan entries logged.</div></div><div class="stcard"><h4>Work-hours boundary violations</h4><div class="cite">Documented pattern of harassment</div><div class="body2">Petitioner works Mon-Fri 7:30am-4pm and has repeatedly requested no non-urgent contact. Respondent has consistently disregarded this.</div><div class="rel">${wh} messages documented during work hours. Export timing report for attorney.</div></div>`;
+  document.getElementById('hearingEv').innerHTML=`<div class="stcard"><h4>Signal behaviors during calls</h4><div class="cite">Corroborates Dr. Kelley Finding 1</div><div class="body2">Dr. Kelley documented Respondent arranged thumb signals for children during calls to report on conditions at Respondent home.</div><div class="rel">Your video analysis will flag signal behaviors. ${allVids.length?allVids.length+' recording(s) analyzed.':'Upload recordings in Videos tab.'}</div></div><div class="stcard"><h4>Transition language (sorry)</h4><div class="cite">Corroborates Dr. Kelley Finding 2</div><div class="body2">Dr. Kelley documented Respondent saying sorry when children had to go to Respondent home, creating a negative association.</div><div class="rel">Video analysis flags transition negativity in handoff moments.</div></div><div class="stcard"><h4>Children using Respondent exact language</h4><div class="cite">Corroborates Dr. Kelley Finding 3</div><div class="body2">Dr. Kelley noted children used the same specific language and complaints as Respondent, indicating coaching.</div><div class="rel">Video analysis flags language mirroring. Message analysis identifies messages designed to plant narratives. ${allMsgs.length?allMsgs.length+' messages analyzed.':'Upload messages in Messages tab.'}</div></div><div class="stcard"><h4>Coached journal entries</h4><div class="cite">Corroborates Dr. Kelley Finding 4</div><div class="body2">Dr. Kelley found Respondent suggested children keep journals reflecting his narrative with dates beyond developmental capacity.</div><div class="rel">Check OFW messages for journal references.</div></div><div class="stcard"><h4>Ethan alienation from Respondent</h4><div class="cite">Corroborates Dr. Kelley intimidation findings</div><div class="body2">Dr. Kelley documented Ethan was intimidated by Respondent and saw Respondent as the primary parent. Ethan has been residing with Respondent approximately 6 months.</div><div class="rel">Reluctance log and goodnight call analysis directly support this. ${rlE.filter(e=>e.child==='Ethan').length} Ethan entries logged.</div></div><div class="stcard"><h4>Work-hours boundary violations</h4><div class="cite">Documented pattern of harassment</div><div class="body2">Respondent works Mon-Fri 7:30am-4pm and has repeatedly requested no non-urgent contact. Respondent has consistently disregarded this.</div><div class="rel">${wh} messages documented during work hours. Export timing report for attorney.</div></div>`;
 }
 
 // LEGAL
-function renderLegal(){const statutes=[{title:'Family Code section 3044 - Domestic Violence Presumption',cite:'Cal. Fam. Code section 3044',body:'Creates a rebuttable presumption that granting custody to a person who has perpetrated domestic violence is detrimental to the best interest of the child. Petitioner bears the burden to rebut it.',rel:'The TDVRO, documented physical intimidation (arm grabbing), and emergency investigation report directly invoke this presumption.'},{title:'Family Code section 3020 - Legislative Policy',cite:'Cal. Fam. Code section 3020',body:"Declares California public policy to assure children frequent and continuing contact with both parents - except where contact would not be in the child's best interest.",rel:"Ethan's estrangement from Petitioner directly conflicts with this policy. Dr. Kelley's testimony that he was intimidated and saw Petitioner as the primary parent is central."},{title:'Family Code section 3011 - Best Interest Factors',cite:'Cal. Fam. Code section 3011',body:"Lists factors the court shall consider including: health, safety, and welfare of the child; any history of abuse; nature and amount of contact with both parents.",rel:"The evaluator's findings on alienation, intimidation, and the father's MCMI-IV results (high drug use area score) are relevant to multiple factors under this section."},{title:'Family Code section 3100 - Visitation Rights',cite:'Cal. Fam. Code section 3100',body:"The court shall grant reasonable visitation rights to a parent unless it is shown that visitation would be detrimental to the best interest of the child.",rel:"The documented pattern of using visitation calls to gather information, signal-based monitoring, and transition negativity are relevant to whether current visitation arrangements serve the children's best interest."},{title:'Family Code section 6203 - Abuse Defined',cite:'Cal. Fam. Code section 6203',body:"Defines abuse to include intentionally or recklessly causing bodily injury, placing a person in reasonable apprehension of imminent serious bodily injury, or engaging in behavior that could be enjoined under section 6320.",rel:"The documented arm grabbing of Ethan and pattern of intimidation at exchanges are relevant to this definition. The emergency investigation report is key evidence."},{title:'Family Code section 6320 - Enjoinable Conduct',cite:'Cal. Fam. Code section 6320',body:"Authorizes the court to enjoin a party from molesting, attacking, threatening, harassing, telephoning including making annoying telephone calls, or disturbing the peace of the other party or minor children.",rel:"The pattern of excessive OFW messaging, work-hours contact despite repeated requests to stop, and showing up at exchanges with extended family for intimidation may be relevant to this section."},{title:'Welfare and Institutions Code section 300 - Child Welfare',cite:'Cal. Welf. & Inst. Code section 300',body:"Establishes grounds for juvenile court jurisdiction including where a child is suffering serious emotional damage evidenced by severe anxiety, depression, withdrawal, or untoward aggressive behavior.",rel:"Dr. Kelley's warning about long-term consequences of alienation including anxiety, depression, and difficulty forming healthy relationships is directly relevant. The emotional impact on all three children, particularly Ethan, should be documented."}];document.getElementById('legalRef').innerHTML=statutes.map(s=>`<div class="stcard"><h4>${s.title}</h4><div class="cite">${s.cite}</div><div class="body2">${s.body}</div><div class="rel">&#8594; ${s.rel}</div></div>`).join('');}
+function renderLegal(){const statutes=[{title:'Family Code section 3044 - Domestic Violence Presumption',cite:'Cal. Fam. Code section 3044',body:'Creates a rebuttable presumption that granting custody to a person who has perpetrated domestic violence is detrimental to the best interest of the child. Petitioner bears the burden to rebut it.',rel:'The TDVRO, documented physical intimidation (arm grabbing), and emergency investigation report directly invoke this presumption.'},{title:'Family Code section 3020 - Legislative Policy',cite:'Cal. Fam. Code section 3020',body:"Declares California public policy to assure children frequent and continuing contact with both parents - except where contact would not be in the child's best interest.",rel:"Ethan's estrangement from Petitioner directly conflicts with this policy. Dr. Kelley's testimony that he was intimidated and saw Respondent as the primary parent is central."},{title:'Family Code section 3011 - Best Interest Factors',cite:'Cal. Fam. Code section 3011',body:"Lists factors the court shall consider including: health, safety, and welfare of the child; any history of abuse; nature and amount of contact with both parents.",rel:"The evaluator's findings on alienation, intimidation, and the father's MCMI-IV results (high drug use area score) are relevant to multiple factors under this section."},{title:'Family Code section 3100 - Visitation Rights',cite:'Cal. Fam. Code section 3100',body:"The court shall grant reasonable visitation rights to a parent unless it is shown that visitation would be detrimental to the best interest of the child.",rel:"The documented pattern of using visitation calls to gather information, signal-based monitoring, and transition negativity are relevant to whether current visitation arrangements serve the children's best interest."},{title:'Family Code section 6203 - Abuse Defined',cite:'Cal. Fam. Code section 6203',body:"Defines abuse to include intentionally or recklessly causing bodily injury, placing a person in reasonable apprehension of imminent serious bodily injury, or engaging in behavior that could be enjoined under section 6320.",rel:"The documented arm grabbing of Ethan and pattern of intimidation at exchanges are relevant to this definition. The emergency investigation report is key evidence."},{title:'Family Code section 6320 - Enjoinable Conduct',cite:'Cal. Fam. Code section 6320',body:"Authorizes the court to enjoin a party from molesting, attacking, threatening, harassing, telephoning including making annoying telephone calls, or disturbing the peace of the other party or minor children.",rel:"The pattern of excessive OFW messaging, work-hours contact despite repeated requests to stop, and showing up at exchanges with extended family for intimidation may be relevant to this section."},{title:'Welfare and Institutions Code section 300 - Child Welfare',cite:'Cal. Welf. & Inst. Code section 300',body:"Establishes grounds for juvenile court jurisdiction including where a child is suffering serious emotional damage evidenced by severe anxiety, depression, withdrawal, or untoward aggressive behavior.",rel:"Dr. Kelley's warning about long-term consequences of alienation including anxiety, depression, and difficulty forming healthy relationships is directly relevant. The emotional impact on all three children, particularly Ethan, should be documented."}];document.getElementById('legalRef').innerHTML=statutes.map(s=>`<div class="stcard"><h4>${s.title}</h4><div class="cite">${s.cite}</div><div class="body2">${s.body}</div><div class="rel">&#8594; ${s.rel}</div></div>`).join('');}
 
 // DOCS
 function addDoc(){const type=document.getElementById('dtype').value,date=document.getElementById('ddate').value,title=document.getElementById('dtitle').value.trim(),notes=document.getElementById('dnotes').value.trim(),link=document.getElementById('dlink').value.trim();if(!title){alert('Please enter a title.');return;}docE.unshift({type,date,title,notes,link});['ddate','dtitle','dnotes','dlink'].forEach(id=>document.getElementById(id).value='');save();renderDocs();}
@@ -884,7 +978,7 @@ function exportRefusals(){
   dl(lines.join('\n'),'Refusal_and_OffCamera_Log.txt');
 }
 function exportNR(){const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents instances where Respondent chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','',' -'.repeat(30)];nrE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>RP[r]||'').join(' ')}${e.notes?'\nContext: '+e.notes:''}`));dl(lines.join('\n'),'Non_Response_Log.txt');}
-function exportRL(){const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','',' -'.repeat(30)];rlE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'".':''} ${e.context||''}`));dl(lines.join('\n'),'Reluctance_Log.txt');}
+function exportRL(){const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','',' -'.repeat(30)];rlE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Respondent'}. ${e.words?'"'+e.words+'".':''} ${e.context||''}`));dl(lines.join('\n'),'Reluctance_Log.txt');}
 function exportTiming(){const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent));const ln=exM.filter(m=>isLN(m.timestamp_sent));const lines=['EXHIBIT - MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','Respondent works Monday-Friday 7:30am-4:00pm. Respondent has previously and repeatedly requested that Petitioner not send non-urgent messages during work hours. The following documents the pattern of disregarding this request.','',' -'.repeat(30),`\nTotal Petitioner messages analyzed: ${exM.length}`,`Messages during Respondent work hours: ${wh.length} (${exM.length?Math.round(wh.length/exM.length*100)+'%':'n/a'})`,`Messages after 9pm or before 7am: ${ln.length}`,'\n-- Work-hours messages --'];wh.forEach((m,i)=>lines.push(`\n${i+1}. ${m.timestamp_sent}\n"${m.body||''}"`));dl(lines.join('\n'),'Timing_Pattern_Report.txt');}
 function exportDurLog(){const all=[...durE,...autoCallLog];const{avgDad,avgMom}=getDurData();const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','',' -'.repeat(30)];if(avgDad&&avgMom)lines.push(`\nSummary: Petitioner calls avg ${avgDad.toFixed(1)}min. Respondent calls avg ${avgMom.toFixed(1)}min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);all.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Petitioner's call":e.type==='mom'?"Respondent's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`));dl(lines.join('\n'),'Call_Duration_Log.txt');}
 function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lines=['HEARING PREPARATION BRIEF - JULY 30, 2026',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','Dr. Kelley (custody evaluator) testifying','',' -'.repeat(30),`\nPrep checklist: ${done}/${CL.length} items complete`,`Messages analyzed: ${allMsgs.length}`,`Videos analyzed: ${allVids.length}`,`Non-response log entries: ${nrE.length}`,`Reluctance log entries: ${rlE.length}`,`Ethan-specific entries: ${rlE.filter(e=>e.child==='Ethan').length}`,`Work-hours violations: ${allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent)).length}`,'\n-- Dr. Kelley Findings Corroboration --','1. Signal behaviors - check video analysis for signal_behavior flags','2. Transition negativity (sorry) - check video analysis for transition_negativity flags','3. Language mirroring - check video analysis coaching flags and message analysis','4. Coached journals - check OFW messages for journal references','Ethan alienation - see reluctance log and Ethan-specific video analysis'];dl(lines.join('\n'),'Hearing_Prep_Brief_730.txt');}
@@ -1030,6 +1124,14 @@ function buildEvidenceSummary(){
   // Hub docs
   const hubSummaries = hubDocs.slice(0,15).map(d=>`[${d.date||'?'}] ${d.category||'doc'}: ${d.title}. Notes: ${(d.notes||'').slice(0,100)}`).join('\n');
 
+  // Include PTSD declaration findings if available
+  const ptsdSection = ptsdFindings ? '\n\nTHERAPIST DECLARATION FINDINGS (PTSD):\n' + ptsdFindings.text.slice(0,800) : '';
+
+  // Include coercive control evidence
+  const ccItems = evidenceItems.slice(0,10).map(e =>
+    `[${e.date||'?'}] ${e.type}: ${e.title}. Categories: ${(e.categories||[]).join(', ')}. ${(e.desc||'').slice(0,100)}`
+  ).join('\n');
+
   return {
     stats: {
       totalMsgs: allMsgs.length, highSeverity: hiMsg.length,
@@ -1078,6 +1180,10 @@ DR. KELLEY DOCUMENTED ALIENATION METHODS:
 2. Saying "sorry" when children have to go to mother home  
 3. Children using father exact language/phrases (coaching)
 4. Coached journal entries with dates beyond developmental capacity
+
+${ptsdSection}
+
+${ccItems ? 'COERCIVE CONTROL EVIDENCE:\n' + ccItems : ''}
 
 EVIDENCE STATISTICS:
 - Total OFW messages analyzed: ${ev.stats.totalMsgs}
@@ -1454,6 +1560,341 @@ function exportCalAll(){
   });
 
   dl(lines.join('\n'), 'Complete_Event_Log.txt');
+}
+
+// CONTACTS
+let contacts = [
+  {id:'ct_judge', role:'Judge', name:'Michele Bell', firm:'Orange County Superior Court - Dept C-17', phone:'', email:'', address:'Lamoreaux Justice Center, 341 The City Drive, Orange CA 92868', notes:'Assigned judge. Hearing July 30 2026 at Dept C-17.', log:[], preloaded:true},
+  {id:'ct_myatty', role:'My attorney', name:'Donald Gerber', firm:'', phone:'', email:'', address:'', notes:'', log:[], preloaded:true},
+  {id:'ct_opposing', role:'Opposing attorney', name:'Eric S. Ludwig', firm:'Ludwig Law Center, Inc.', phone:'(714) 283-1023', email:'eric@ludwiglawcenter.com', address:'505 S. Villa Real Drive Suite 213, Anaheim Hills CA 92807', notes:"Attorney for Petitioner Douglas Rhodes.", log:[], preloaded:true},
+  {id:'ct_ethanatty', role:"Ethan's attorney", name:'Steven Dragna', firm:'', phone:'', email:'', address:'', notes:'Appointed to represent Ethan at April 14 2026 hearing.', log:[], preloaded:true},
+  {id:'ct_therapist', role:'Therapist (Ethan)', name:'Alan Liberman', firm:'', phone:'', email:'', address:'', notes:'Family therapist for Ethan appointed per FOAH paragraph 6 (April 14 2026 order). Replacing Dr. Jorge Galindo who was unavailable. Court ordered immediate commencement of family counseling with Ethan.', log:[], preloaded:true},
+  {id:'ct_evaluator', role:'Custody evaluator', name:'Dr. Kelley', firm:'', phone:'', email:'', address:'', notes:'Custody evaluator. Will testify at July 30 2026 hearing. Documented four alienation methods by Petitioner. Found Ethan was intimidated by Petitioner and viewed Respondent as primary parent. MCMI-IV showed high score in drug use area for Petitioner.', log:[], preloaded:true},
+  {id:'ct_mytherapist', role:'My therapist', name:'', firm:'', phone:'', email:'', address:'', notes:'Diagnosed Respondent Chelsea Rhodes with PTSD resulting from relationship with Petitioner. Co-parenting therapy was not advised due to PTSD diagnosis. Provided declaration for court proceedings.', log:[], preloaded:true},
+];
+let evFileData = null;
+let evidenceItems = [];
+let ptsdFindings = null;
+
+function ctSave(){
+  try{localStorage.setItem('eo_ct', JSON.stringify(contacts));}catch(e){}
+  try{localStorage.setItem('eo_ev', JSON.stringify(evidenceItems));}catch(e){}
+  if(ptsdFindings) try{localStorage.setItem('eo_ptsd', JSON.stringify(ptsdFindings));}catch(e){}
+  showSave();
+}
+
+function ctLoad(){
+  try{
+    const raw = localStorage.getItem('eo_ct');
+    if(raw){
+      const saved = JSON.parse(raw);
+      const savedIds = new Set(saved.map(c=>c.id));
+      contacts = [...saved, ...contacts.filter(c=>!savedIds.has(c.id))];
+    }
+  }catch(e){}
+  try{
+    const raw2 = localStorage.getItem('eo_ev');
+    if(raw2) evidenceItems = JSON.parse(raw2);
+  }catch(e){}
+  try{
+    const raw3 = localStorage.getItem('eo_ptsd');
+    if(raw3) ptsdFindings = JSON.parse(raw3);
+  }catch(e){}
+}
+
+function renderContacts(){
+  const CT_COLORS = {
+    'My attorney':'#1D9E75','Opposing attorney':'#c0392b',"Ethan's attorney":'#378ADD',
+    'Judge':'#1a1a1a','Therapist (Ethan)':'#7F77DD','My therapist':'#7F77DD',
+    'Custody evaluator':'#e67e22','Court-appointed expert':'#8e44ad','Witness':'#666','Other':'#666'
+  };
+  document.getElementById('contactList').innerHTML = contacts.map((ct,i) => {
+    const color = CT_COLORS[ct.role] || '#666';
+    const logHtml = (ct.log||[]).slice(0,5).map((l,li) =>
+      `<div style="font-size:11px;padding:5px 8px;background:#f9f9f7;border-radius:6px;margin-top:4px;border-left:2px solid ${color}">
+        <span style="color:#999">${l.date}</span> ${l.type==='attorney'?'&#128220;':'&#9889;'} ${l.summary}
+        <button onclick="deleteCtLog(${i},${li})" style="float:right;background:none;border:none;cursor:pointer;color:#bbb;font-size:11px">&#x2715;</button>
+      </div>`
+    ).join('');
+    return `<div class="le" style="border-left:3px solid ${color};margin-bottom:10px">
+      <div class="lh">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="bg" style="background:${color};color:#fff;font-size:10px">${ct.role}</span>
+            <span class="ld">${ct.name||'(name not set)'}</span>
+          </div>
+          ${ct.firm?`<div style="font-size:11px;color:#666;margin-top:2px">${ct.firm}</div>`:''}
+        </div>
+        <div class="abtn">
+          <button class="btn btne" onclick="openEditCt(${i})">Edit</button>
+          ${!ct.preloaded?`<button class="btn btnd" onclick="contacts.splice(${i},1);ctSave();renderContacts()">Del</button>`:''}
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin:6px 0;font-size:12px;color:#555">
+        ${ct.phone?`<span>&#128222; ${ct.phone}</span>`:''}
+        ${ct.email?`<a href="mailto:${ct.email}" style="color:#1a5fa8">&#9993; ${ct.email}</a>`:''}
+        ${ct.address?`<span>&#128205; ${ct.address}</span>`:''}
+      </div>
+      ${ct.notes?`<div class="lb" style="font-size:12px">${ct.notes}</div>`:''}
+      ${logHtml}
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btns" style="font-size:11px" onclick="addCtLog(${i},'attorney')">+ Log attorney call</button>
+        <button class="btn btns" style="font-size:11px" onclick="addCtLog(${i},'therapy')">+ Log therapy session</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditCt(i){
+  const ct = contacts[i];
+  editCtx = {type:'contact', index:i};
+  document.getElementById('mTitle').textContent = 'Edit contact';
+  document.getElementById('mBody').innerHTML = `
+    <label>Role</label><select id="ectRole"><option>My attorney</option><option>Opposing attorney</option><option>Ethan's attorney</option><option>Judge</option><option>Therapist (Ethan)</option><option>My therapist</option><option>Custody evaluator</option><option>Court-appointed expert</option><option>Witness</option><option>Other</option></select>
+    <label>Name</label><input type="text" id="ectName" value="${ct.name||''}">
+    <label>Firm / Practice</label><input type="text" id="ectFirm" value="${ct.firm||''}">
+    <label>Phone</label><input type="text" id="ectPhone" value="${ct.phone||''}">
+    <label>Email</label><input type="text" id="ectEmail" value="${ct.email||''}">
+    <label>Address</label><input type="text" id="ectAddress" value="${ct.address||''}">
+    <label>Notes</label><textarea id="ectNotes">${ct.notes||''}</textarea>`;
+  document.getElementById('ectRole').value = ct.role || 'Other';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function addContact(){
+  const ct = {
+    id: 'ct_'+Date.now(),
+    role: document.getElementById('ctRole').value,
+    name: document.getElementById('ctName').value.trim(),
+    firm: document.getElementById('ctFirm').value.trim(),
+    phone: document.getElementById('ctPhone').value.trim(),
+    email: document.getElementById('ctEmail').value.trim(),
+    address: document.getElementById('ctAddress').value.trim(),
+    notes: document.getElementById('ctNotes').value.trim(),
+    log: [], preloaded: false
+  };
+  if(!ct.name){alert('Please enter a name.');return;}
+  contacts.push(ct);
+  ['ctName','ctFirm','ctPhone','ctEmail','ctAddress','ctNotes'].forEach(id=>document.getElementById(id).value='');
+  ctSave(); renderContacts();
+}
+
+function addCtLog(i, type){
+  const date = prompt('Date (e.g. ' + new Date().toLocaleDateString() + '):');
+  if(!date) return;
+  const summary = prompt(type==='attorney' ? 'Summary of call/meeting:' : 'Session notes (topics covered, progress):');
+  if(!summary) return;
+  contacts[i].log = contacts[i].log || [];
+  contacts[i].log.unshift({date, type, summary, added: new Date().toISOString()});
+  ctSave(); renderContacts();
+}
+
+function deleteCtLog(ctIdx, logIdx){
+  contacts[ctIdx].log.splice(logIdx, 1);
+  ctSave(); renderContacts();
+}
+
+// EVIDENCE
+function onEvFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('evFileInfo').textContent = 'Selected: ' + file.name + ' (' + (file.size/1024).toFixed(0) + 'KB)';
+  document.getElementById('evAnalyzeBtn').style.display = 'inline-flex';
+  if(file.type.startsWith('image/') || file.type === 'application/pdf'){
+    const fr = new FileReader();
+    fr.onload = e => {evFileData = {b64: e.target.result.split(',')[1], type: file.type, name: file.name};};
+    fr.readAsDataURL(file);
+  } else if(file.type === 'text/plain'){
+    const fr = new FileReader();
+    fr.onload = e => {evFileData = {text: e.target.result, name: file.name};};
+    fr.readAsText(file);
+  }
+}
+
+function getSelectedCC(){
+  const labels = ['Financial control/isolation','Monitoring/surveillance','Threats','Isolation from support network','Physical intimidation/abuse','Emotional/psychological abuse','Coercive parenting tactics','Impact on Respondent (PTSD)'];
+  return [1,2,3,4,5,6,7,8].filter(n => document.getElementById('cc'+n)?.checked).map(n => labels[n-1]);
+}
+
+function addEvidence(){
+  const title = document.getElementById('evTitle').value.trim();
+  const type = document.getElementById('evType').value;
+  const date = document.getElementById('evDate').value;
+  const desc = document.getElementById('evDesc').value.trim();
+  if(!title || !type){alert('Please enter a title and type.');return;}
+  const ev = {
+    id: 'ev_'+Date.now(),
+    title, type, date, desc,
+    categories: getSelectedCC(),
+    analysis: null,
+    fileName: evFileData?.name || null,
+    addedAt: new Date().toISOString()
+  };
+  evidenceItems.unshift(ev);
+  evFileData = null;
+  ['evTitle','evDate','evDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('evType').value = '';
+  document.getElementById('evFileInfo').textContent = '';
+  document.getElementById('evAnalyzeBtn').style.display = 'none';
+  document.getElementById('evAnalysisResult').innerHTML = '';
+  [1,2,3,4,5,6,7,8].forEach(n=>{const el=document.getElementById('cc'+n);if(el)el.checked=false;});
+  ctSave(); renderEvidence();
+}
+
+async function analyzeEvidence(){
+  if(!API_KEY){alert('Please connect your Anthropic API key first.');return;}
+  if(!evFileData){alert('Please select a file first.');return;}
+  const btn = document.getElementById('evAnalyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = "<span class='sp'></span>Analyzing...";
+  document.getElementById('evAnalysisResult').innerHTML = '';
+
+  const type = document.getElementById('evType').value;
+  const desc = document.getElementById('evDesc').value.trim();
+  const isDeclaration = type === 'Therapist declaration';
+
+  const prompt = isDeclaration ?
+    `You are analyzing a therapist declaration for a custody case. Respondent: Chelsea Rhodes. Petitioner: Doug Rhodes.
+
+This is a professional therapeutic declaration. Extract and structure the following:
+
+1. DIAGNOSIS: What is the exact diagnosis? (especially PTSD)
+2. CAUSATION: What does the therapist attribute as the cause? Be specific about what behaviors or events caused the diagnosis.
+3. SYMPTOMS: What specific symptoms are documented?
+4. IMPACT ON PARENTING: What does the declaration say about impact on parenting capacity?
+5. PROFESSIONAL OPINION: What is the therapist's professional opinion relevant to custody?
+6. KEY QUOTES: Extract 3-5 direct quotes most relevant to the custody case (under 15 words each)
+7. COURT RELEVANCE: How does this declaration support Respondent's position regarding FC 3044 domestic violence presumption?
+8. COERCIVE CONTROL CONNECTION: What specific behaviors by Petitioner does the declaration identify as causative?
+
+Format as structured sections. This will be automatically added to the Case Overview.` :
+
+    `You are analyzing evidence of coercive control and abuse for a custody case. Respondent: Chelsea Rhodes. Petitioner: Doug Rhodes.
+
+Document type: ${type}
+Respondent's description: ${desc}
+
+Analyze this document for:
+1. INCIDENT SUMMARY: What happened, when, who was involved
+2. COERCIVE CONTROL PATTERN: Which coercive control categories does this demonstrate (financial control, monitoring, threats, isolation, physical intimidation, emotional abuse, parenting coercion)
+3. ESCALATION: Where does this fit in a pattern of escalating behavior
+4. IMPACT: What impact on Respondent is documented or implied
+5. COURT RELEVANCE: How does this support claims under FC 3044, FC 6203, or FC 6320
+6. CONNECTION TO PTSD: How does this incident connect to or explain Respondent PTSD diagnosis
+7. COURT-READY DESCRIPTION: 3-4 sentences in plain language suitable for declaration or brief
+
+Be specific. Reference exact details from the document.`;
+
+  try{
+    let msgs;
+    if(evFileData.b64){
+      msgs = [{role:'user',content:[
+        {type: evFileData.type==='application/pdf' ? 'document' : 'image',
+         source:{type:'base64',media_type:evFileData.type,data:evFileData.b64}},
+        {type:'text',text:prompt}
+      ]}];
+    } else {
+      msgs = [{role:'user',content: prompt + '\n\nDocument:\n' + evFileData.text}];
+    }
+
+    const result = await callAPI(msgs, 3000);
+    document.getElementById('evAnalysisResult').innerHTML = '<div class="csb" style="white-space:pre-wrap;font-size:12px">' + result + '</div>';
+
+    // If therapist declaration, save findings and update case overview context
+    if(isDeclaration){
+      ptsdFindings = {
+        text: result,
+        uploadedAt: new Date().toISOString(),
+        fileName: evFileData.name
+      };
+      ctSave();
+      document.getElementById('evAnalysisResult').innerHTML += '<div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:8px 10px;border-radius:6px;margin-top:8px;border-left:2px solid #1D9E75">&#10003; Findings extracted and saved. These will automatically appear in your Case Overview when you generate it.</div>';
+    }
+
+    // Save analysis to most recent evidence item
+    if(evidenceItems.length){
+      evidenceItems[0].analysis = result;
+      ctSave();
+      renderEvidence();
+    }
+  }catch(e){
+    document.getElementById('evAnalysisResult').innerHTML = '<div class="err">Error: ' + e.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '&#10022; Analyze with AI';
+}
+
+function renderEvidence(){
+  const search = (document.getElementById('evSearch')?.value||'').toLowerCase();
+  const cat = document.getElementById('evCatFilter')?.value||'';
+  const sort = document.getElementById('evSort')?.value||'newest';
+
+  let items = [...evidenceItems];
+  if(search) items = items.filter(e => (e.title||'').toLowerCase().includes(search)||(e.desc||'').toLowerCase().includes(search)||(e.analysis||'').toLowerCase().includes(search));
+  if(cat) items = items.filter(e => e.type === cat);
+  if(sort==='oldest') items.sort((a,b)=>a.addedAt.localeCompare(b.addedAt));
+  else if(sort==='newest') items.sort((a,b)=>b.addedAt.localeCompare(a.addedAt));
+  else if(sort==='type') items.sort((a,b)=>(a.type||'').localeCompare(b.type||''));
+
+  const EV_COLORS = {
+    'Therapist declaration':'#8e44ad','Text message':'#378ADD','Email':'#378ADD',
+    'Photo':'#1D9E75','Police/incident report':'#c0392b','Financial record':'#e67e22',
+    'Voicemail/audio':'#5b4fcf','Witness statement':'#27ae60','Medical record':'#e67e22','Other':'#666'
+  };
+
+  const list = document.getElementById('evidenceList');
+  if(!items.length){list.innerHTML="<div class='empty'>No evidence uploaded yet. Upload text messages, declarations, police reports, financial records, and any other documentation of coercive control and abuse.</div>";return;}
+
+  list.innerHTML = items.map((e,i) => {
+    const origIdx = evidenceItems.indexOf(e);
+    const color = EV_COLORS[e.type]||'#666';
+    const cats = (e.categories||[]).map(c=>`<span class="bg" style="background:#fdf0f0;color:#c0392b;font-size:10px">${c}</span>`).join('');
+    return `<div class="le" style="border-left:3px solid ${color}">
+      <div class="lh">
+        <div>
+          <div class="ld">${e.title}</div>
+          <div style="font-size:11px;color:#999">${e.type}${e.date?' - '+e.date:''}${e.fileName?' - '+e.fileName:''}</div>
+        </div>
+        <div class="abtn">
+          <button class="btn btnd" onclick="evidenceItems.splice(${origIdx},1);ctSave();renderEvidence()">Del</button>
+        </div>
+      </div>
+      ${cats?`<div class="bgs" style="margin-top:4px">${cats}</div>`:''}
+      ${e.desc?`<div class="lb">${e.desc}</div>`:''}
+      ${e.analysis?`<div class="lp" style="white-space:pre-wrap;font-size:11px;margin-top:6px">${e.analysis.slice(0,400)}${e.analysis.length>400?'...':''}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function exportEvidence(){
+  const lines = [
+    'NON-OFW EVIDENCE INDEX - COERCIVE CONTROL AND ABUSE',
+    'Generated: ' + new Date().toLocaleDateString(),
+    'Case: In re Rhodes Children - Respondent: Chelsea Rhodes',
+    'Total items: ' + evidenceItems.length,
+    '',
+    'NOTE: Respondent Chelsea Rhodes has been diagnosed with PTSD by her treating therapist as a direct result of the relationship with Petitioner Douglas Rhodes. Co-parenting therapy was not recommended due to this diagnosis.',
+    '',
+    ' -'.repeat(30)
+  ];
+
+  if(ptsdFindings){
+    lines.push('\nTHERAPIST DECLARATION FINDINGS:');
+    lines.push(ptsdFindings.text);
+    lines.push('\n' + '-'.repeat(40));
+  }
+
+  [...evidenceItems].sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach((e,i)=>{
+    lines.push(`\nITEM ${i+1}: ${e.title}`);
+    lines.push('Type: ' + e.type);
+    if(e.date) lines.push('Date: ' + e.date);
+    if(e.categories?.length) lines.push('Coercive control categories: ' + e.categories.join(', '));
+    if(e.desc) lines.push('Description: ' + e.desc);
+    if(e.analysis) lines.push('\nAI Analysis:\n' + e.analysis);
+    lines.push('\n' + '-'.repeat(40));
+  });
+
+  dl(lines.join('\n'), 'Coercive_Control_Evidence_Index.txt');
 }
 
 </script>
