@@ -224,17 +224,32 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- VIDEOS -->
     <div id="p-videos" class="panel">
-      <div class="card"><h3>Upload OFW call recordings</h3><p class="cp">Full MP4. AI auto-detects speakers, handoffs, background adults, distractions, alienation behaviors. Durations auto-logged to Duration tab.</p>
+      <div class="card">
+        <h3>Gemini API key for video analysis</h3>
+        <p class="cp">Video analysis uses Google Gemini which can actually watch MP4 files. Get a free key at <a href="https://ai.google.dev" target="_blank">ai.google.dev</a> &rarr; Get API key. Paste it below. Only used in this session.</p>
+        <div class="akrow" style="margin-bottom:8px"><input type="password" id="gemKeyIn" placeholder="AIza..." autocomplete="off" style="flex:1;font-size:13px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-family:inherit"><button class="btn btnp" onclick="setGemKey()">Connect Gemini</button></div>
+        <div id="gemKeyStatus" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+      </div>
+      <div class="card"><h3>Upload OFW call recordings</h3>
+        <p class="cp">MP4 files. Gemini will watch each video and flag: background adults, kids looking off-camera, who ends the call, refusals to talk, coached language, signal behaviors, transition negativity, and all four of Dr. Kelley documented alienation behaviors. Durations auto-logged.</p>
         <div class="ib"><strong>Before uploading:</strong> Confirm with your attorney that OFW recording satisfies California two-party consent requirements.</div>
-        <div class="uz" onclick="document.getElementById('vIn').click()" id="vDrop"><div class="uzi">&#127909;</div><p class="uzp">Drop MP4 recordings here</p></div>
+        <div class="uz" onclick="document.getElementById('vIn').click()" id="vDrop"><div class="uzi">&#127909;</div><p class="uzp">Drop MP4 recordings here</p><p style="font-size:11px;color:#999;margin-top:4px">Large files may take several minutes to upload to Gemini</p></div>
         <input type="file" id="vIn" multiple accept="video/*" style="display:none" onchange="addQ(Array.from(this.files),vQ,'vQEl','vABar')">
         <div id="vQEl"></div>
-        <div class="abar" id="vABar" style="display:none"><button class="btn btnp" onclick="analyzeVids()" id="vBtn">&#10022; Analyze</button><div class="pw" id="vPW"><div class="pf" id="vPF" style="width:0%"></div></div><span style="font-size:11px;color:#999" id="vPL"></span></div>
+        <div class="abar" id="vABar" style="display:none">
+          <button class="btn btnp" onclick="analyzeVids()" id="vBtn">&#10022; Analyze with Gemini</button>
+          <div class="pw" id="vPW"><div class="pf" id="vPF" style="width:0%"></div></div>
+          <span style="font-size:11px;color:#999" id="vPL"></span>
+        </div>
         <div id="vErr"></div>
       </div>
       <div class="sg" id="vStats" style="display:none"></div>
       <div id="vList"></div>
-      <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportVids('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportVids('full')">&#128196; Attorney copy</button></div></div>
+      <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportVids('plain')">&#128196; Court exhibit</button>
+        <button class="btn btns" onclick="exportVids('full')">&#128196; Attorney copy</button>
+        <button class="btn btns" onclick="exportRefusals()">&#128196; Refusal log</button>
+      </div></div>
     </div>
     <!-- NON-RESPONSE -->
     <div id="p-nonresponse" class="panel">
@@ -334,7 +349,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 </div>
 <script>
 if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-let API_KEY=null,onBreak=false;
+let API_KEY=null,GEMINI_KEY=null,onBreak=false;
 const WS=7.5,WE=16,WD=[1,2,3,4,5];
 let allMsgs=[],allVids=[],mQ=[],vQ=[],autoCallLog=[];
 let nrE=[],rlE=[],durE=[],docE=[],clState={};
@@ -352,6 +367,7 @@ function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').
 
 // KEY
 function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();rAll();renderHourGrid([]);}
+function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(!k.startsWith('AIza')){document.getElementById('gemKeyStatus').textContent='Please enter a valid Gemini key starting with AIza';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
 function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');}
 
@@ -374,11 +390,11 @@ function logM(s){const el=document.getElementById('mLog');el.style.display='bloc
 async function callAPI(msgs,mt=1500){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:mt,messages:msgs})});const d=await r.json();if(d.error)throw new Error(d.error.message);return d.content?.map(c=>c.text||'').join('')||'';}
 function pJ(t){try{return JSON.parse(t.replace(/```json|```/g,'').trim());}catch(e){return null;}}
 
-const MI=`You are analyzing an OFW screenshot for a domestic abuse case. Respondent (father): Doug Rhodes. Petitioner (mother): Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
+const MI=`You are analyzing an OFW screenshot for a domestic abuse case. Petitioner (father): Doug Rhodes. Respondent (mother): Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke.
 Extract ALL messages. Return JSON array, each: sender,recipient,timestamp_sent,timestamp_viewed,subject,body(verbatim),tactics_clinical:[DARVO,Blame-shifting,False accusation,Control attempt,Gaslighting,Minimizing,Monitoring,Baiting,Excessive contact,Neutral],tactics_plain(plain descriptions for judge),court_summary(2-3 sentences third person factual no clinical labels starting On date Respondent or Petitioner),severity(high|medium|low|neutral),child_mentioned(array),requires_response(true if needed for child safety),is_call_related(true if about phone/video call).
 Reply ONLY with valid JSON array.`;
 
-const MT=`You are analyzing OFW messages for a domestic abuse case. Respondent (father): Doug Rhodes. Petitioner (mother): Chelsea Rhodes. Children: Ethan,Charlotte,Duke.
+const MT=`You are analyzing OFW messages for a domestic abuse case. Petitioner (father): Doug Rhodes. Respondent (mother): Chelsea Rhodes. Children: Ethan,Charlotte,Duke.
 For each message add: tactics_clinical,tactics_plain,court_summary,severity,child_mentioned,requires_response,is_call_related.
 Messages: MSGS
 Return complete array with all original fields plus new fields. Reply ONLY with valid JSON array.`;
@@ -411,17 +427,124 @@ Reply ONLY with valid JSON.`;
 
 async function analyzeVids(){
   if(!vQ.length)return;
-  const btn=document.getElementById('vBtn');btn.disabled=true;btn.innerHTML="<span class='sp'></span>Analyzing...";
+  if(!GEMINI_KEY){document.getElementById('vErr').innerHTML="<div class=\'err\'>Please enter your Gemini API key above first.</div>";return;}
+  const btn=document.getElementById('vBtn');btn.disabled=true;btn.innerHTML="<span class=\'sp\'></span>Uploading to Gemini...";
   document.getElementById('vPW').style.display='block';document.getElementById('vErr').innerHTML='';
   for(let i=0;i<vQ.length;i++){
-    document.getElementById('vPF').style.width=Math.round((i/vQ.length)*100)+'%';document.getElementById('vPL').textContent=(i+1)+' of '+vQ.length;
-    try{const b64=await b64f(vQ[i]);const t=await callAPI([{role:'user',content:[{type:'image',source:{type:'base64',media_type:vQ[i].type||'video/mp4',data:b64}},{type:'text',text:VP}]}],1500);const p=pJ(t);if(p){allVids.push({...p,filename:vQ[i].name});autoLog(p);}}
-    catch(e){console.error(e);}
+    const file=vQ[i];
+    document.getElementById('vPF').style.width=Math.round((i/vQ.length)*100)+'%';
+    document.getElementById('vPL').textContent='Uploading '+file.name+' ('+(i+1)+' of '+vQ.length+')...';
+    try{
+      // Step 1: Upload file to Gemini Files API
+      const b64=await b64f(file);
+      const uploadResp=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+GEMINI_KEY,{
+        method:'POST',
+        headers:{'X-Goog-Upload-Protocol':'raw','X-Goog-Upload-Header-Content-Type':file.type||'video/mp4','Content-Type':'application/json'},
+        body:JSON.stringify({file:{display_name:file.name}})
+      });
+      // Use resumable upload
+      const uploadUrl=await initGeminiUpload(file);
+      if(!uploadUrl){throw new Error('Failed to initialize upload');}
+      document.getElementById('vPL').textContent='Uploading '+file.name+'...';
+      const fileUri=await uploadToGemini(uploadUrl,file);
+      if(!fileUri){throw new Error('Failed to upload file');}
+      document.getElementById('vPL').textContent='Analyzing '+file.name+' with Gemini...';
+      // Step 2: Analyze with Gemini
+      const result=await analyzeWithGemini(fileUri,file.name);
+      if(result){allVids.push(result);autoLog(result);}
+    }catch(e){
+      document.getElementById('vErr').innerHTML="<div class=\'err\'>Error with "+file.name+": "+e.message+"</div>";
+      console.error(e);
+    }
   }
-  document.getElementById('vPF').style.width='100%';document.getElementById('vPL').textContent='Done';
-  btn.disabled=false;btn.innerHTML='&#x21BA; More';save();
+  document.getElementById('vPF').style.width='100%';
+  document.getElementById('vPL').textContent='Done';
+  btn.disabled=false;btn.innerHTML='&#x21BA; More';
+  save();
   if(allVids.length){renderVids();renderDurChart();renderAutoLog();document.getElementById('vExp').style.display='block';}
-  else document.getElementById('vErr').innerHTML="<div class='err'>Could not analyze video.</div>";
+}
+
+async function initGeminiUpload(file){
+  const resp=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+GEMINI_KEY,{
+    method:'POST',
+    headers:{'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':file.size,'X-Goog-Upload-Header-Content-Type':file.type||'video/mp4','Content-Type':'application/json'},
+    body:JSON.stringify({file:{display_name:file.name}})
+  });
+  return resp.headers.get('x-goog-upload-url');
+}
+
+async function uploadToGemini(uploadUrl,file){
+  const resp=await fetch(uploadUrl,{
+    method:'POST',
+    headers:{'X-Goog-Upload-Command':'upload, finalize','X-Goog-Upload-Offset':'0','Content-Type':file.type||'video/mp4'},
+    body:file
+  });
+  const data=await resp.json();
+  // Wait for file to be processed
+  let fileUri=data.file?.uri;
+  let name=data.file?.name;
+  if(!fileUri)return null;
+  // Poll until ACTIVE
+  for(let i=0;i<30;i++){
+    await new Promise(r=>setTimeout(r,3000));
+    const status=await fetch('https://generativelanguage.googleapis.com/v1beta/'+name+'?key='+GEMINI_KEY);
+    const sd=await status.json();
+    if(sd.state==='ACTIVE')return fileUri;
+    if(sd.state==='FAILED')throw new Error('File processing failed');
+  }
+  return fileUri;
+}
+
+async function analyzeWithGemini(fileUri,filename){
+  const prompt=`You are analyzing a video call recording for a custody case. Petitioner (father): Doug Rhodes. Respondent (mother): Chelsea Rhodes. Children: Ethan (oldest, has been living with father for ~6 months after documented intimidation, previously started to say "I miss" then stopped himself mid-sentence), Charlotte, Duke.
+
+Watch the ENTIRE video carefully. Return a JSON object with these fields:
+
+- filename: "${filename}"
+- call_date: MM/DD/YYYY if visible or determinable
+- total_duration_seconds: number
+- speakers_detected: array of who appears
+- overall_severity: "high"|"medium"|"low"|"neutral"
+- court_summary: 4-5 sentences, plain language, third person, no clinical labels
+
+- segments: array of [{speaker_on_call, start_approx, end_approx, duration_seconds, flags:[{category, severity, timestamp_approx, court_plain}]}]
+  Flag categories: alienation, background_adult, distraction, coaching, transition_negativity, self_censorship, signal_behavior, positive
+
+- background_incidents: array of [{timestamp_approx, who, what, court_plain}]
+  Log EVERY instance of: adults visible or audible in background, adults entering frame, adults speaking to children during call
+
+- refusal_incidents: array of [{timestamp_approx, child, exact_words_or_description, refusal_type, court_plain}]
+  refusal_type options: "refuses_to_talk"|"says_doesnt_want_to_talk"|"ends_call"|"one_word_answers"|"silence"|"redirected_by_adult"|"other"
+  Log EVERY instance where any child says they don't want to talk, goes silent, ends call, or is redirected away from talking to Respondent (mother)
+
+- distraction_incidents: array of [{timestamp_approx, child, distraction_type, court_plain}]
+
+- off_camera_incidents: array of [{timestamp_approx, child, description, court_plain}]
+  Log every time a child looks off-camera before answering, during conversation, or in a way suggesting they are being watched or signaled
+
+- ethan_indicators: {
+    eye_contact: description,
+    off_screen_moments: array of timestamps and descriptions,
+    self_censorship_moments: description of any times Ethan stops himself,
+    affection_toward_mother: description,
+    affect: overall emotional state,
+    who_ended: who ended the call
+  }
+
+Reply ONLY with valid JSON. No markdown, no explanation.`;
+
+  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      contents:[{parts:[{fileData:{mimeType:'video/mp4',fileUri:fileUri}},{text:prompt}]}],
+      generationConfig:{responseMimeType:'application/json',maxOutputTokens:4000}
+    })
+  });
+  const data=await resp.json();
+  if(data.error)throw new Error(data.error.message);
+  const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  return pJ(text);
 }
 function autoLog(v){(v.segments||[]).forEach(seg=>{if(!seg.duration_seconds||seg.duration_seconds<30)return;const isDad=seg.speaker_on_call?.toLowerCase().includes('doug');const isMom=seg.speaker_on_call?.toLowerCase().includes('chelsea');const isEt=seg.speaker_on_call?.toLowerCase().includes('ethan');const type=isDad?'dad':isMom?'mom':isEt?'ethan':null;if(!type)return;autoCallLog.push({date:v.call_date||'Unknown',type,mins:Math.round(seg.duration_seconds/60*10)/10,ender:'Unknown',source:v.filename||'',auto:true});});}
 
@@ -477,7 +600,9 @@ function renderVids(){
   document.getElementById('vStats').style.display='grid';
   document.getElementById('vStats').innerHTML=`<div class="sc"><div class="sl">Recordings</div><div class="sv">${allVids.length}</div></div><div class="sc"><div class="sl">High flags</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">Background adults</div><div class="sv red">${bg}</div></div><div class="sc"><div class="sl">Distractions</div><div class="sv">${di}</div></div>`;
   const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};const FC={alienation:'high',background_adult:'bga',distraction:'dis',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
-  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div></div><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map(f=>`<div class="fi ${FC[f.category]||f.severity}"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
+  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div></div><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map(f=>`<div class="fi ${FC[f.category]||f.severity}"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.refusal_incidents?.length?`<div class="fi high" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128683; Refusals to talk (${v.refusal_incidents.length})</strong>${v.refusal_incidents.map(r=>`<div>[${r.timestamp_approx||'?'}] <strong>${r.child||'Child'}</strong>: ${r.court_plain}</div>`).join('')}</div>`:''}
+      ${v.off_camera_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128064; Off-camera incidents (${v.off_camera_incidents.length})</strong>${v.off_camera_incidents.map(o=>`<div>[${o.timestamp_approx||'?'}] <strong>${o.child||'Child'}</strong>: ${o.court_plain}</div>`).join('')}</div>`:''}
+      ${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 
 // NON-RESPONSE
@@ -546,6 +671,29 @@ function openEDoc(i){const e=docE[i];editCtx={type:'doc',index:i};document.getEl
 function dl(content,filename){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'}));a.download=filename;a.click();}
 function exportMsgs(mode){const lines=[mode==='plain'?'EXHIBIT - OFW COMMUNICATION RECORD (COURT COPY)':'EXHIBIT - OFW COMMUNICATION RECORD (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Petitioner: Doug Rhodes - Respondent: Chelsea Rhodes',`Total messages: ${allMsgs.length}`,'',' -'.repeat(30)];allMsgs.forEach((m,i)=>{const wh=isEx(m.sender)&&isDWH(m.timestamp_sent);const ln=isEx(m.sender)&&isLN(m.timestamp_sent);lines.push(`\nITEM ${i+1}${wh?' [SENT DURING RESPONDENT WORK HOURS]':''}${ln?' [SENT LATE NIGHT]':''}`);lines.push(`Date/Time Sent: ${m.timestamp_sent||'Unknown'}`);if(m.timestamp_viewed)lines.push(`Viewed: ${m.timestamp_viewed}`);lines.push(`From: ${m.sender||'?'} To: ${m.recipient||'?'}\nSubject: ${m.subject||'N/A'}\n\nMessage:\n"${m.body||''}"`);if(mode==='plain')lines.push(`\nDescription:\n${m.court_summary||''}`);else{lines.push(`Behavioral description: ${(m.tactics_plain||[]).join(' ')}`);lines.push(`Clinical classification (attorney only): ${(m.tactics_clinical||[]).join(', ')}`);}lines.push('\n'+'-'.repeat(40));});dl(lines.join('\n'),mode==='plain'?'OFW_Court_Exhibit.txt':'OFW_Full_Analysis.txt');}
 function exportVids(mode){const lines=[mode==='plain'?'EXHIBIT - VIDEO CALL ANALYSIS (COURT COPY)':'EXHIBIT - VIDEO CALL ANALYSIS (ATTORNEY COPY)',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Petitioner: Doug Rhodes - Respondent: Chelsea Rhodes',`Recordings: ${allVids.length}`,'',' -'.repeat(30)];allVids.forEach((v,i)=>{lines.push(`\nRECORDING ${i+1}: ${v.filename}\nDate: ${v.call_date||'Unknown'}\nDuration: ${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+' min':'unknown'}\n\nDescription:\n${v.court_summary||''}`);if(v.background_incidents?.length){lines.push('\nBackground adults:');v.background_incidents.forEach(b=>lines.push(`  [${b.timestamp_approx}] ${b.court_plain}`));}if(v.distraction_incidents?.length){lines.push('\nDistractions:');v.distraction_incidents.forEach(d=>lines.push(`  [${d.timestamp_approx}] ${d.court_plain}`));}lines.push('\n'+'-'.repeat(40));});dl(lines.join('\n'),mode==='plain'?'Video_Court_Exhibit.txt':'Video_Full_Analysis.txt');}
+
+function exportRefusals(){
+  const lines=['REFUSAL AND OFF-CAMERA INCIDENT LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents every incident where a child refused to speak with Respondent, ended a call, went silent, or looked off-camera in a manner suggesting monitoring or coaching. Each entry is drawn from OFW call recordings.','',' -'.repeat(30)];
+  let total=0;
+  allVids.forEach((v,vi)=>{
+    const refusals=v.refusal_incidents||[];
+    const offcam=v.off_camera_incidents||[];
+    if(refusals.length||offcam.length){
+      lines.push(`\nRECORDING ${vi+1}: ${v.filename} (${v.call_date||'date unknown'})`);
+      if(refusals.length){
+        lines.push(`\nRefusal incidents (${refusals.length}):`);
+        refusals.forEach((r,i)=>{lines.push(`  ${i+1}. [${r.timestamp_approx||'unknown time'}] ${r.child||'Child'}: ${r.court_plain}`);total++;});
+      }
+      if(offcam.length){
+        lines.push(`\nOff-camera incidents (${offcam.length}):`);
+        offcam.forEach((o,i)=>lines.push(`  ${i+1}. [${o.timestamp_approx||'unknown time'}] ${o.child||'Child'}: ${o.court_plain}`));
+      }
+      lines.push('\n'+'-'.repeat(40));
+    }
+  });
+  lines.splice(5,0,`Total refusal incidents across ${allVids.length} recordings: ${total}`);
+  dl(lines.join('\n'),'Refusal_and_OffCamera_Log.txt');
+}
 function exportNR(){const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents instances where Respondent chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','',' -'.repeat(30)];nrE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>RP[r]||'').join(' ')}${e.notes?'\nContext: '+e.notes:''}`));dl(lines.join('\n'),'Non_Response_Log.txt');}
 function exportRL(){const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','',' -'.repeat(30)];rlE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Petitioner'}. ${e.words?'"'+e.words+'".':''} ${e.context||''}`));dl(lines.join('\n'),'Reluctance_Log.txt');}
 function exportTiming(){const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent));const ln=exM.filter(m=>isLN(m.timestamp_sent));const lines=['EXHIBIT - MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','Respondent works Monday-Friday 7:30am-4:00pm. Respondent has previously and repeatedly requested that Petitioner not send non-urgent messages during work hours. The following documents the pattern of disregarding this request.','',' -'.repeat(30),`\nTotal Petitioner messages analyzed: ${exM.length}`,`Messages during Respondent work hours: ${wh.length} (${exM.length?Math.round(wh.length/exM.length*100)+'%':'n/a'})`,`Messages after 9pm or before 7am: ${ln.length}`,'\n-- Work-hours messages --'];wh.forEach((m,i)=>lines.push(`\n${i+1}. ${m.timestamp_sent}\n"${m.body||''}"`));dl(lines.join('\n'),'Timing_Pattern_Report.txt');}
