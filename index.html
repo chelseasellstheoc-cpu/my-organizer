@@ -70,7 +70,7 @@ input:checked+.togs::before{transform:translateX(18px)}
 .sv{font-size:20px;font-weight:600}
 .sv.red{color:#c0392b}.sv.amb{color:#b7770d}
 .fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
-.chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}
+.chip{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#666}.chip.hi-sev{background:#fdf0f0;border-color:#f5c5c5;color:#c0392b}
 .chip.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .mc{border:1px solid #e5e5e0;border-radius:10px;padding:12px 14px;margin-bottom:8px;background:#fff}
 .mc.fl{border-left:3px solid #c0392b}.mc.wh{border-left:3px solid #e67e22}.mc.ln{border-left:3px solid #7F77DD}
@@ -835,8 +835,8 @@ function renderMsgs(){
   const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent)).length;const ln=exM.filter(m=>isLN(m.timestamp_sent)).length;const hi=allMsgs.filter(m=>m.severity==='high').length;
   document.getElementById('mStats').style.display='grid';
   document.getElementById('mStats').innerHTML=`<div class="sc"><div class="sl">Total messages</div><div class="sv">${allMsgs.length}</div></div><div class="sc"><div class="sl">High severity</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">During work hours</div><div class="sv amb">${wh}</div></div><div class="sc"><div class="sl">Late night</div><div class="sv amb">${ln}</div></div>`;
-  const tacs=['all',...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[])),...(wh?['Work hours']:[]),...(ln?['Late night']:[])].filter(Boolean);
-  document.getElementById('mFilters').innerHTML=tacs.map(t=>`<button class="chip ${t===aMF?'active':''}" onclick="filterM('${t}')">${t==='all'?'All':t}</button>`).join('');
+  const hiCount=allMsgs.filter(m=>m.severity==='high').length;const tacs=['all',...(hiCount?['High severity']:[]),...new Set(allMsgs.flatMap(m=>m.tactics_clinical||[])),...(wh?['Work hours']:[]),...(ln?['Late night']:[])].filter(Boolean);
+  document.getElementById('mFilters').innerHTML=tacs.map(t=>`<button class="chip ${t===aMF?'active':''} ${t==='High severity'?'hi-sev':''}" onclick="filterM('${t}')">${t==='all'?'All':t}</button>`).join('');
   renderML();
 }
 function filterM(t){aMF=t;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.textContent===(t==='all'?'All':t)));renderML();}
@@ -844,6 +844,7 @@ function renderML(){
   let f=allMsgs;
   if(aMF==='Work hours')f=allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent));
   else if(aMF==='Late night')f=allMsgs.filter(m=>isEx(m.sender)&&isLN(m.timestamp_sent));
+  else if(aMF==='High severity')f=allMsgs.filter(m=>m.severity==='high');
   else if(aMF!=='all')f=allMsgs.filter(m=>(m.tactics_clinical||[]).includes(aMF));
   // Invoice/appointment filter
   if(hideInv){f=f.filter(m=>{const body=(m.body||'').toLowerCase();const subj=(m.subject||'').toLowerCase();const combined=body+' '+subj;return!(combined.includes('invoice')||combined.includes('payment')||combined.includes('billing')||combined.includes('receipt')||combined.includes(' paid')||combined.includes('amount due')||combined.includes('balance')||combined.includes('appointment')||combined.includes('reminder')||combined.includes('scheduled visit')||combined.includes('visit reminder')||combined.includes('session')||subj.startsWith('invoice')||subj.startsWith('appointment')||subj.startsWith('payment'));});}
@@ -1809,7 +1810,13 @@ Be specific. Reference exact details from the document.`;
         fileName: evFileData.name
       };
       ctSave();
-      document.getElementById('evAnalysisResult').innerHTML += '<div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:8px 10px;border-radius:6px;margin-top:8px;border-left:2px solid #1D9E75">&#10003; Findings extracted and saved. These will automatically appear in your Case Overview when you generate it.</div>';
+      // Auto-add the declaration as evidence item if not already added
+      const declTitle = document.getElementById('evTitle').value.trim()||'Therapist PTSD Declaration';
+      const declDate = document.getElementById('evDate').value;
+      const autoEv = {id:'ev_decl_'+Date.now(),title:declTitle,type:'Therapist declaration',date:declDate,desc:document.getElementById('evDesc').value.trim(),categories:getSelectedCC(),analysis:result,fileName:evFileData?.name||null,addedAt:new Date().toISOString()};
+      evidenceItems.unshift(autoEv);
+      ctSave();renderEvidence();
+      document.getElementById('evAnalysisResult').innerHTML += '<div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:8px 10px;border-radius:6px;margin-top:8px;border-left:2px solid #1D9E75">&#10003; Declaration analyzed, findings extracted, and automatically saved to your evidence list. These will appear in your Case Overview.</div>';
     }
 
     // Save analysis to most recent evidence item
