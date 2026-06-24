@@ -501,13 +501,15 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <div><label>Date</label><input type="date" id="ethanDate"></div>
           <div><label>Status</label>
             <select id="ethanStatus">
+              <option value="undispositioned">Logged - not yet dispositioned</option>
               <option value="happened">Happened - on time</option>
               <option value="happened_late">Happened - Ethan arrived late</option>
-              <option value="happened_short">Happened - ended early</option>
+              <option value="happened_short">Happened - ended early/shortened</option>
+              <option value="happened_pressured">Happened - post-dinner interference/pressure</option>
               <option value="missed_noshowdoug">Missed - Doug did not bring Ethan</option>
               <option value="missed_refusal">Missed - Ethan said he did not want to come</option>
               <option value="missed_excuse">Missed - Doug gave excuse (baseball/other)</option>
-              <option value="interfered">Happened but Doug interfered</option>
+              <option value="interfered">Happened but Doug interfered during dinner</option>
               <option value="pending">Upcoming - not yet occurred</option>
             </select>
           </div>
@@ -2672,13 +2674,15 @@ let ethanFilter = 'all';
 let ethanFileData = null;
 
 const ETHAN_STATUS = {
-  happened: {label:'Happened', color:'#1D9E75', icon:'&#10003;'},
-  happened_late: {label:'Happened - late', color:'#e67e22', icon:'&#9200;'},
-  happened_short: {label:'Happened - ended early', color:'#e67e22', icon:'&#9200;'},
-  missed_noshowdoug: {label:'Missed - Doug no show', color:'#c0392b', icon:'&#9888;'},
-  missed_refusal: {label:'Missed - refusal (coached?)', color:'#c0392b', icon:'&#9888;'},
+  undispositioned: {label:'Logged - not yet dispositioned', color:'#888', icon:'&#9711;'},
+  happened: {label:'Happened - on time', color:'#1D9E75', icon:'&#10003;'},
+  happened_late: {label:'Happened - Ethan arrived late', color:'#e67e22', icon:'&#9200;'},
+  happened_short: {label:'Happened - shortened/ended early', color:'#e67e22', icon:'&#9200;'},
+  happened_pressured: {label:'Happened - post-dinner interference', color:'#8e44ad', icon:'&#9888;'},
+  missed_noshowdoug: {label:'Missed - Doug did not bring Ethan', color:'#c0392b', icon:'&#9888;'},
+  missed_refusal: {label:'Missed - Ethan refused (coached?)', color:'#c0392b', icon:'&#9888;'},
   missed_excuse: {label:'Missed - excuse given', color:'#c0392b', icon:'&#9888;'},
-  interfered: {label:'Interfered with', color:'#8e44ad', icon:'&#9888;'},
+  interfered: {label:'Interfered during dinner', color:'#8e44ad', icon:'&#9888;'},
   pending: {label:'Upcoming', color:'#888', icon:'&#9711;'}
 };
 
@@ -2786,8 +2790,8 @@ function renderEthan(){
       ${item.logged.notes?`<div class="lb">${item.logged.notes}</div>`:''}
       ${item.logged.driveLink?`<a href="${item.logged.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8">&#128247; View evidence</a>`:''}
       ${item.logged.fileName?`<div style="font-size:11px;color:#1a7a52">&#128247; ${item.logged.fileName}</div>`:''}
-      ${(item.logged.status.startsWith('missed')||item.logged.status==='interfered')?
-        `<div style="font-size:11px;color:#c0392b;background:#fdf0f0;padding:5px 8px;border-radius:4px;margin-top:6px">&#9888; This entry may constitute contempt of the April 14 2026 court order (FOAH paragraph 5)</div>`:''}
+      ${(item.logged.status.startsWith('missed')||item.logged.status==='interfered'||item.logged.status==='happened_short'||item.logged.status==='happened_pressured')?
+        `<div style="font-size:11px;color:#c0392b;background:#fdf0f0;padding:5px 8px;border-radius:4px;margin-top:6px">&#9888; ${item.logged.status==='happened_short'?'Dinner was shortened below the court-ordered 90 minutes. Per FOAH paragraph 5, dinners run 5:30-7:00pm (90 min). Repeated shortening may constitute contempt.':item.logged.status==='happened_pressured'?'Post-dinner scheduling or pressure interferes with the spirit of the court order by creating anxiety around Respondent time. Document any specific activities scheduled immediately after.':'This entry may constitute contempt of the April 14 2026 court order (FOAH paragraph 5).'}</div>`:''}
     </div>`;
   }).join('');
   // Add related message buttons to each dinner card
@@ -2817,13 +2821,15 @@ function openEditEthan(i){
     <label>Date</label><input type="date" id="eetDate" value="${e.date}">
     <label>Status</label>
     <select id="eetStatus">
+      <option value="undispositioned" ${e.status==='undispositioned'?'selected':''}>Logged - not yet dispositioned</option>
       <option value="happened" ${e.status==='happened'?'selected':''}>Happened - on time</option>
       <option value="happened_late" ${e.status==='happened_late'?'selected':''}>Happened - Ethan arrived late</option>
-      <option value="happened_short" ${e.status==='happened_short'?'selected':''}>Happened - ended early</option>
+      <option value="happened_short" ${e.status==='happened_short'?'selected':''}>Happened - shortened/ended early</option>
+      <option value="happened_pressured" ${e.status==='happened_pressured'?'selected':''}>Happened - post-dinner interference/pressure</option>
       <option value="missed_noshowdoug" ${e.status==='missed_noshowdoug'?'selected':''}>Missed - Doug did not bring Ethan</option>
-      <option value="missed_refusal" ${e.status==='missed_refusal'?'selected':''}>Missed - Ethan said he did not want to come</option>
+      <option value="missed_refusal" ${e.status==='missed_refusal'?'selected':''}>Missed - Ethan refused (coached?)</option>
       <option value="missed_excuse" ${e.status==='missed_excuse'?'selected':''}>Missed - Doug gave excuse</option>
-      <option value="interfered" ${e.status==='interfered'?'selected':''}>Happened but Doug interfered</option>
+      <option value="interfered" ${e.status==='interfered'?'selected':''}>Happened but Doug interfered during dinner</option>
     </select>
     <label>Notes</label><textarea id="eetNotes">${e.notes||''}</textarea>
     <label>Google Drive link</label><input type="text" id="eetLink" value="${e.driveLink||''}">
