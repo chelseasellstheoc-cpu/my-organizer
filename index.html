@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <!-- v7 -->
 <html lang="en">
 <head>
@@ -238,7 +238,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div class="fbar" id="mFilters"></div>
       <div id="mList"></div>
-      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
+      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="showCoverageReport()">&#128197; Coverage gaps</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
     </div>
     <!-- VIDEOS -->
     <div id="p-videos" class="panel">
@@ -341,17 +341,53 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- DURATION -->
     <div id="p-duration" class="panel">
-      <p class="stitle">&#128222; Call duration</p>
-      <div id="durChart"></div>
+      <div class="hhead" style="background:linear-gradient(135deg,#1a4a2a,#1D9E75)">
+        <h2>&#128222; Call Log &amp; Duration</h2>
+        <p>Log every scheduled call with Ethan and the children. Document missed calls, shortened calls, and interference. Combined with video analysis for a complete contact record.</p>
+      </div>
+      <div id="durChart" style="margin-top:1rem"></div>
       <div id="autoLog" style="margin-bottom:8px"></div>
-      <div class="card"><h3>Manually log a call</h3>
-        <div class="fr"><div><label>Date</label><input type="date" id="dud"></div><div><label>Type</label><select id="duty"><option value="dad">His call with kids at my home</option><option value="mom">My call with kids</option><option value="ethan">Ethan goodnight call</option></select></div></div>
-        <div class="fr"><div><label>Duration (min)</label><input type="number" id="dum" min="1" max="180" placeholder="e.g. 22"></div><div><label>Who ended</label><select id="due"><option>Dad</option><option>Child</option><option>Me</option><option>Unknown</option></select></div></div>
-        <label>Notes</label><textarea id="dun" style="min-height:35px" placeholder="e.g. Grandparents audible. Kids eating."></textarea>
-        <button class="btn btnp" onclick="addDur()">+ Add</button>
+      <div class="card" style="margin-top:1rem"><h3>Log a call</h3>
+        <div class="fr">
+          <div><label>Date</label><input type="date" id="dud"></div>
+          <div><label>Call type</label>
+            <select id="duty">
+              <option value="dad">His call with kids (at my home)</option>
+              <option value="mom">My call with kids</option>
+              <option value="ethan">My call with Ethan specifically</option>
+              <option value="missed_noanswer">Missed - Ethan did not answer</option>
+              <option value="missed_unavailable">Missed - Doug said Ethan unavailable</option>
+              <option value="missed_refused">Missed - Ethan said he did not want to talk</option>
+              <option value="missed_technical">Missed - technical issues (possible pretext)</option>
+              <option value="cutshort">Call was cut short by Doug or Ethan</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr">
+          <div><label>Duration (min) - 0 if missed</label><input type="number" id="dum" min="0" max="180" placeholder="e.g. 22"></div>
+          <div><label>Who ended call</label>
+            <select id="due">
+              <option>Doug</option>
+              <option>Ethan</option>
+              <option>Me</option>
+              <option>Unknown</option>
+              <option>N/A - call missed</option>
+            </select>
+          </div>
+        </div>
+        <label>What happened / notes</label>
+        <textarea id="dun" style="min-height:50px" placeholder="e.g. Called at 7pm as scheduled. Ethan answered but Doug was audible in background. Call ended after 8 minutes when Ethan said he had to go. OR: Called 3 times, no answer. Texted Doug on OFW, no response."></textarea>
+        <label>Upload screenshot / evidence (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn btns" onclick="document.getElementById('durFile').click()" style="font-size:12px">&#128247; Upload</button>
+          <input type="file" id="durFile" accept="image/*,.pdf" style="display:none" onchange="onDurFile(this)">
+          <input type="text" id="durDriveLink" placeholder="or Google Drive link..." style="flex:1;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
+        </div>
+        <div id="durFileInfo" style="font-size:11px;color:#1a7a52"></div>
+        <button class="btn btnp" onclick="addDur()">+ Log call</button>
       </div>
       <div id="durList"></div>
-      <p class="stitle">&#128336; Message timing patterns</p>
+      <p class="stitle" style="margin-top:1.5rem">&#128202; Message timing patterns</p>
       <p style="font-size:12px;color:#666;margin-bottom:.75rem;line-height:1.5">Respondent has repeatedly requested no non-urgent contact during work hours (Mon-Fri 7:30am-4pm). This section documents that pattern.</p>
       <div id="timingStats"><div class="empty">Analyze messages first.</div></div>
       <p class="stitle" style="margin-top:1rem">&#128202; His messages by hour</p>
@@ -359,8 +395,11 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div class="hgrid" id="hourGrid"></div>
       <p class="stitle">&#9201; Response gaps</p>
       <div id="respGaps"><div class="empty">Analyze messages first.</div></div>
-      <div class="es"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportTiming()">&#128196; Timing report</button><button class="btn btns" onclick="exportDurLog()">&#128196; Call duration log</button></div></div>
-    </div>
+      <div class="es"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportTiming()">&#128196; Timing report</button>
+        <button class="btn btns" onclick="exportDurLog()">&#128196; Call log</button>
+      </div></div>
+
     <!-- PATTERNS -->
     <div id="p-patterns" class="panel">
       <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
@@ -1029,7 +1068,44 @@ function addDur(){const d=document.getElementById('dud').value,ty=document.getEl
 function getDurData(){const all=[...durE,...autoCallLog];const dad=all.filter(e=>e.type==='dad').map(e=>e.mins);const mom=all.filter(e=>e.type==='mom').map(e=>e.mins);const ethan=all.filter(e=>e.type==='ethan').map(e=>e.mins);const avg=arr=>arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length):null;return{dad,mom,ethan,avgDad:avg(dad),avgMom:avg(mom),avgEthan:avg(ethan)};}
 function renderDurChart(){const{dad,mom,ethan,avgDad,avgMom,avgEthan}=getDurData();const mx=Math.max(avgDad||0,avgMom||0,avgEthan||0,30);const rows=[{l:'His calls (avg)',v:avgDad,c:'dad',n:dad.length},{l:'Your calls (avg)',v:avgMom,c:'mom',n:mom.length},{l:'Ethan goodnight (avg)',v:avgEthan,c:'ethan',n:ethan.length}].filter(r=>r.v!==null);document.getElementById('durChart').innerHTML=rows.length?`<div class="card">${rows.map(r=>`<div class="dr"><div class="dl2">${r.l} (${r.n})</div><div class="dt"><div class="df ${r.c}" style="width:${Math.min(100,(r.v/mx)*100)}%"></div></div><div class="dv">${r.v.toFixed(1)}m</div></div>`).join('')}${avgDad&&avgMom?`<p style="font-size:12px;color:#666;margin-top:8px;line-height:1.5">His calls avg <strong>${avgDad.toFixed(1)}min</strong> vs your <strong>${avgMom.toFixed(1)}min</strong> - a <strong>${(avgDad/avgMom).toFixed(1)}x disparity</strong> across ${dad.length+mom.length} documented calls.</p>`:''}</div>`:"<div class='empty'>No data yet.</div>";}
 function renderAutoLog(){document.getElementById('autoLog').innerHTML=autoCallLog.length?`<div style="font-size:12px;color:#1a7a52;background:#f0faf5;padding:7px 11px;border-radius:8px;border-left:2px solid #1D9E75">&#10003; ${autoCallLog.length} call segment${autoCallLog.length!==1?'s':''} auto-logged from video analysis</div>`:'';}
-function renderDurList(){const TL={dad:'His call',mom:'My call',ethan:'Ethan goodnight'};document.getElementById('durList').innerHTML=durE.length?durE.map((e,i)=>`<div class="le"><div class="lh"><div style="display:flex;align-items:center;gap:6px"><span class="ld">${e.date}</span><span class="bg ${e.type==='dad'?'br':e.type==='mom'?'bg2':'bp'}">${TL[e.type]||e.type}</span></div><div class="abtn"><button class="btn btne" onclick="openEDur(${i})">Edit</button><button class="btn btnd" onclick="durE.splice(${i},1);save();renderDurChart();renderDurList()">Del</button></div></div><div class="lb">${e.mins}min - Ended: ${e.ender}${e.notes?' - '+e.notes:''}</div></div>`).join(''):'';}
+function renderDurList(){
+  const TL={
+    dad:'His call with kids',mom:'My call with kids',ethan:'My call with Ethan',
+    missed_noanswer:'MISSED - no answer',missed_unavailable:'MISSED - unavailable',
+    missed_refused:'MISSED - Ethan refused',missed_technical:'MISSED - technical',
+    cutshort:'Cut short'
+  };
+  const TC={
+    dad:'br',mom:'bg2',ethan:'bp',
+    missed_noanswer:'br',missed_unavailable:'br',missed_refused:'br',
+    missed_technical:'ba',cutshort:'ba'
+  };
+  const all=[...durE,...autoCallLog].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('durList').innerHTML=all.length?all.map((e,i)=>{
+    const origIdx=durE.indexOf(e);
+    const isMissed=e.missed||(e.type||'').startsWith('missed');
+    const durDisplay=isMissed?'<span style="color:#c0392b;font-weight:600">MISSED</span>':`${e.mins} min`;
+    return `<div class="le" style="border-left:3px solid ${isMissed?'#c0392b':e.type==='mom'||e.type==='ethan'?'#1D9E75':'#378ADD'}">
+      <div class="lh">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="ld">${e.date}</span>
+          <span class="bg ${TC[e.type]||'bp'}">${TL[e.type]||e.type}</span>
+          <span style="font-size:12px">${durDisplay}</span>
+          ${e.ender&&e.ender!=='N/A - call missed'?`<span style="font-size:11px;color:#888">ended by ${e.ender}</span>`:''}
+          ${e.auto?'<span style="font-size:10px;color:#888">(auto)</span>':''}
+        </div>
+        <div class="abtn">
+          ${origIdx>=0?`<button class="btn btne" onclick="openEDur(${origIdx})">Edit</button><button class="btn btnd" onclick="durE.splice(${origIdx},1);save();renderDurChart();renderDurList()">Del</button>`:''}
+        </div>
+      </div>
+      ${e.notes?`<div class="lb">${e.notes}</div>`:''}
+      ${isMissed?`<div style="font-size:11px;color:#c0392b;background:#fdf0f0;padding:4px 8px;border-radius:4px;margin-top:4px">&#9888; Missed contact with children. Document any OFW messages sent requesting explanation.</div>`:''}
+      ${e.driveLink?`<a href="${e.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View evidence</a>`:''}
+      ${e.fileName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${e.fileName}</div>`:''}
+    </div>`;
+  }).join(''):"<div class='empty'>No calls logged yet. Log every scheduled call - whether it happened, was missed, or was cut short.</div>";
+}
+
 function openEDur(i){const e=durE[i];editCtx={type:'dur',index:i};document.getElementById('mTitle').textContent='Edit call entry';document.getElementById('mBody').innerHTML=`<label>Date</label><input type="date" id="ed" value="${e.date}"><label>Duration (minutes)</label><input type="number" id="emins" value="${e.mins}"><label>Notes</label><textarea id="en" style="min-height:40px">${e.notes||''}</textarea>`;document.getElementById('editModal').classList.add('open');}
 
 // TIMING
@@ -1103,7 +1179,37 @@ function exportRefusals(){
 function exportNR(){const lines=['NON-RESPONSE DECISION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents instances where Respondent chose not to respond to OFW messages and the documented reason for each decision. This log is maintained contemporaneously.','',' -'.repeat(30)];nrE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nMessage: "${e.msg}"\nReason: ${e.reasons.map(r=>RP[r]||'').join(' ')}${e.notes?'\nContext: '+e.notes:''}`));dl(lines.join('\n'),'Non_Response_Log.txt');}
 function exportRL(){const lines=['CONTACT RELUCTANCE AND SELF-CENSORSHIP LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','This log documents incidents where a child showed coached reluctance to engage with Petitioner or self-censored expressions of affection. Each entry was recorded contemporaneously.','',' -'.repeat(30)];rlE.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}${e.time?' at '+e.time:''}\nChild: ${e.child}\nType: ${e.type||'N/A'}\nObserved: "${e.words}"${e.context?'\nContext: '+e.context:''}\nCourt language: On ${e.date}, ${e.child} ${e.type?e.type.toLowerCase():'showed reluctance during contact with Respondent'}. ${e.words?'"'+e.words+'".':''} ${e.context||''}`));dl(lines.join('\n'),'Reluctance_Log.txt');}
 function exportTiming(){const exM=allMsgs.filter(m=>isEx(m.sender));const wh=exM.filter(m=>isDWH(m.timestamp_sent));const ln=exM.filter(m=>isLN(m.timestamp_sent));const lines=['EXHIBIT - MESSAGE TIMING PATTERN ANALYSIS',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','','Respondent works Monday-Friday 7:30am-4:00pm. Respondent has previously and repeatedly requested that Petitioner not send non-urgent messages during work hours. The following documents the pattern of disregarding this request.','',' -'.repeat(30),`\nTotal Petitioner messages analyzed: ${exM.length}`,`Messages during Respondent work hours: ${wh.length} (${exM.length?Math.round(wh.length/exM.length*100)+'%':'n/a'})`,`Messages after 9pm or before 7am: ${ln.length}`,'\n-- Work-hours messages --'];wh.forEach((m,i)=>lines.push(`\n${i+1}. ${m.timestamp_sent}\n"${m.body||''}"`));dl(lines.join('\n'),'Timing_Pattern_Report.txt');}
-function exportDurLog(){const all=[...durE,...autoCallLog];const{avgDad,avgMom}=getDurData();const lines=['CALL DURATION LOG',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','',' -'.repeat(30)];if(avgDad&&avgMom)lines.push(`\nSummary: Petitioner calls avg ${avgDad.toFixed(1)}min. Respondent calls avg ${avgMom.toFixed(1)}min. Disparity: ${(avgDad/avgMom).toFixed(1)}x.\n`);all.forEach((e,i)=>lines.push(`\nENTRY ${i+1}\nDate: ${e.date}\nType: ${e.type==='dad'?"Petitioner's call":e.type==='mom'?"Respondent's call":"Ethan goodnight call"}\nDuration: ${e.mins} minutes\nEnded by: ${e.ender||'Unknown'}${e.notes?'\nNotes: '+e.notes:''}${e.auto?' [Auto-logged from video analysis]':''}`));dl(lines.join('\n'),'Call_Duration_Log.txt');}
+function exportDurLog(){
+  const all=[...durE,...autoCallLog].sort((a,b)=>a.date.localeCompare(b.date));
+  const missed=all.filter(e=>e.missed||(e.type||'').startsWith('missed'));
+  const myAvg=all.filter(e=>e.type==='mom'||e.type==='ethan').reduce((s,e)=>s+e.mins,0)/Math.max(1,all.filter(e=>e.type==='mom'||e.type==='ethan').length);
+  const hisAvg=all.filter(e=>e.type==='dad').reduce((s,e)=>s+e.mins,0)/Math.max(1,all.filter(e=>e.type==='dad').length);
+  const lines=[
+    'CALL LOG - CHELSEA RHODES',
+    'Generated: '+new Date().toLocaleDateString(),
+    'Case: 25D000590 - Respondent: Chelsea Rhodes',
+    '',
+    'SUMMARY:',
+    'Total calls logged: '+all.length,
+    'Missed calls: '+missed.length,
+    'My avg call duration: '+myAvg.toFixed(1)+' min',
+    'His avg call duration: '+hisAvg.toFixed(1)+' min',
+    missed.length?'\nWARNING: '+missed.length+' calls missed. Each missed call may evidence interference with Respondent right to contact under FC 3100.':'',
+    '',
+    '--- COMPLETE CALL LOG ---'
+  ];
+  all.forEach((e,i)=>{
+    const isMissed=e.missed||(e.type||'').startsWith('missed');
+    lines.push('\n'+(i+1)+'. '+e.date+' - '+(isMissed?'MISSED CALL':''+e.mins+' min'));
+    lines.push('Type: '+(e.type||''));
+    if(e.ender&&e.ender!=='N/A - call missed') lines.push('Ended by: '+e.ender);
+    if(e.notes) lines.push('Notes: '+e.notes);
+    if(e.driveLink) lines.push('Evidence: '+e.driveLink);
+    if(isMissed) lines.push('ACTION NEEDED: Log any OFW communication about this missed call in Non-response or Messages tab.');
+  });
+  dl(lines.join('\n'),'Call_Log.txt');
+}
+
 function exportHearing(){const done=CL.filter(c=>clState[c.id]).length;const lines=['HEARING PREPARATION BRIEF - JULY 30, 2026',`Generated: ${new Date().toLocaleDateString()}`,'Case: In re Rhodes Children - Respondent: Chelsea Rhodes','Dr. Kelley (custody evaluator) testifying','',' -'.repeat(30),`\nPrep checklist: ${done}/${CL.length} items complete`,`Messages analyzed: ${allMsgs.length}`,`Videos analyzed: ${allVids.length}`,`Non-response log entries: ${nrE.length}`,`Reluctance log entries: ${rlE.length}`,`Ethan-specific entries: ${rlE.filter(e=>e.child==='Ethan').length}`,`Work-hours violations: ${allMsgs.filter(m=>isEx(m.sender)&&isDWH(m.timestamp_sent)).length}`,'\n-- Dr. Kelley Findings Corroboration --','1. Signal behaviors - check video analysis for signal_behavior flags','2. Transition negativity (sorry) - check video analysis for transition_negativity flags','3. Language mirroring - check video analysis coaching flags and message analysis','4. Coached journals - check OFW messages for journal references','Ethan alienation - see reluctance log and Ethan-specific video analysis'];dl(lines.join('\n'),'Hearing_Prep_Brief_730.txt');}
 function copySum(){const t={};allMsgs.forEach(m=>(m.tactics_clinical||[]).forEach(tc=>{if(tc!=='Neutral')t[tc]=(t[tc]||0)+1;}));const exM=allMsgs.filter(m=>isEx(m.sender));navigator.clipboard.writeText(`EVIDENCE SUMMARY\nMessages: ${allMsgs.length} - High severity: ${allMsgs.filter(m=>m.severity==='high').length}\nWork-hours violations: ${exM.filter(m=>isDWH(m.timestamp_sent)).length}\nVideos: ${allVids.length}\nNon-response log: ${nrE.length}\nReluctance log: ${rlE.length}\n\nBehaviors:\n${Object.entries(t).map(([k,v])=>`- ${k}: ${v}`).join('\n')}`).then(()=>alert('Copied'));}
 // DOC HUB
@@ -2886,6 +2992,139 @@ function searchEthanMsgs(d){
   if(el)el.value=s;
   sw('messages');
   setTimeout(renderML,100);
+}
+
+function onDurFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  window._durFileData = {name: file.name};
+  const info = document.getElementById('durFileInfo');
+  if(info) info.textContent = 'Attached: ' + file.name;
+}
+
+function showCoverageReport(){
+  if(!allMsgs.length){alert('No messages loaded yet.');return;}
+
+  // Get all dates that have messages
+  const datesWithMsgs = new Set();
+  allMsgs.forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    if(d){
+      const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      datesWithMsgs.add(key);
+    }
+  });
+
+  // Get date range
+  const sortedDates = [...datesWithMsgs].sort();
+  const firstDate = new Date(sortedDates[0]+'T12:00:00');
+  const lastDate = new Date();
+
+  // Find gaps - weeks with no messages from Doug
+  const weekGaps = [];
+  const current = new Date(firstDate);
+  while(current <= lastDate){
+    const weekStart = new Date(current);
+    const weekEnd = new Date(current);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    
+    const weekKey = weekStart.toISOString().slice(0,10);
+    const weekMsgs = allMsgs.filter(m => {
+      const d = parsTS(m.timestamp_sent);
+      return d && d >= weekStart && d <= weekEnd && isEx(m.sender);
+    });
+    
+    if(!weekMsgs.length){
+      weekGaps.push({
+        start: weekStart.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+        end: weekEnd.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+      });
+    }
+    current.setDate(current.getDate() + 7);
+  }
+
+  // Group messages by month
+  const byMonth = {};
+  allMsgs.filter(m=>isEx(m.sender)).forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    if(!d) return;
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    if(!byMonth[key]) byMonth[key] = {label, count:0, dates:new Set()};
+    byMonth[key].count++;
+    byMonth[key].dates.add(d.toISOString().slice(0,10));
+  });
+
+  // Build report HTML
+  const monthRows = Object.entries(byMonth).sort().map(([k,v]) => 
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0ea;font-size:13px">
+      <span>${v.label}</span>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span style="color:#378ADD">${v.count} messages</span>
+        <span style="color:#888;font-size:11px">${v.dates.size} days</span>
+        <div style="width:80px;height:6px;background:#f0f0ea;border-radius:3px">
+          <div style="width:${Math.min(100,v.count*2)}%;height:100%;background:#378ADD;border-radius:3px"></div>
+        </div>
+      </div>
+    </div>`
+  ).join('');
+
+  const gapRows = weekGaps.slice(0,20).map(g =>
+    `<div style="padding:4px 8px;background:#fdf0f0;border-radius:4px;font-size:12px;color:#c0392b">
+      ${g.start} - ${g.end}
+    </div>`
+  ).join('');
+
+  // Show in a modal-style overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;padding:20px';
+  overlay.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:600px;margin:0 auto;padding:1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3 style="font-size:16px;font-weight:600">OFW Message Coverage Report</h3>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#888">&#x2715;</button>
+    </div>
+    <div style="background:#f0f4ff;border-radius:8px;padding:10px 14px;margin-bottom:1rem;font-size:13px">
+      <strong>${allMsgs.filter(m=>isEx(m.sender)).length}</strong> messages from Doug across <strong>${datesWithMsgs.size}</strong> days, from <strong>${sortedDates[0]}</strong> to <strong>${sortedDates[sortedDates.length-1]}</strong>
+    </div>
+    <h4 style="font-size:13px;font-weight:600;margin-bottom:8px">Messages by month</h4>
+    <div style="margin-bottom:1rem">${monthRows}</div>
+    ${weekGaps.length ? `<h4 style="font-size:13px;font-weight:600;margin-bottom:8px;color:#c0392b">Weeks with no messages from Doug (${weekGaps.length} total)</h4>
+    <p style="font-size:12px;color:#666;margin-bottom:8px">These weeks have no OFW messages uploaded. Upload additional OFW exports to fill gaps, or note these as periods of no contact.</p>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:1rem">${gapRows}</div>` : '<p style="color:#1D9E75;font-size:13px">No weekly gaps found - good coverage!</p>'}
+    <button onclick="exportCoverageReport()" class="btn btns" style="margin-right:8px">&#128196; Export report</button>
+    <button onclick="this.closest('[style*=fixed]').remove()" class="btn">Close</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function exportCoverageReport(){
+  if(!allMsgs.length) return;
+  const byMonth = {};
+  allMsgs.filter(m=>isEx(m.sender)).forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    if(!d) return;
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    if(!byMonth[key]) byMonth[key] = {label, count:0, dates:new Set()};
+    byMonth[key].count++;
+    byMonth[key].dates.add(d.toISOString().slice(0,10));
+  });
+
+  const lines = [
+    'OFW MESSAGE COVERAGE REPORT',
+    'Generated: '+new Date().toLocaleDateString(),
+    'Case: 25D000590 - Respondent: Chelsea Rhodes',
+    'Total messages from Petitioner: '+allMsgs.filter(m=>isEx(m.sender)).length,
+    '',
+    '--- MESSAGES BY MONTH ---'
+  ];
+  Object.entries(byMonth).sort().forEach(([k,v]) => {
+    lines.push(v.label+': '+v.count+' messages across '+v.dates.size+' days');
+  });
+  lines.push('\n--- DATES WITH NO MESSAGES FROM PETITIONER ---');
+  lines.push('Upload additional OFW PDF exports to fill any gaps in coverage.');
+
+  dl(lines.join('\n'), 'OFW_Coverage_Report.txt');
 }
 
 </script>
