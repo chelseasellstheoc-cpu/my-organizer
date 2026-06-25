@@ -835,6 +835,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <input type="text" id="billLastPay" placeholder="e.g. 1/9 $3000 Zelle CU">
         <label>Notes</label>
         <input type="text" id="billNotes" placeholder="e.g. Balance $500 past due">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="billRecurring" style="width:16px;height:16px">
+            <span><strong>Recurring</strong> - same amount every month, auto-carries forward</span>
+          </label>
+        </div>
         <button class="btn btnp" onclick="addBill()">+ Add bill</button>
       </div>
       <div id="billCatChart" style="margin-top:1rem"></div>
@@ -3378,9 +3384,9 @@ function renderExpenses(){
   const lateCount = expenses.filter(e=>e.status==='late').length;
 
   document.getElementById('expStats').innerHTML = [
-    {label:'Total paid by you', val:'$'+totalPaid.toFixed(2), color:'#1D9E75'},
-    {label:'Total all expenses', val:'$'+totalAll.toFixed(2), color:'#1a1a1a'},
-    {label:'Unpaid/late bills', val:'$'+totalUnpaid.toFixed(2)+(lateCount?' ('+lateCount+' overdue)':''), color:totalUnpaid>0?'#c0392b':'#888'},
+    {label:'Total paid by you', val:'$'+fmtAmt(totalPaid), color:'#1D9E75'},
+    {label:'Total all expenses', val:'$'+fmtAmt(totalAll), color:'#1a1a1a'},
+    {label:'Unpaid/late bills', val:'$'+fmtAmt(totalUnpaid)+(lateCount?' ('+lateCount+' overdue)':''), color:totalUnpaid>0?'#c0392b':'#888'},
   ].map(s=>`<div style="background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:700;color:${s.color}">${s.val}</div><div style="font-size:11px;color:#666;margin-top:2px">${s.label}</div></div>`).join('');
 
   // Monthly chart
@@ -3468,7 +3474,7 @@ function renderExpenses(){
       <div class="lh">
         <div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span class="ld">$${e.amount.toFixed(2)}</span>
+            <span class="ld">$${fmtAmt(e.amount)}</span>
             <span class="bg" style="background:${color};color:#fff;font-size:10px">${e.category}</span>
             <span style="font-size:11px;color:${sColor};font-weight:${e.status==='late'?'700':'400'}">${STATUS_LABELS[e.status]||e.status}</span>
           </div>
@@ -3534,7 +3540,7 @@ function exportExpenses(mode){
     lines.push('--- UNPAID AND OVERDUE BILLS ---');
     lines.push('These outstanding bills demonstrate Respondent cannot absorb additional financial obligations.');
     lateItems.sort((a,b)=>a.date.localeCompare(b.date)).forEach((e,i)=>{
-      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${e.amount.toFixed(2)} [${e.status.toUpperCase()}]`);
+      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${fmtAmt(e.amount)} [${e.status.toUpperCase()}]`);
       if(e.desc) lines.push('   '+e.desc);
       if(e.notes) lines.push('   Notes: '+e.notes);
     });
@@ -3560,7 +3566,7 @@ function exportExpenses(mode){
   } else {
     lines.push('--- COMPLETE EXPENSE LOG ---');
     [...expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach((e,i)=>{
-      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${e.amount.toFixed(2)} [${e.status}]`);
+      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${fmtAmt(e.amount)} [${e.status}]`);
       if(e.desc) lines.push('   '+e.desc);
       if(e.children?.length) lines.push('   Children: '+e.children.join(', '));
       if(e.notes) lines.push('   Notes: '+e.notes);
@@ -3693,7 +3699,7 @@ function renderPendingExpenses(){
     return `<div style="background:${e.likelyDupe?'#fffbf0':'#f9f9f7'};border:1px solid ${e.likelyDupe?'#f0c040':'#e0e0e0'};border-radius:8px;padding:10px 12px;margin-bottom:6px;opacity:0.85">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
         <div>
-          <div style="font-size:13px;font-weight:600">$${e.amount.toFixed(2)} - ${e.date} ${dupeWarning}</div>
+          <div style="font-size:13px;font-weight:600">$${fmtAmt(e.amount)} - ${e.date} ${dupeWarning}</div>
           <div style="font-size:12px;color:#555;margin-top:2px">${e.desc||'(no description)'}</div>
           ${e.account?`<div style="font-size:11px;color:#888">Account: ${e.account}</div>`:''}
         </div>
@@ -3865,8 +3871,10 @@ function addBillMonth(){
   if(!billsData[m]) billsData[m] = {bills:[], income:0};
   currentBillMonth = m;
   billsSave();
+  const carried = autoCarryRecurring();
   renderBillMonthSelect();
   renderBills();
+  if(carried>0) alert(carried+' recurring bills auto-carried from previous month.');
 }
 
 function copyLastMonth(){
@@ -3874,8 +3882,11 @@ function copyLastMonth(){
   if(months.length < 2){alert('Need at least 2 months to copy from.');return;}
   const last = months[1]; // second most recent
   const current = months[0];
-  if(!confirm('Copy all bills from '+last+' to '+current+'? Existing bills in '+current+' will be kept.')) return;
-  const toCopy = (billsData[last]?.bills||[]).map(b=>({...b, id:'bill_'+Date.now()+'_'+Math.random(), status:'unpaid', lastPay:'', notes:''}));
+  if(!confirm('Copy recurring bills from '+last+' to '+current+'?')) return;
+  const recurring = (billsData[last]?.bills||[]).filter(b=>b.recurring);
+  if(!recurring.length){alert('No recurring bills in '+last+'. Check the Recurring box on each bill first.');return;}
+  const existIds = new Set((billsData[current]?.bills||[]).map(b=>b.company+'_'+b.day));
+  const toCopy = recurring.filter(b=>!existIds.has(b.company+'_'+b.day)).map(b=>({...b, id:'bill_'+Date.now()+'_'+Math.random(), status:'unpaid', lastPay:'', notes:'', outstandingBalance:0}));
   billsData[current].bills = [...(billsData[current].bills||[]), ...toCopy];
   billsSave();
   renderBills();
@@ -3920,10 +3931,12 @@ function addBill(){
   if(!company||!amt){alert('Please enter company name and amount.');return;}
   if(!billsData[currentBillMonth]) billsData[currentBillMonth]={bills:[],income:0};
 
+  const recurring = document.getElementById('billRecurring')?.checked||false;
   billsData[currentBillMonth].bills.push({
     id:'bill_'+Date.now(), day, company, amount:amt,
-    outstandingBalance:balance, category:cat, status, lastPay, notes
+    outstandingBalance:balance, category:cat, status, lastPay, notes, recurring
   });
+  const brc=document.getElementById('billRecurring');if(brc)brc.checked=false;
   billsData[currentBillMonth].bills.sort((a,b)=>a.day-b.day);
 
   ['billDay','billCompany','billAmt','billBalance','billLastPay','billNotes'].forEach(id=>{
@@ -3963,10 +3976,10 @@ function renderBills(){
 
   // Stats
   document.getElementById('billStats').innerHTML = [
-    {label:'Monthly income', val:'$'+income.toFixed(2), color:'#1D9E75'},
-    {label:'Total bills', val:'$'+totalAmt.toFixed(2), color:'#1a1a1a'},
-    {label:'Left after bills', val:'$'+leftover.toFixed(2)+(leftover<500?' (critical)':''), color:leftover<500?'#c0392b':leftover<1000?'#e67e22':'#1D9E75'},
-    {label:'Outstanding balances', val:'$'+totalBalance.toFixed(2), color:totalBalance>0?'#c0392b':'#888'},
+    {label:'Monthly income', val:'$'+fmtAmt(income), color:'#1D9E75'},
+    {label:'Total bills', val:'$'+fmtAmt(totalAmt), color:'#1a1a1a'},
+    {label:'Left after bills', val:'$'+fmtAmt(leftover)+(leftover<500?' (critical)':''), color:leftover<500?'#c0392b':leftover<1000?'#e67e22':'#1D9E75'},
+    {label:'Outstanding balances', val:'$'+fmtAmt(totalBalance), color:totalBalance>0?'#c0392b':'#888'},
   ].map(s=>`<div style="background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:700;color:${s.color}">${s.val}</div><div style="font-size:11px;color:#666;margin-top:2px">${s.label}</div></div>`).join('');
 
   // Category chart
@@ -4016,13 +4029,13 @@ function renderBills(){
           ${b.notes?`<div style="font-size:12px;color:#888;margin-top:2px">${b.notes}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-          <span style="font-size:16px;font-weight:700;color:${color}">$${b.amount.toFixed(2)}</span>
+          <span style="font-size:16px;font-weight:700;color:${color}">$${fmtAmt(b.amount)}</span>
           <select onchange="updateBillStatus('${currentBillMonth}','${b.id}',this.value)" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid ${color};color:${color};font-weight:600;background:#fff">
             <option value="unpaid" ${b.status==='unpaid'?'selected':''}>Unpaid</option>
             <option value="paid" ${b.status==='paid'?'selected':''}>Paid - not posted</option>
             <option value="posted" ${b.status==='posted'?'selected':''}>Posted</option>
           </select>
-          <button onclick="deleteBill('${currentBillMonth}','${b.id}')" class="btn btnd" style="font-size:11px">Del</button>
+          <label style='display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;margin-bottom:4px'><input type='checkbox' ${b.recurring?'checked':''} onchange="toggleRecurring('${currentBillMonth}','${b.id}',this.checked)"> <span style='color:#666'>Recurring</span></label><button onclick="deleteBill('${currentBillMonth}','${b.id}')" class="btn btnd" style="font-size:11px">Del</button>
         </div>
       </div>
     </div>`;
@@ -4087,6 +4100,34 @@ function exportBills(mode){
 
   const fname = mode==='outstanding'?'Outstanding_Balances.txt':mode==='month'?'Bills_'+currentBillMonth+'.txt':'Bills_Summary.txt';
   dl(lines.join('\n'), fname);
+}
+
+function fmtAmt(n){
+  if(isNaN(n)||n===null||n===undefined) return '0.00';
+  return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function toggleRecurring(monthKey, billId, isRecurring){
+  const bill = (billsData[monthKey]?.bills||[]).find(b=>b.id===billId);
+  if(bill){bill.recurring=isRecurring;billsSave();}
+}
+
+function autoCarryRecurring(){
+  const months = getBillMonths();
+  if(months.length < 2) return 0;
+  const last = months[1];
+  const current = months[0];
+  const recurring = (billsData[last]?.bills||[]).filter(b=>b.recurring);
+  if(!recurring.length) return 0;
+  const existIds = new Set((billsData[current]?.bills||[]).map(b=>b.company+'_'+b.day));
+  const toCopy = recurring
+    .filter(b=>!existIds.has(b.company+'_'+b.day))
+    .map(b=>({...b, id:'bill_'+Date.now()+'_'+Math.random(), status:'unpaid', lastPay:'', notes:'', outstandingBalance:0}));
+  if(toCopy.length){
+    billsData[current].bills = [...(billsData[current].bills||[]), ...toCopy].sort((a,b)=>a.day-b.day);
+    billsSave();
+  }
+  return toCopy.length;
 }
 
 </script>
