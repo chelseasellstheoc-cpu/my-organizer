@@ -745,7 +745,17 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
         <button class="btn btns" id="expLateToggle" onclick="expShowLate=!expShowLate;this.style.background=expShowLate?'#fdf0f0':'#fff';this.style.borderColor=expShowLate?'#c0392b':'#e0e0e0';renderExpenses()" style="font-size:12px">&#9888; Late/unpaid</button>
       </div>
-      <div class="card"><h3>Add expense</h3>
+      <div class="card" style="border-color:#378ADD;background:#f0f4ff">
+        <h3>&#128202; Import from Google Sheet (CSV)</h3>
+        <p class="cp">Export your Google Sheet as CSV (File → Download → CSV) then upload here. Columns needed: Date, Vendor, Notes, Amount, Account Charged. Imports as pending - you confirm each one and assign categories.</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btnp" onclick="document.getElementById('expCSV').click()" style="font-size:13px">&#128196; Upload CSV from Google Sheets</button>
+          <input type="file" id="expCSV" accept=".csv,text/csv" style="display:none" onchange="importExpenseCSV(this)">
+          <span id="expCSVStatus" style="font-size:12px;color:#666"></span>
+        </div>
+        <div id="expPendingList" style="margin-top:10px"></div>
+      </div>
+      <div class="card"><h3>Add expense manually</h3>
         <div class="fr">
           <div><label>Date</label><input type="date" id="expDate"></div>
           <div><label>Category</label><select id="expCat"><option value="">Select...</option><option>Medical</option><option>Orthodontic</option><option>Therapy</option><option>Sports/activities</option><option>School</option><option>Before/after school care</option><option>Ethan dinners</option><option>Clothing/shoes</option><option>Haircuts</option><option>Dental</option><option>Prescription/pharmacy</option><option>Childcare</option><option>Transportation</option><option>Other</option></select></div>
@@ -3185,8 +3195,8 @@ let expenses = [];
 let expShowLate = false;
 let expFileData = null;
 
-const EXP_CATS = ['Medical','Orthodontic','Therapy','Sports/activities','School','Before/after school care','Ethan dinners','Clothing/shoes','Haircuts','Dental','Prescription/pharmacy','Childcare','Transportation','Other'];
-const EXP_COLORS = {'Medical':'#c0392b','Orthodontic':'#8e44ad','Therapy':'#7F77DD','Sports/activities':'#27ae60','School':'#378ADD','Before/after school care':'#2980b9','Ethan dinners':'#7F77DD','Clothing/shoes':'#e67e22','Haircuts':'#e67e22','Dental':'#c0392b','Prescription/pharmacy':'#c0392b','Childcare':'#1D9E75','Transportation':'#666','Other':'#888'};
+const EXP_CATS = ['Medical','Orthodontic','Therapy','Sports/activities','School','Before/after school care','Preschool','Ethan dinners','Clothing/shoes','Haircuts','Dental','Prescription/pharmacy','Childcare','Transportation','Holidays','Birthdays','Fun/entertainment','Misc','Other'];
+const EXP_COLORS = {'Medical':'#c0392b','Orthodontic':'#8e44ad','Therapy':'#7F77DD','Sports/activities':'#27ae60','School':'#378ADD','Before/after school care':'#2980b9','Preschool':'#2980b9','Ethan dinners':'#7F77DD','Clothing/shoes':'#e67e22','Haircuts':'#e67e22','Dental':'#c0392b','Prescription/pharmacy':'#c0392b','Childcare':'#1D9E75','Transportation':'#666','Holidays':'#e74c3c','Birthdays':'#9b59b6','Fun/entertainment':'#f39c12','Misc':'#95a5a6','Other':'#888'};
 
 function expSave(){
   try{localStorage.setItem('eo_exp', JSON.stringify(expenses));}catch(e){}
@@ -3477,6 +3487,170 @@ function exportExpenses(mode){
 
   const fname = mode==='late'?'Unpaid_Bills.txt':mode==='summary'?'Expense_Summary.txt':'Expense_Log.txt';
   dl(lines.join('\n'), fname);
+}
+
+// CSV IMPORT
+let pendingExpenses = [];
+
+function importExpenseCSV(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('expCSVStatus').textContent = 'Reading...';
+  const fr = new FileReader();
+  fr.onload = function(e){
+    try{
+      const text = e.target.result;
+      const rows = parseCSV(text);
+      if(!rows.length){
+        document.getElementById('expCSVStatus').textContent = 'No rows found in CSV.';
+        return;
+      }
+      // Find header row
+      const headers = rows[0].map(h=>h.trim().toLowerCase());
+      const dateIdx = headers.findIndex(h=>h.includes('date'));
+      const vendorIdx = headers.findIndex(h=>h.includes('vendor')||h.includes('payee')||h.includes('merchant'));
+      const notesIdx = headers.findIndex(h=>h.includes('note')||h.includes('desc')||h.includes('memo'));
+      const amountIdx = headers.findIndex(h=>h.includes('amount')||h.includes('total')||h.includes('cost'));
+      const accountIdx = headers.findIndex(h=>h.includes('account')||h.includes('card')||h.includes('charged'));
+
+      if(dateIdx<0||amountIdx<0){
+        document.getElementById('expCSVStatus').textContent = 'Could not find Date or Amount columns. Check your CSV.';
+        return;
+      }
+
+      let imported = 0, skipped = 0, dupes = 0;
+      const newPending = [];
+
+      rows.slice(1).forEach((row,i) => {
+        if(!row.length||!row[0]) return;
+        const dateRaw = row[dateIdx]?.trim()||'';
+        const amountRaw = row[amountIdx]?.trim().replace(/[$,]/g,'')||'0';
+        const amount = parseFloat(amountRaw);
+        if(!dateRaw||isNaN(amount)||amount<=0){skipped++;return;}
+
+        // Parse date - handle MM/DD/YYYY, M/D/YYYY, YYYY-MM-DD
+        let date = '';
+        const d1 = dateRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        const d2 = dateRaw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if(d1) date = d1[3]+'-'+d1[1].padStart(2,'0')+'-'+d1[2].padStart(2,'0');
+        else if(d2) date = dateRaw;
+        else {skipped++;return;}
+
+        const vendor = vendorIdx>=0 ? (row[vendorIdx]?.trim()||'') : '';
+        const notes = notesIdx>=0 ? (row[notesIdx]?.trim()||'') : '';
+        const account = accountIdx>=0 ? (row[accountIdx]?.trim()||'') : '';
+        const desc = [vendor, notes].filter(Boolean).join(' - ');
+
+        // Check for likely duplicate (same date + same amount already confirmed)
+        const isDupe = expenses.some(ex=>ex.date===date&&Math.abs(ex.amount-amount)<0.01&&!ex.pending);
+        // Check if already in pending
+        const alreadyPending = pendingExpenses.some(ex=>ex.date===date&&Math.abs(ex.amount-amount)<0.01);
+        if(alreadyPending){skipped++;return;}
+
+        newPending.push({
+          id:'pend_'+Date.now()+'_'+i,
+          date, amount, desc, vendor, notes, account,
+          category:'', status:'me', children:[],
+          driveLink:'', fileName:null, addedAt:new Date().toISOString(),
+          pending:true, likelyDupe:isDupe
+        });
+        if(isDupe) dupes++;
+        imported++;
+      });
+
+      pendingExpenses = [...pendingExpenses, ...newPending];
+      const msg = imported+' rows imported'+( dupes?' ('+dupes+' may be duplicates)':'')+( skipped?' - '+skipped+' skipped (invalid date/amount)':'');
+      document.getElementById('expCSVStatus').textContent = msg;
+      renderPendingExpenses();
+    }catch(err){
+      document.getElementById('expCSVStatus').textContent = 'Error reading CSV: '+err.message;
+    }
+  };
+  fr.readAsText(file);
+  input.value = '';
+}
+
+function parseCSV(text){
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  lines.forEach(line=>{
+    if(!line.trim()) return;
+    const row = [];
+    let cur = '', inQ = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch==='"'&&!inQ){inQ=true;}
+      else if(ch==='"'&&inQ){inQ=false;}
+      else if(ch===','&&!inQ){row.push(cur);cur='';}
+      else{cur+=ch;}
+    }
+    row.push(cur);
+    rows.push(row);
+  });
+  return rows;
+}
+
+function renderPendingExpenses(){
+  const el = document.getElementById('expPendingList');
+  if(!pendingExpenses.length){el.innerHTML='';return;}
+
+  el.innerHTML = '<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#378ADD">'+pendingExpenses.length+' pending - confirm each one to add to your expense log</div>' +
+  pendingExpenses.map((e,i)=>{
+    const dupeWarning = e.likelyDupe ? '<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 5px;border-radius:3px;margin-left:4px">possible duplicate</span>' : '';
+    return `<div style="background:${e.likelyDupe?'#fffbf0':'#f9f9f7'};border:1px solid ${e.likelyDupe?'#f0c040':'#e0e0e0'};border-radius:8px;padding:10px 12px;margin-bottom:6px;opacity:0.85">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-size:13px;font-weight:600">$${e.amount.toFixed(2)} - ${e.date} ${dupeWarning}</div>
+          <div style="font-size:12px;color:#555;margin-top:2px">${e.desc||'(no description)'}</div>
+          ${e.account?`<div style="font-size:11px;color:#888">Account: ${e.account}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <select onchange="pendingExpenses[${i}].category=this.value" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid #e0e0e0">
+            <option value="">Assign category...</option>
+            ${EXP_CATS.map(c=>`<option value="${c}" ${c===e.category?'selected':''}>${c}</option>`).join('')}
+          </select>
+          <select onchange="pendingExpenses[${i}].status=this.value" style="font-size:11px;padding:4px 6px;border-radius:6px;border:1px solid #e0e0e0">
+            <option value="me" ${e.status==='me'?'selected':''}>Paid by me</option>
+            <option value="insurance" ${e.status==='insurance'?'selected':''}>Insurance</option>
+            <option value="unpaid" ${e.status==='unpaid'?'selected':''}>Unpaid</option>
+            <option value="late" ${e.status==='late'?'selected':''}>Late/overdue</option>
+          </select>
+          <button onclick="confirmPending(${i})" class="btn btns" style="font-size:11px;background:#f0faf5;border-color:#1D9E75;color:#1D9E75">&#10003; Confirm</button>
+          <button onclick="pendingExpenses.splice(${i},1);renderPendingExpenses()" class="btn btnd" style="font-size:11px">Skip</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') +
+  '<div style="display:flex;gap:8px;margin-top:8px">' +
+  '<button onclick="confirmAllPending()" class="btn btnp" style="font-size:12px">&#10003; Confirm all (assigns categories as selected)</button>' +
+  '<button onclick="pendingExpenses=[];renderPendingExpenses()" class="btn btns" style="font-size:12px">Clear all pending</button>' +
+  '</div>';
+}
+
+function confirmPending(i){
+  const e = pendingExpenses[i];
+  if(!e.category){alert('Please assign a category first.');return;}
+  const confirmed = {...e, pending:false, id:'exp_'+Date.now()};
+  expenses.unshift(confirmed);
+  pendingExpenses.splice(i,1);
+  expSave();
+  renderPendingExpenses();
+  renderExpenses();
+}
+
+function confirmAllPending(){
+  const uncat = pendingExpenses.filter(e=>!e.category);
+  if(uncat.length){
+    if(!confirm(uncat.length+' items have no category assigned. They will be added as Other. Continue?'))return;
+    uncat.forEach(e=>e.category='Other');
+  }
+  pendingExpenses.forEach(e=>{
+    expenses.unshift({...e, pending:false, id:'exp_'+Date.now()+'_'+Math.random()});
+  });
+  pendingExpenses = [];
+  expSave();
+  renderPendingExpenses();
+  renderExpenses();
 }
 
 </script>
