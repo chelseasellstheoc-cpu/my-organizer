@@ -208,6 +208,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
       
       <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
+      <button class="tab" onclick="sw('expenses')">&#128176; Expenses</button>
       <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
       <button class="tab" onclick="sw('ethan')">&#127860; Ethan dinners</button>
       <button class="tab" onclick="sw('contacts')">&#128222; Contacts</button>
@@ -729,6 +730,59 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="masterList" style="margin-top:1rem"></div>
     </div>
+
+    <!-- EXPENSES -->
+    <div id="p-expenses" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#1a3a1a,#2d7a2d)">
+        <h2>&#128176; Child-Related Expenses</h2>
+        <p>Track every expense for the children. Documents your financial contribution and supports arguments about ability to pay.</p>
+      </div>
+      <div id="expStats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1rem 0"></div>
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <input type="text" id="expSearch" placeholder="Search expenses..." style="flex:1;min-width:150px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderExpenses()">
+        <select id="expCatFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All categories</option><option>Medical</option><option>Orthodontic</option><option>Therapy</option><option>Sports/activities</option><option>School</option><option>Before/after school care</option><option>Ethan dinners</option><option>Clothing/shoes</option><option>Haircuts</option><option>Dental</option><option>Prescription/pharmacy</option><option>Childcare</option><option>Transportation</option><option>Other</option></select>
+        <select id="expMonthFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All months</option></select>
+        <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
+        <button class="btn btns" id="expLateToggle" onclick="expShowLate=!expShowLate;this.style.background=expShowLate?'#fdf0f0':'#fff';this.style.borderColor=expShowLate?'#c0392b':'#e0e0e0';renderExpenses()" style="font-size:12px">&#9888; Late/unpaid</button>
+      </div>
+      <div class="card"><h3>Add expense</h3>
+        <div class="fr">
+          <div><label>Date</label><input type="date" id="expDate"></div>
+          <div><label>Category</label><select id="expCat"><option value="">Select...</option><option>Medical</option><option>Orthodontic</option><option>Therapy</option><option>Sports/activities</option><option>School</option><option>Before/after school care</option><option>Ethan dinners</option><option>Clothing/shoes</option><option>Haircuts</option><option>Dental</option><option>Prescription/pharmacy</option><option>Childcare</option><option>Transportation</option><option>Other</option></select></div>
+        </div>
+        <div class="fr">
+          <div><label>Amount ($)</label><input type="number" id="expAmount" min="0" step="0.01" placeholder="0.00"></div>
+          <div><label>Status</label><select id="expPaidBy"><option value="me">Paid by me</option><option value="insurance">Paid by insurance</option><option value="unpaid">Unpaid / outstanding</option><option value="late">Late / overdue</option></select></div>
+        </div>
+        <label>Description</label>
+        <input type="text" id="expDesc" placeholder="e.g. Charlotte ortho adjustment, Ethan therapy, Duke soccer registration">
+        <label>Child(ren)</label>
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="expEthan"> Ethan</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="expCharlotte"> Charlotte</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="expDuke"> Duke</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="expAll"> All three</label>
+        </div>
+        <label>Upload receipt (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn btns" onclick="document.getElementById('expFile').click()" style="font-size:12px">&#128247; Upload receipt</button>
+          <input type="file" id="expFile" accept="image/*,.pdf" style="display:none" onchange="onExpFile(this)">
+          <input type="text" id="expDriveLink" placeholder="or Google Drive link..." style="flex:1;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0">
+        </div>
+        <div id="expFileInfo" style="font-size:11px;color:#1a7a52"></div>
+        <label>Notes (optional)</label>
+        <textarea id="expNotes" style="min-height:40px" placeholder="e.g. Insurance denied. Still owe balance. Doug was notified."></textarea>
+        <button class="btn btnp" onclick="addExpense()">+ Add expense</button>
+      </div>
+      <div id="expMonthlyChart" style="margin-top:1rem"></div>
+      <div id="expCatChart" style="margin-top:1rem"></div>
+      <div id="expList" style="margin-top:1rem"></div>
+      <div class="es" style="margin-top:1rem"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportExpenses('full')">&#128196; Full expense log</button>
+        <button class="btn btns" onclick="exportExpenses('summary')">&#128196; Monthly summary</button>
+        <button class="btn btns" onclick="exportExpenses('late')">&#128196; Unpaid/late bills</button>
+      </div></div>
+    </div>
 <!-- CASE OVERVIEW -->
     <div id="p-overview" class="panel">
       <div class="hhead" style="background:linear-gradient(135deg,#1a3a6b,#2a5fa8)">
@@ -784,13 +838,13 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();renderExpenses();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();expLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{if(t.getAttribute('onclick')==='sw(\''+n+'\')') t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}if(n==='expenses')setTimeout(renderExpenses,50);}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -1031,7 +1085,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -3124,6 +3178,305 @@ function exportCoverageReport(){
   lines.push('Upload additional OFW PDF exports to fill any gaps in coverage.');
 
   dl(lines.join('\n'), 'OFW_Coverage_Report.txt');
+}
+
+// EXPENSES
+let expenses = [];
+let expShowLate = false;
+let expFileData = null;
+
+const EXP_CATS = ['Medical','Orthodontic','Therapy','Sports/activities','School','Before/after school care','Ethan dinners','Clothing/shoes','Haircuts','Dental','Prescription/pharmacy','Childcare','Transportation','Other'];
+const EXP_COLORS = {'Medical':'#c0392b','Orthodontic':'#8e44ad','Therapy':'#7F77DD','Sports/activities':'#27ae60','School':'#378ADD','Before/after school care':'#2980b9','Ethan dinners':'#7F77DD','Clothing/shoes':'#e67e22','Haircuts':'#e67e22','Dental':'#c0392b','Prescription/pharmacy':'#c0392b','Childcare':'#1D9E75','Transportation':'#666','Other':'#888'};
+
+function expSave(){
+  try{localStorage.setItem('eo_exp', JSON.stringify(expenses));}catch(e){}
+  showSave();
+}
+
+function expLoad(){
+  try{
+    const raw = localStorage.getItem('eo_exp');
+    if(raw) expenses = JSON.parse(raw);
+  }catch(e){}
+}
+
+function onExpFile(input){
+  const file = input.files[0];
+  if(!file) return;
+  expFileData = {name: file.name};
+  document.getElementById('expFileInfo').textContent = 'Attached: ' + file.name;
+}
+
+function addExpense(){
+  const date = document.getElementById('expDate').value;
+  const cat = document.getElementById('expCat').value;
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  const desc = document.getElementById('expDesc').value.trim();
+  const status = document.getElementById('expPaidBy').value;
+  const driveLink = document.getElementById('expDriveLink').value.trim();
+  const notes = document.getElementById('expNotes').value.trim();
+  const allThree = document.getElementById('expAll').checked;
+
+  if(!date || !cat || isNaN(amount) || amount < 0){
+    alert('Please enter date, category, and amount.');return;
+  }
+
+  const children = allThree ? ['Ethan','Charlotte','Duke'] : [
+    document.getElementById('expEthan').checked && 'Ethan',
+    document.getElementById('expCharlotte').checked && 'Charlotte',
+    document.getElementById('expDuke').checked && 'Duke'
+  ].filter(Boolean);
+
+  const exp = {
+    id: 'exp_'+Date.now(), date, category:cat, amount, desc, status,
+    children, driveLink, notes,
+    fileName: expFileData?.name || null,
+    addedAt: new Date().toISOString()
+  };
+
+  expenses.unshift(exp);
+  expFileData = null;
+  ['expDate','expDesc','expAmount','expDriveLink','expNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('expCat').value='';
+  document.getElementById('expPaidBy').value='me';
+  document.getElementById('expFileInfo').textContent='';
+  ['expEthan','expCharlotte','expDuke','expAll'].forEach(id=>document.getElementById(id).checked=false);
+  expSave();
+  renderExpenses();
+}
+
+function renderExpenses(){
+  const search = (document.getElementById('expSearch')?.value||'').toLowerCase();
+  const catF = document.getElementById('expCatFilter')?.value||'';
+  const monthF = document.getElementById('expMonthFilter')?.value||'';
+  const sort = document.getElementById('expSort')?.value||'date-desc';
+
+  let items = [...expenses];
+  if(expShowLate) items = items.filter(e => e.status==='late'||e.status==='unpaid');
+  if(catF) items = items.filter(e => e.category===catF);
+  if(monthF) items = items.filter(e => e.date && e.date.startsWith(monthF));
+  if(search) items = items.filter(e =>
+    (e.desc||'').toLowerCase().includes(search)||
+    (e.category||'').toLowerCase().includes(search)||
+    (e.notes||'').toLowerCase().includes(search)
+  );
+
+  if(sort==='date-asc') items.sort((a,b)=>a.date.localeCompare(b.date));
+  else if(sort==='date-desc') items.sort((a,b)=>b.date.localeCompare(a.date));
+  else if(sort==='amount-desc') items.sort((a,b)=>b.amount-a.amount);
+  else if(sort==='cat') items.sort((a,b)=>(a.category||'').localeCompare(b.category||''));
+
+  // Update month filter options
+  const months = [...new Set(expenses.map(e=>e.date?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const mf = document.getElementById('expMonthFilter');
+  if(mf){
+    const cur = mf.value;
+    mf.innerHTML = '<option value="">All months</option>' + months.map(m=>{
+      const d = new Date(m+'-01');
+      const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      return `<option value="${m}" ${m===cur?'selected':''}>${label}</option>`;
+    }).join('');
+  }
+
+  // Stats
+  const totalPaid = expenses.filter(e=>e.status==='me').reduce((s,e)=>s+e.amount,0);
+  const totalUnpaid = expenses.filter(e=>e.status==='unpaid'||e.status==='late').reduce((s,e)=>s+e.amount,0);
+  const totalAll = expenses.reduce((s,e)=>s+e.amount,0);
+  const lateCount = expenses.filter(e=>e.status==='late').length;
+
+  document.getElementById('expStats').innerHTML = [
+    {label:'Total paid by you', val:'$'+totalPaid.toFixed(2), color:'#1D9E75'},
+    {label:'Total all expenses', val:'$'+totalAll.toFixed(2), color:'#1a1a1a'},
+    {label:'Unpaid/late bills', val:'$'+totalUnpaid.toFixed(2)+(lateCount?' ('+lateCount+' overdue)':''), color:totalUnpaid>0?'#c0392b':'#888'},
+  ].map(s=>`<div style="background:#fff;border:1px solid #e5e5e0;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:700;color:${s.color}">${s.val}</div><div style="font-size:11px;color:#666;margin-top:2px">${s.label}</div></div>`).join('');
+
+  // Monthly chart
+  const byMonth = {};
+  expenses.forEach(e=>{
+    const k = e.date?.slice(0,7);
+    if(!k) return;
+    if(!byMonth[k]) byMonth[k]={paid:0,unpaid:0};
+    if(e.status==='me') byMonth[k].paid+=e.amount;
+    else if(e.status==='unpaid'||e.status==='late') byMonth[k].unpaid+=e.amount;
+  });
+  const mkeys = Object.keys(byMonth).sort();
+  const maxM = Math.max(...mkeys.map(k=>byMonth[k].paid+byMonth[k].unpaid),1);
+
+  if(mkeys.length){
+    document.getElementById('expMonthlyChart').innerHTML =
+      '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem">' +
+      '<h3 style="font-size:14px;font-weight:600;margin-bottom:1rem">Monthly expenses</h3>' +
+      '<div style="display:flex;align-items:flex-end;gap:6px;height:100px;border-bottom:1px solid #e5e5e0;margin-bottom:8px">' +
+      mkeys.map(k=>{
+        const total = byMonth[k].paid + byMonth[k].unpaid;
+        const h = Math.round((total/maxM)*90);
+        const ph = Math.round((byMonth[k].paid/maxM)*90);
+        const label = new Date(k+'-01').toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center" title="${k}: $${total.toFixed(2)}">
+          <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:90px;gap:1px">
+            ${byMonth[k].unpaid?`<div style="width:100%;height:${h-ph}px;background:#c0392b;border-radius:2px 2px 0 0;min-height:2px"></div>`:''}
+            <div style="width:100%;height:${ph}px;background:#1D9E75;min-height:2px"></div>
+          </div>
+          <div style="font-size:9px;color:#888;margin-top:3px;transform:rotate(-45deg);white-space:nowrap">${label}</div>
+        </div>`;
+      }).join('') +
+      '</div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+      '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#1D9E75;border-radius:2px;display:inline-block"></span>Paid by me</span>' +
+      '<span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:10px;height:10px;background:#c0392b;border-radius:2px;display:inline-block"></span>Unpaid/late</span>' +
+      '</div></div>';
+  }
+
+  // Category breakdown
+  const byCat = {};
+  expenses.filter(e=>e.status==='me').forEach(e=>{
+    if(!byCat[e.category]) byCat[e.category]=0;
+    byCat[e.category]+=e.amount;
+  });
+  const catEntries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const maxC = Math.max(...catEntries.map(c=>c[1]),1);
+
+  if(catEntries.length){
+    document.getElementById('expCatChart').innerHTML =
+      '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem">' +
+      '<h3 style="font-size:14px;font-weight:600;margin-bottom:1rem">Spending by category (paid by me)</h3>' +
+      catEntries.map(([cat,amt])=>{
+        const pct = Math.round((amt/maxC)*100);
+        const color = EXP_COLORS[cat]||'#666';
+        return `<div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+            <span style="color:${color};font-weight:500">${cat}</span>
+            <span style="font-weight:600">$${amt.toFixed(2)}</span>
+          </div>
+          <div style="height:6px;background:#f0f0ea;border-radius:3px">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div>
+          </div>
+        </div>`;
+      }).join('') +
+      '</div>';
+  }
+
+  // List
+  const STATUS_LABELS = {me:'Paid by me',insurance:'Insurance',unpaid:'Unpaid',late:'OVERDUE'};
+  const STATUS_COLORS = {me:'#1D9E75',insurance:'#378ADD',unpaid:'#e67e22',late:'#c0392b'};
+
+  const list = document.getElementById('expList');
+  if(!items.length){
+    list.innerHTML="<div class='empty'>No expenses match. Add your first expense above.</div>";
+    return;
+  }
+
+  list.innerHTML = items.map(e=>{
+    const origIdx = expenses.indexOf(e);
+    const color = EXP_COLORS[e.category]||'#666';
+    const sColor = STATUS_COLORS[e.status]||'#888';
+    const children = (e.children||[]).join(', ');
+    return `<div class="le" style="border-left:3px solid ${color}">
+      <div class="lh">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="ld">$${e.amount.toFixed(2)}</span>
+            <span class="bg" style="background:${color};color:#fff;font-size:10px">${e.category}</span>
+            <span style="font-size:11px;color:${sColor};font-weight:${e.status==='late'?'700':'400'}">${STATUS_LABELS[e.status]||e.status}</span>
+          </div>
+          <div style="font-size:12px;color:#666;margin-top:2px">${e.date}${children?' \u2022 '+children:''}</div>
+          ${e.desc?`<div style="font-size:13px;margin-top:2px">${e.desc}</div>`:''}
+        </div>
+        <div class="abtn">
+          <button class="btn btne" onclick="openEditExpense(${origIdx})">Edit</button>
+          <button class="btn btnd" onclick="if(confirm('Delete?')){expenses.splice(${origIdx},1);expSave();renderExpenses()}">Del</button>
+        </div>
+      </div>
+      ${e.notes?`<div class="lb" style="font-size:12px">${e.notes}</div>`:''}
+      ${e.driveLink?`<a href="${e.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8">&#128247; View receipt</a>`:''}
+      ${e.fileName?`<div style="font-size:11px;color:#1a7a52">&#128247; ${e.fileName}</div>`:''}
+      ${e.status==='late'?`<div style="font-size:11px;color:#c0392b;background:#fdf0f0;padding:4px 8px;border-radius:4px;margin-top:4px">&#9888; Overdue bill - documents financial strain</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openEditExpense(i){
+  const e = expenses[i];
+  editCtx = {type:'expense', index:i};
+  document.getElementById('mTitle').textContent = 'Edit expense';
+  document.getElementById('mBody').innerHTML = `
+    <label>Date</label><input type="date" id="eexpDate" value="${e.date||''}">
+    <label>Category</label>
+    <select id="eexpCat">${EXP_CATS.map(c=>`<option ${c===e.category?'selected':''}>${c}</option>`).join('')}</select>
+    <label>Amount ($)</label><input type="number" id="eexpAmount" value="${e.amount||0}" step="0.01" min="0">
+    <label>Status</label>
+    <select id="eexpStatus">
+      <option value="me" ${e.status==='me'?'selected':''}>Paid by me</option>
+      <option value="insurance" ${e.status==='insurance'?'selected':''}>Insurance</option>
+      <option value="unpaid" ${e.status==='unpaid'?'selected':''}>Unpaid/outstanding</option>
+      <option value="late" ${e.status==='late'?'selected':''}>Late/overdue</option>
+    </select>
+    <label>Description</label><input type="text" id="eexpDesc" value="${e.desc||''}">
+    <label>Notes</label><textarea id="eexpNotes">${e.notes||''}</textarea>
+    <label>Google Drive receipt link</label><input type="text" id="eexpLink" value="${e.driveLink||''}">
+  `;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function exportExpenses(mode){
+  const totalPaid = expenses.filter(e=>e.status==='me').reduce((s,e)=>s+e.amount,0);
+  const totalAll = expenses.reduce((s,e)=>s+e.amount,0);
+  const lateItems = expenses.filter(e=>e.status==='late'||e.status==='unpaid');
+
+  const lines = [
+    'CHILD-RELATED EXPENSE LOG - CHELSEA RHODES',
+    'Generated: '+new Date().toLocaleDateString(),
+    'Case: 25D000590 - Respondent: Chelsea Rhodes',
+    'Tracking period: January 24 2025 - present',
+    '',
+    'SUMMARY:',
+    'Total expenses for children: $'+totalAll.toFixed(2),
+    'Total paid by Respondent: $'+totalPaid.toFixed(2),
+    'Outstanding/unpaid bills: $'+lateItems.reduce((s,e)=>s+e.amount,0).toFixed(2),
+    'Number of overdue bills: '+expenses.filter(e=>e.status==='late').length,
+    ''
+  ];
+
+  if(mode==='late'){
+    lines.push('--- UNPAID AND OVERDUE BILLS ---');
+    lines.push('These outstanding bills demonstrate Respondent cannot absorb additional financial obligations.');
+    lateItems.sort((a,b)=>a.date.localeCompare(b.date)).forEach((e,i)=>{
+      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${e.amount.toFixed(2)} [${e.status.toUpperCase()}]`);
+      if(e.desc) lines.push('   '+e.desc);
+      if(e.notes) lines.push('   Notes: '+e.notes);
+    });
+  } else if(mode==='summary'){
+    lines.push('--- MONTHLY SUMMARY ---');
+    const byMonth = {};
+    expenses.forEach(e=>{
+      const k = e.date?.slice(0,7);
+      if(!k) return;
+      if(!byMonth[k]) byMonth[k]={paid:0,unpaid:0,items:0};
+      if(e.status==='me') byMonth[k].paid+=e.amount;
+      else if(e.status==='unpaid'||e.status==='late') byMonth[k].unpaid+=e.amount;
+      byMonth[k].items++;
+    });
+    Object.entries(byMonth).sort().forEach(([k,v])=>{
+      const label = new Date(k+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      lines.push(`${label}: $${(v.paid+v.unpaid).toFixed(2)} total ($${v.paid.toFixed(2)} paid, $${v.unpaid.toFixed(2)} unpaid) - ${v.items} expenses`);
+    });
+    lines.push('\n--- BY CATEGORY ---');
+    const byCat = {};
+    expenses.forEach(e=>{if(!byCat[e.category])byCat[e.category]=0;byCat[e.category]+=e.amount;});
+    Object.entries(byCat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>lines.push(`${k}: $${v.toFixed(2)}`));
+  } else {
+    lines.push('--- COMPLETE EXPENSE LOG ---');
+    [...expenses].sort((a,b)=>a.date.localeCompare(b.date)).forEach((e,i)=>{
+      lines.push(`\n${i+1}. ${e.date} - ${e.category}: $${e.amount.toFixed(2)} [${e.status}]`);
+      if(e.desc) lines.push('   '+e.desc);
+      if(e.children?.length) lines.push('   Children: '+e.children.join(', '));
+      if(e.notes) lines.push('   Notes: '+e.notes);
+      if(e.driveLink) lines.push('   Receipt: '+e.driveLink);
+    });
+  }
+
+  const fname = mode==='late'?'Unpaid_Bills.txt':mode==='summary'?'Expense_Summary.txt':'Expense_Log.txt';
+  dl(lines.join('\n'), fname);
 }
 
 </script>
