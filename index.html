@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Evidence Organizer</title>
+<title>Evidence Organizer v8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -184,7 +184,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     <h1>&#128274; Evidence Organizer</h1>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span class="svi" id="svi">&#10003; Saved</span>
-      <div class="apist"><div class="dot" id="dot"></div><span id="atxt">No API key</span><button class="btn btns" onclick="resetKey()">Change</button></div>
+      <div class="apist"><div class="dot" id="dot"></div><span id="atxt">No API key</span><span style="font-size:10px;color:#bbb;margin-left:8px">v8</span><button class="btn btns" onclick="resetKey()">Change</button></div>
       <button class="btn btns" onclick="exportDB()">&#128190; Backup</button>
       <label class="btn btns" style="cursor:pointer">&#128194; Restore<input type="file" accept=".json" style="display:none" onchange="importDB(this)"></label>
     </div>
