@@ -239,7 +239,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div class="fbar" id="mFilters"></div>
       <div id="mList"></div>
-      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="showCoverageReport()">&#128197; Coverage gaps</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
+      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="bulkFixLabels()" style="background:#fff3cd;border-color:#f0c040;color:#856404">&#128295; Fix Petitioner/Respondent labels</button><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="showCoverageReport()">&#128197; Coverage gaps</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
     </div>
     <!-- VIDEOS -->
     <div id="p-videos" class="panel">
@@ -3661,6 +3661,82 @@ function confirmAllPending(){
   expSave();
   renderPendingExpenses();
   renderExpenses();
+}
+
+function bulkFixLabels(){
+  if(!allMsgs.length){alert('No messages loaded.');return;}
+
+  let fixed = 0;
+
+  allMsgs.forEach(m => {
+    if(!m.court_summary) return;
+    let s = m.court_summary;
+    let changed = false;
+
+    // The wrong pattern: "Respondent Doug Rhodes" or "Respondent's attorney Eric Ludwig"
+    // and "Petitioner Chelsea Rhodes"
+    // We need to swap these while keeping correct ones intact
+
+    // Step 1: Use placeholders to avoid double-replacement
+    // Wrong: Petitioner Chelsea -> CORRECT_RESP
+    // Wrong: Respondent Doug -> CORRECT_PET
+    // Also handle possessives and standalone references
+
+    // Replace wrong "Petitioner Chelsea" patterns
+    if(/Petitioner.*?Chelsea|Chelsea.*?Petitioner/i.test(s) ||
+       /Petitioner[^D]*?(?:her|she|mother)/i.test(s)){
+
+      // Full swap approach - identify who did what in this message
+      const senderIsDoug = m.sender && m.sender.toLowerCase().includes('doug');
+      const senderIsChelsea = m.sender && m.sender.toLowerCase().includes('chelsea');
+      const senderIsLudwig = m.sender && (m.sender.toLowerCase().includes('ludwig') || m.sender.toLowerCase().includes('eric'));
+
+      // Temporarily encode correct uses before swapping
+      s = s.replace(/Petitioner(?=.*?Doug|.*?Rhodes.*?Doug)/g, 'PETITIONER_CORRECT');
+      s = s.replace(/Respondent(?=.*?Chelsea|.*?Rhodes.*?Chelsea)/g, 'RESPONDENT_CORRECT');
+
+      // Swap the wrong ones
+      s = s.replace(/Petitioner/g, 'RESPONDENT_TEMP');
+      s = s.replace(/Respondent/g, 'PETITIONER_TEMP');
+
+      // Restore correct ones
+      s = s.replace(/PETITIONER_CORRECT/g, 'Petitioner');
+      s = s.replace(/RESPONDENT_CORRECT/g, 'Respondent');
+      s = s.replace(/PETITIONER_TEMP/g, 'Petitioner');
+      s = s.replace(/RESPONDENT_TEMP/g, 'Respondent');
+
+      if(s !== m.court_summary){m.court_summary = s;changed = true;}
+    }
+
+    if(changed) fixed++;
+  });
+
+  if(fixed === 0){
+    // Do a simpler direct swap on all messages
+    // Pattern: in summaries about Doug's messages, he should be Petitioner
+    // Pattern: in summaries about Chelsea's messages, she should be Respondent
+    allMsgs.forEach(m => {
+      if(!m.court_summary) return;
+      let s = m.court_summary;
+
+      // Direct swap of clearly wrong patterns
+      s = s.replace(/Petitioner Chelsea Rhodes/gi, 'Respondent Chelsea Rhodes');
+      s = s.replace(/Petitioner Chelsea/gi, 'Respondent Chelsea');
+      s = s.replace(/Respondent Doug Rhodes/gi, 'Petitioner Doug Rhodes');
+      s = s.replace(/Respondent Doug/gi, 'Petitioner Doug');
+      s = s.replace(/Respondent Douglas/gi, 'Petitioner Douglas');
+      s = s.replace(/Respondent\'s attorney.*?Eric/gi, "Petitioner's attorney Eric");
+      s = s.replace(/Respondent\'s attorney.*?Ludwig/gi, "Petitioner's attorney Ludwig");
+      s = s.replace(/Petitioner\'s attorney.*?Gerber/gi, "Respondent's attorney Gerber");
+      s = s.replace(/Petitioner\'s attorney.*?Donald/gi, "Respondent's attorney Donald");
+
+      if(s !== m.court_summary){m.court_summary = s;fixed++;}
+    });
+  }
+
+  save();
+  renderMsgs();
+  alert('Fixed '+fixed+' court summaries. Click each message to review.');
 }
 
 </script>
