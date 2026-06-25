@@ -39,9 +39,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .togs::before{content:"";position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
 input:checked+.togs{background:#1D9E75}
 input:checked+.togs::before{transform:translateX(18px)}
-.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid #e5e5e0;margin-bottom:1.5rem;gap:2px}
-.tab{padding:7px 9px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
-.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.tabs{display:flex;flex-wrap:wrap;gap:0;margin-bottom:1.5rem;background:#f5f5f0;border-radius:12px;padding:8px;gap:6px}
+.tabgroup{display:flex;flex-direction:column;flex:1;min-width:120px;background:#fff;border-radius:8px;padding:6px 4px;border:1px solid #e5e5e0}
+.tabgrouplabel{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#aaa;padding:2px 6px 4px;display:block}
+.tab{padding:5px 8px;font-size:12px;font-weight:400;cursor:pointer;border:none;background:none;color:#555;border-radius:6px;text-align:left;white-space:nowrap;transition:background .15s}
+.tab:hover{background:#f5f5f0;color:#1a1a1a}
+.tab.active{background:#1a1a1a;color:#fff;font-weight:600}
 .panel{display:none}
 .panel.active{display:block;min-height:400px;width:100%}
 .card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
@@ -82,7 +85,8 @@ input:checked+.togs::before{transform:translateX(18px)}
 .br{background:#fdf0f0;color:#c0392b}.ba{background:#fdf6e3;color:#b7770d}.bp{background:#f3f0fd;color:#5b4fcf}
 .bc{background:#fdf2ee;color:#c0522b}.bg2{background:#f0faf5;color:#1a7a52}.bgr{background:#f5f5f0;color:#666}
 .bb{background:#eef4fd;color:#1a5fa8}
-.mbody{font-size:13px;color:#333;line-height:1.6;margin:6px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd;display:none}.mbody.open{display:block}
+.mbody{font-size:13px;color:#333;line-height:1.6;margin:6px 0;padding:8px 10px;background:#f9f9f7;border-radius:6px;border-left:2px solid #ddd}
+.mc.collapsed .mbody,.mc.collapsed .atabs,.mc.collapsed .ctext,.mc.collapsed .atext,.mc.collapsed .tf,.mc.collapsed .nrnote,.mc.collapsed [data-exp]{display:none}
 .mbody.ex{border-left-color:#c0392b}
 .tf{font-size:11px;padding:3px 8px;border-radius:6px;margin-bottom:4px;display:inline-block}
 .tf.wk{background:#fdf6e3;color:#b7770d}.tf.lt{background:#f3f0fd;color:#5b4fcf}
@@ -197,27 +201,42 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
   </div>
   <div id="app" style="display:none;min-height:600px;width:100%">
     <div class="tabs">
-      <button class="tab active" onclick="sw('messages')">&#128203; Messages</button>
-      <button class="tab" onclick="sw('videos')">&#127909; Videos</button>
-      <button class="tab" onclick="sw('nonresponse')">&#128276; Non-response</button>
-      <button class="tab" onclick="sw('reluctance')">&#128566; Reluctance</button>
-      <button class="tab" onclick="sw('duration')">&#9201; Duration</button>
-      <button class="tab" onclick="sw('patterns')">&#128202; Patterns</button>
-      <button class="tab" onclick="sw('gaps')">&#9888; Order gaps</button>
-      <button class="tab" onclick="sw('hearing')">&#128197; 7/30 Hearing</button>
-      <button class="tab" onclick="sw('legal')">&#9878; Legal ref</button>
-      
-      <button class="tab" onclick="sw('overview')">&#9889; Case overview</button>
-      <button class="tab" onclick="sw('expenses')">&#128176; Expenses</button>
-      <button class="tab" onclick="sw('bills')">&#128181; My bills</button>
-      <button class="tab" onclick="sw('calendar')">&#128197; Calendar</button>
-      <button class="tab" onclick="sw('ethan')">&#127860; Ethan dinners</button>
-      <button class="tab" onclick="sw('contacts')">&#128222; Contacts</button>
-      <button class="tab" onclick="sw('evidence')">&#128274; Evidence</button>
-      <button class="tab" onclick="sw('master')">&#128269; All evidence</button>
+      <div class="tabgroup">
+        <span class="tabgrouplabel">Communication</span>
+        <button class="tab active" onclick="sw('messages')">Messages</button>
+        <button class="tab" onclick="sw('videos')">Videos</button>
+        <button class="tab" onclick="sw('nonresponse')">Non-response</button>
+        <button class="tab" onclick="sw('reluctance')">Reluctance</button>
+        <button class="tab" onclick="sw('duration')">Call log</button>
+      </div>
+      <div class="tabgroup">
+        <span class="tabgrouplabel">Analysis</span>
+        <button class="tab" onclick="sw('patterns')">Patterns</button>
+        <button class="tab" onclick="sw('gaps')">Order gaps</button>
+        <button class="tab" onclick="sw('hearing')">7/30 Hearing</button>
+        <button class="tab" onclick="sw('legal')">Legal ref</button>
+        <button class="tab" onclick="sw('overview')">Case overview</button>
+      </div>
+      <div class="tabgroup">
+        <span class="tabgrouplabel">Evidence</span>
+        <button class="tab" onclick="sw('evidence')">Evidence</button>
+        <button class="tab" onclick="sw('master')">All evidence</button>
+        <button class="tab" onclick="sw('calendar')">Calendar</button>
+        <button class="tab" onclick="sw('ethan')">Ethan dinners</button>
+        <button class="tab" onclick="sw('contacts')">Contacts</button>
+      </div>
+      <div class="tabgroup">
+        <span class="tabgrouplabel">Financial</span>
+        <button class="tab" onclick="sw('expenses')">Kid expenses</button>
+        <button class="tab" onclick="sw('bills')">My bills</button>
+      </div>
     </div>
     <!-- MESSAGES -->
     <div id="p-messages" class="panel active">
+      <div class="hhead" style="background:linear-gradient(135deg,#1a2a4a,#378ADD)">
+        <h2>&#128203; Messages</h2>
+        <p>OFW communication log. Analyze patterns, flag work-hours contact, and build your court record.</p>
+      </div>
       <div class="togrow"><div class="toglbl">Hide invoices &amp; appointments <span class="togsub">Filter out OFW billing and scheduling messages to focus on communication</span></div><label class="tog"><input type="checkbox" id="hideInvoices" onchange="hideInv=this.checked;save();if(allMsgs.length)renderMsgs()"><span class="togs"></span></label></div>
       <div class="togrow"><div class="toglbl">Summer break mode <span class="togsub">6/25-7/20/26 - suspends work-hours flagging</span></div><label class="tog"><input type="checkbox" id="brk" onchange="onBreak=this.checked;save();if(allMsgs.length)renderMsgs()"><span class="togs"></span></label></div>
       <div class="card"><h3>Upload OFW messages</h3><p class="cp">PDF, ZIP, or screenshots. Work-hours messages (Mon-Fri 7:30am-4pm) flagged automatically. All data saves between sessions automatically.</p>
@@ -228,7 +247,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <div class="plog" id="mLog"></div><div id="mErr"></div>
       </div>
       <div class="sg" id="mStats" style="display:none"></div>
-      <div id="mExpandBar" style="display:none;font-size:12px;color:#666;margin-bottom:6px">Messages are collapsed. <button onclick="document.querySelectorAll('.mbody').forEach(el=>el.classList.add('open'))" style="background:none;border:none;color:#1a5fa8;cursor:pointer;font-size:12px;text-decoration:underline">Expand all</button> | <button onclick="document.querySelectorAll('.mbody').forEach(el=>el.classList.remove('open'))" style="background:none;border:none;color:#1a5fa8;cursor:pointer;font-size:12px;text-decoration:underline">Collapse all</button></div>
+      <div id="mExpandBar" style="display:none;font-size:12px;color:#666;margin-bottom:6px">Messages are collapsed. <button onclick="document.querySelectorAll('.mc').forEach(el=>el.classList.remove('collapsed'))" style="background:none;border:none;color:#1a5fa8;cursor:pointer;font-size:12px;text-decoration:underline">Expand all</button> | <button onclick="document.querySelectorAll('.mc').forEach(el=>el.classList.add('collapsed'))" style="background:none;border:none;color:#1a5fa8;cursor:pointer;font-size:12px;text-decoration:underline">Collapse all</button></div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
         <input type="text" id="mSearchIn" placeholder="Search messages..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="mSearch=this.value;renderML()">
         <select id="mSortSel" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="mSort=this.value;renderML()">
@@ -245,7 +264,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- VIDEOS -->
     <div id="p-videos" class="panel">
-      <div class="card">
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a1a3a,#7F77DD)">
+        <h2>&#127909; Video Analysis</h2>
+        <p>Upload video calls for AI analysis. Flags coaching, background adults, refusals, and alienation behaviors.</p>
+      </div>
+<div class="card">
         <h3>Gemini API key for video analysis</h3>
         <p class="cp">Video analysis uses Google Gemini which can actually watch MP4 files. Get a free key at <a href="https://ai.google.dev" target="_blank">ai.google.dev</a> &rarr; Get API key. Paste it below. Only used in this session.</p>
         <div class="akrow" style="margin-bottom:8px"><input type="password" id="gemKeyIn" placeholder="AIza..." autocomplete="off" style="flex:1;font-size:13px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:8px;font-family:inherit"><button class="btn btnp" onclick="setGemKey()">Connect Gemini</button></div>
@@ -274,7 +298,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- NON-RESPONSE -->
     <div id="p-nonresponse" class="panel">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="nrSort=this.value;renderNR()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#2a1a1a,#c0392b)">
+        <h2>&#128276; Non-Response Log</h2>
+        <p>Document messages that do not require a response. Protects against claims of non-communication.</p>
+      </div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="nrSort=this.value;renderNR()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
       <div class="card"><h3>Log a non-response decision</h3>
         <p class="cp">Document every time you choose not to respond. Each entry generates court-ready language explaining your reasoning. Protects you from being characterized as uncooperative.</p>
         <div class="ib" style="margin-bottom:10px">Not responding to character attacks, baiting, and false accusations is a documented de-escalation strategy - not a failure to communicate.</div>
@@ -330,7 +359,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- RELUCTANCE -->
     <div id="p-reluctance" class="panel">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="rlSort=this.value;renderRL()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a2a1a,#27ae60)">
+        <h2>&#128566; Reluctance Log</h2>
+        <p>Log incidents where children appeared to self-censor or showed reluctance around Respondent.</p>
+      </div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><select style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #e0e0e0;background:#fff" onchange="rlSort=this.value;renderRL()"><option value="desc">Newest first</option><option value="asc">Oldest first</option></select></div>
       <div class="card"><h3>Log reluctance or self-censorship</h3><p class="cp">Approximate dates are fine and more credible than precise dates entered before a hearing. Edit any entry anytime.</p>
         <div class="fr"><div><label>Date (approximate okay)</label><input type="date" id="rld"></div><div><label>Time</label><input type="time" id="rlt"></div></div>
         <label>Child</label><select id="rlc"><option value="">Select...</option><option>Charlotte</option><option>Duke</option><option>Ethan</option></select>
@@ -406,7 +440,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 
     <!-- PATTERNS -->
     <div id="p-patterns" class="panel">
-      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a1a2a,#8e44ad)">
+        <h2>&#128202; Patterns</h2>
+        <p>Visualize communication tactics, work-hours contact, and behavioral patterns across all evidence.</p>
+      </div>
+<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
         <div style="display:flex;gap:6px">
           <button class="btn btns" id="patViewList" onclick="setPatView('list')" style="background:#1a1a1a;color:#fff;border-color:#1a1a1a">List view</button>
           <button class="btn btns" id="patViewBar" onclick="setPatView('bar')">Bar chart</button>
@@ -420,7 +459,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- ORDER GAPS -->
     <div id="p-gaps" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Gaps in your current order with proposed plain-language replacement language for your attorney.</p>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#2a2a1a,#e67e22)">
+        <h2>&#9888;&#xFE0F; Order Gaps</h2>
+        <p>Proposed plain-language improvements to your current court order for the July 30 hearing.</p>
+      </div>
+<p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Gaps in your current order with proposed plain-language replacement language for your attorney.</p>
       <div id="gapList"></div>
     </div>
     <!-- HEARING -->
@@ -437,12 +481,22 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- LEGAL -->
     <div id="p-legal" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Verified California statutes relevant to your case. Ask your attorney to identify specific cases that apply to your documented facts - do not cite cases from this tool without attorney verification.</p>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a2a2a,#16a085)">
+        <h2>&#9878;&#xFE0F; Legal Reference</h2>
+        <p>Key California Family Code statutes relevant to your case.</p>
+      </div>
+<p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Verified California statutes relevant to your case. Ask your attorney to identify specific cases that apply to your documented facts - do not cite cases from this tool without attorney verification.</p>
       <div id="legalRef"></div>
     </div>
     <!-- DOCS -->
     <div id="p-docs" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Reference index for your court documents. Enter key details manually - no content sent to AI. Store actual files in Google Drive and link here. All entries save automatically.</p>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#2a1a2a,#8e44ad)">
+        <h2>&#128196; Document Hub</h2>
+        <p>Upload declarations, police reports, school records, and other documents for AI analysis.</p>
+      </div>
+<p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Reference index for your court documents. Enter key details manually - no content sent to AI. Store actual files in Google Drive and link here. All entries save automatically.</p>
       <div class="card"><h3>Add a document</h3>
         <div class="fr"><div><label>Type</label><select id="dtype"><option>Current custody and visitation order</option><option>TDVRO</option><option>Custody evaluation (Dr. Kelley)</option><option>Emergency investigation report</option><option>Attorney correspondence</option><option>School or medical record</option><option>Court filing</option><option>Other</option></select></div><div><label>Date</label><input type="date" id="ddate"></div></div>
         <label>Title / description</label><input type="text" id="dtitle" placeholder="e.g. Current custody order issued 1/15/25">
@@ -454,7 +508,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
     </div>
     <!-- CALENDAR -->
     <div id="p-calendar" class="panel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a2a3a,#2980b9)">
+        <h2>&#128197; Calendar</h2>
+        <p>Custody schedule, court dates, and Ethan dinner visits. Pre-loaded from January 2025.</p>
+      </div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn" onclick="calPrev()">&#8592;</button>
           <h2 id="calTitle" style="font-size:16px;font-weight:600;min-width:160px;text-align:center"></h2>
@@ -573,7 +632,12 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
 
     <!-- CONTACTS -->
     <div id="p-contacts" class="panel">
-      <p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Key contacts for your case. All fields are editable. Contact logs track attorney calls and therapy sessions.</p>
+      
+      <div class="hhead" style="background:linear-gradient(135deg,#1a1a2a,#7F77DD)">
+        <h2>&#128222; Contacts</h2>
+        <p>Key people in your case - attorneys, evaluators, therapists, and judicial officers.</p>
+      </div>
+<p style="font-size:13px;color:#666;margin-bottom:1rem;line-height:1.5">Key contacts for your case. All fields are editable. Contact logs track attorney calls and therapy sessions.</p>
       <div id="contactList"></div>
       <div class="card" style="margin-top:1rem">
         <h3>Add a contact</h3>
@@ -1172,7 +1236,7 @@ function renderML(){
     const mode=mVM[origI]||'court';
     const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
     const idx=allMsgs.indexOf(m);
-    html += `<div class="mc ${fl?'fl':wh?'wh':ln?'ln':''}" onclick="this.querySelector('.mbody').classList.toggle('open')" style="cursor:pointer"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${origI})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
+    html += `<div class="mc collapsed ${fl?'fl':wh?'wh':ln?'ln':''}" onclick="this.classList.toggle('collapsed')" style="cursor:pointer"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${origI})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
   }).join(''); return html; })():"<div class='empty'>No messages match this filter.</div>";}
 function setMM(i,mode){mVM[i]=mode;renderML();}
 
