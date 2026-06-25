@@ -742,7 +742,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <input type="text" id="expSearch" placeholder="Search expenses..." style="flex:1;min-width:150px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderExpenses()">
         <select id="expCatFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All categories</option><option>Medical</option><option>Orthodontic</option><option>Therapy</option><option>Sports/activities</option><option>School</option><option>Before/after school care</option><option>Ethan dinners</option><option>Clothing/shoes</option><option>Haircuts</option><option>Dental</option><option>Prescription/pharmacy</option><option>Childcare</option><option>Transportation</option><option>Other</option></select>
         <select id="expMonthFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All months</option></select>
-        <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
+        <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-asc">Oldest first</option><option value="date-desc">Newest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
         <button class="btn btns" id="expLateToggle" onclick="expShowLate=!expShowLate;this.style.background=expShowLate?'#fdf0f0':'#fff';this.style.borderColor=expShowLate?'#c0392b':'#e0e0e0';renderExpenses()" style="font-size:12px">&#9888; Late/unpaid</button>
       </div>
       <div class="card" style="border-color:#378ADD;background:#f0f4ff">
@@ -1079,12 +1079,43 @@ function renderML(){
   else if(mSort==='date-desc')f=[...f].sort((a,b)=>(parsTS(b.timestamp_sent)||0)-(parsTS(a.timestamp_sent)||0));
   else if(mSort==='severity')f=[...f].sort((a,b)=>(sev[a.severity]||4)-(sev[b.severity]||4));
   else if(mSort==='sender')f=[...f].sort((a,b)=>(a.sender||'').localeCompare(b.sender||''));
-  document.getElementById('mList').innerHTML=f.length?f.map((m,i)=>{
-    const origI=allMsgs.indexOf(m);const mode=mVM[origI]||'court';const ex=isEx(m.sender);const tacts=m.tactics_clinical||['Neutral'];
+  document.getElementById('mList').innerHTML=f.length?(()=>{
+  // Group by date for daily count headers
+  const dayGroups = {};
+  f.forEach(m => {
+    const d = parsTS(m.timestamp_sent);
+    const key = d ? d.toISOString().slice(0,10) : 'unknown';
+    if(!dayGroups[key]) dayGroups[key] = [];
+    dayGroups[key].push(m);
+  });
+
+  let html = '';
+  let lastDay = null;
+
+  f.map((m,i)=>{
+    const origI=allMsgs.indexOf(m);
+    const d = parsTS(m.timestamp_sent);
+    const dayKey = d ? d.toISOString().slice(0,10) : 'unknown';
+    const ex = isEx(m.sender);
+
+    // Add day header if new day
+    if(dayKey !== lastDay && dayGroups[dayKey]){
+      lastDay = dayKey;
+      const dayCount = dayGroups[dayKey].length;
+      const exCount = dayGroups[dayKey].filter(msg=>isEx(msg.sender)).length;
+      const dayLabel = d ? d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : 'Unknown date';
+      const excessive = exCount >= 3;
+      html += `<div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px;padding:6px 10px;background:${excessive?'#fdf0f0':'#f5f5f0'};border-radius:6px;border-left:3px solid ${excessive?'#c0392b':'#ddd'}">
+        <span style="font-size:12px;font-weight:600;color:#1a1a1a">${dayLabel}</span>
+        <span style="font-size:11px;color:${excessive?'#c0392b':'#666'}">${exCount} message${exCount!==1?'s':''} from Petitioner${excessive?' \u26a0\ufe0f Excessive contact':''}</span>
+        ${dayCount!==exCount?`<span style="font-size:11px;color:#888">${dayCount-exCount} from you</span>`:''}
+      </div>`;
+    }
+    const mode=mVM[origI]||'court';
     const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
     const idx=allMsgs.indexOf(m);
     return`<div class="mc ${fl?'fl':wh?'wh':ln?'ln':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${origI})">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
-  }).join(''):"<div class='empty'>No messages match this filter.</div>";}
+  }).join(''); return html; })():"<div class='empty'>No messages match this filter.</div>";}
 function setMM(i,mode){mVM[i]=mode;renderML();}
 
 // EDIT MODAL
@@ -3259,7 +3290,7 @@ function renderExpenses(){
   const search = (document.getElementById('expSearch')?.value||'').toLowerCase();
   const catF = document.getElementById('expCatFilter')?.value||'';
   const monthF = document.getElementById('expMonthFilter')?.value||'';
-  const sort = document.getElementById('expSort')?.value||'date-desc';
+  const sort = document.getElementById('expSort')?.value||'date-asc';
 
   let items = [...expenses];
   if(expShowLate) items = items.filter(e => e.status==='late'||e.status==='unpaid');
