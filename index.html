@@ -1,4 +1,4 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <!-- v7 -->
 <html lang="en">
 <head>
@@ -898,7 +898,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         </div>
         <div class="fr">
           <div><label>Category</label>
-            <select id="billCat"><option>Housing</option><option>Utilities</option><option>Transportation</option><option>Insurance</option><option>Phone</option><option>Internet</option><option>Food/gas</option><option>Children</option><option>Medical/health</option><option>Taxes</option><option>Savings/retirement</option><option>Other</option></select>
+            <select id="billCat"><option>Housing</option><option>Utilities</option><option>Car payment</option><option>Vehicle/gas/repairs</option><option>Transportation</option><option>Insurance</option><option>Phone</option><option>Internet</option><option>Food/gas</option><option>Children</option><option>Medical/health</option><option>Dental</option><option>Taxes</option><option>Savings/retirement</option><option>Other</option></select>
           </div>
           <div><label>Status</label>
             <select id="billStatus"><option value="unpaid">Unpaid</option><option value="paid">Paid - not posted</option><option value="posted">Posted/confirmed</option></select>
@@ -1257,7 +1257,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -3911,9 +3911,9 @@ const BILL_COLORS = {
   posted: '#1D9E75'
 };
 const BILL_CAT_COLORS = {
-  Housing:'#378ADD',Utilities:'#e67e22',Transportation:'#1D9E75',
-  Insurance:'#8e44ad',Phone:'#27ae60',Internet:'#2980b9',
-  'Food/gas':'#f39c12',Children:'#7F77DD','Medical/health':'#c0392b',
+  Housing:'#378ADD',Utilities:'#e67e22','Car payment':'#1D9E75','Vehicle/gas/repairs':'#16a085',Transportation:'#27ae60',
+  Insurance:'#8e44ad',Phone:'#2ecc71',Internet:'#2980b9',
+  'Food/gas':'#f39c12',Children:'#7F77DD','Medical/health':'#c0392b',Dental:'#e74c3c',
   Taxes:'#7f8c8d','Savings/retirement':'#1abc9c',Other:'#95a5a6'
 };
 
@@ -4108,7 +4108,7 @@ function renderBills(){
             <option value="paid" ${b.status==='paid'?'selected':''}>Paid - not posted</option>
             <option value="posted" ${b.status==='posted'?'selected':''}>Posted</option>
           </select>
-          <label style='display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;margin-bottom:4px'><input type='checkbox' ${b.recurring?'checked':''} onchange="toggleRecurring('${currentBillMonth}','${b.id}',this.checked)"> <span style='color:#666'>Recurring</span></label><button onclick="deleteBill('${currentBillMonth}','${b.id}')" class="btn btnd" style="font-size:11px">Del</button>
+          <label style='display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;margin-bottom:4px'><input type='checkbox' ${b.recurring?'checked':''} onchange="toggleRecurring('${currentBillMonth}','${b.id}',this.checked)"> <span style='color:#666'>Recurring</span></label><button onclick="openEditBill('${currentBillMonth}','${b.id}');event.stopPropagation()" class="btn btne" style="font-size:11px">Edit</button><button onclick="deleteBill('${currentBillMonth}','${b.id}')" class="btn btnd" style="font-size:11px">Del</button>
         </div>
       </div>
     </div>`;
@@ -4228,6 +4228,42 @@ function importHistoricalBills(postSepOnly){
   currentBillMonth=toImport[toImport.length-1];
   renderBillMonthSelect();
   renderBills();
+}
+
+function openEditBill(monthKey, billId){
+  const bill = (billsData[monthKey]?.bills||[]).find(b=>b.id===billId);
+  if(!bill) return;
+  editCtx = {type:'bill', monthKey, billId};
+  document.getElementById('mTitle').textContent = 'Edit bill';
+  document.getElementById('mBody').innerHTML = `
+    <label>Due date (day of month)</label>
+    <input type="number" id="ebDay" value="${bill.day}" min="1" max="31">
+    <label>Company / Bill name</label>
+    <input type="text" id="ebCompany" value="${bill.company||''}">
+    <label>Monthly amount ($)</label>
+    <input type="number" id="ebAmt" value="${bill.amount||0}" step="0.01" min="0">
+    <label>Outstanding balance ($)</label>
+    <input type="number" id="ebBalance" value="${bill.outstandingBalance||0}" step="0.01" min="0">
+    <label>Category</label>
+    <select id="ebCat">
+      ${['Housing','Utilities','Car payment','Vehicle/gas/repairs','Transportation','Insurance','Phone','Internet','Food/gas','Children','Medical/health','Dental','Taxes','Savings/retirement','Other'].map(c=>`<option ${c===bill.category?'selected':''}>${c}</option>`).join('')}
+    </select>
+    <label>Status</label>
+    <select id="ebStatus">
+      <option value="unpaid" ${bill.status==='unpaid'?'selected':''}>Unpaid</option>
+      <option value="paid" ${bill.status==='paid'?'selected':''}>Paid - not posted</option>
+      <option value="posted" ${bill.status==='posted'?'selected':''}>Posted/confirmed</option>
+    </select>
+    <label>Last payment info</label>
+    <input type="text" id="ebLastPay" value="${bill.lastPay||''}">
+    <label>Notes</label>
+    <input type="text" id="ebNotes" value="${bill.notes||''}">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="ebRecurring" ${bill.recurring?'checked':''}>
+      <span>Recurring (auto-carries to next month)</span>
+    </label>
+  `;
+  document.getElementById('editModal').classList.add('open');
 }
 
 </script>
