@@ -1172,45 +1172,26 @@ async function uploadToGemini(uploadUrl,file){
 }
 
 async function analyzeWithGemini(fileUri,filename){
-  const prompt=`You are analyzing a video call recording for a custody case. Petitioner (father): Doug Rhodes. Respondent (mother): Chelsea Rhodes. Children: Ethan (oldest, has been living with father for ~6 months after documented intimidation, previously started to say "I miss" then stopped himself mid-sentence), Charlotte, Duke.
+  const prompt=`Analyze this custody case video call. Petitioner (father): Doug Rhodes. Respondent (mother): Chelsea Rhodes. Children: Ethan (oldest, living with father after intimidation), Charlotte, Duke.
 
-Watch the ENTIRE video carefully. Return a JSON object with these fields:
+Return ONLY valid JSON with these fields:
+{
+  "filename": "${filename}",
+  "call_date": "MM/DD/YYYY or null",
+  "total_duration_seconds": number,
+  "speakers_detected": [],
+  "overall_severity": "high|medium|low|neutral",
+  "court_summary": "3-4 sentences plain language",
+  "segments": [{"speaker_on_call":"","start_approx":"","end_approx":"","duration_seconds":0,"flags":[{"category":"alienation|background_adult|coaching|self_censorship|signal_behavior|distraction|positive","severity":"high|medium|low","timestamp_approx":"","court_plain":""}]}],
+  "background_incidents": [{"timestamp_approx":"","who":"","what":"","court_plain":""}],
+  "interrogation_incidents": [{"timestamp_approx":"","asked_by":"","child_targeted":"","question_asked":"","court_plain":"","pre_tdvro":false}],
+  "refusal_incidents": [{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],
+  "off_camera_incidents": [{"timestamp_approx":"","child":"","court_plain":""}],
+  "ethan_indicators": {"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""}
+}
 
-- filename: "${filename}"
-- call_date: MM/DD/YYYY if visible or determinable
-- total_duration_seconds: number
-- speakers_detected: array of who appears
-- overall_severity: "high"|"medium"|"low"|"neutral"
-- court_summary: 4-5 sentences, plain language, third person, no clinical labels
+Flag interrogation_incidents for ANY questions about food, activities, schedule, or mother's home. Flag background_incidents for ANY adult visible or audible. Be concise in court_plain fields.`;
 
-- segments: array of [{speaker_on_call, start_approx, end_approx, duration_seconds, flags:[{category, severity, timestamp_approx, court_plain}]}]
-  Flag categories: alienation, background_adult, distraction, coaching, transition_negativity, self_censorship, signal_behavior, positive
-
-- background_incidents: array of [{timestamp_approx, who, what, court_plain}]
-  Log EVERY instance of: adults visible or audible in background, adults entering frame, adults speaking to children during call
-
-- interrogation_incidents: array of [{timestamp_approx, asked_by, child_targeted, question_asked, court_plain, pre_tdvro}]
-  CRITICAL - Log EVERY instance where Doug Rhodes or any adult asks children questions about: what they ate, what was for dinner/lunch/breakfast, what they did today, what activities they did, where they went, who they saw, what time they went to bed, what their mother did, what happened at mother's house, or ANY question designed to gather information about Respondent home or activities. These are information-gathering questions that constitute surveillance of the other parent's home. pre_tdvro should be true if call date appears to be before May 19 2025.
-
-- refusal_incidents: array of [{timestamp_approx, child, exact_words_or_description, refusal_type, court_plain}]
-  refusal_type options: "refuses_to_talk"|"says_doesnt_want_to_talk"|"ends_call"|"one_word_answers"|"silence"|"redirected_by_adult"|"other"
-  Log EVERY instance where any child says they don't want to talk, goes silent, ends call, or is redirected away from talking to Respondent (mother)
-
-- distraction_incidents: array of [{timestamp_approx, child, distraction_type, court_plain}]
-
-- off_camera_incidents: array of [{timestamp_approx, child, description, court_plain}]
-  Log every time a child looks off-camera before answering, during conversation, or in a way suggesting they are being watched or signaled
-
-- ethan_indicators: {
-    eye_contact: description,
-    off_screen_moments: array of timestamps and descriptions,
-    self_censorship_moments: description of any times Ethan stops himself,
-    affection_toward_mother: description,
-    affect: overall emotional state,
-    who_ended: who ended the call
-  }
-
-Reply ONLY with valid JSON. No markdown, no explanation.`;
 
   const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY,{
     method:'POST',
