@@ -1141,13 +1141,6 @@ async function analyzeVids(){
     document.getElementById('vPF').style.width=Math.round((i/vQ.length)*100)+'%';
     document.getElementById('vPL').textContent='Uploading '+file.name+' ('+(i+1)+' of '+vQ.length+')...';
     try{
-      // Step 1: Upload file to Gemini Files API
-      const b64=await b64f(file);
-      const uploadResp=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+GEMINI_KEY,{
-        method:'POST',
-        headers:{'X-Goog-Upload-Protocol':'raw','X-Goog-Upload-Header-Content-Type':(file.type||(file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4')),'Content-Type':'application/json'},
-        body:JSON.stringify({file:{display_name:file.name}})
-      });
       // Use resumable upload
       console.log('Starting Gemini upload for:', file.name, 'size:', file.size);
       const uploadUrl=await initGeminiUpload(file);
