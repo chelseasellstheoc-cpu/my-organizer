@@ -1029,42 +1029,59 @@ async function callAPI(msgs,mt=1500){const r=await fetch('https://api.anthropic.
 function pJ(t){
   if(!t) return null;
   t = t.replace(/```json|```/g,'').trim();
-  // Extract JSON object even if truncated
   const objStart = t.indexOf('{');
   if(objStart > 0) t = t.slice(objStart);
   // Try full parse first
   try{return JSON.parse(t);} catch(e){}
-  // If truncated, try to close the JSON and parse partial data
+  // Truncated JSON recovery - extract field by field
   try{
-    // Count open braces/brackets to figure out what's missing
-    let opens = 0, inStr = false, esc = false;
-    for(let i=0;i<t.length;i++){
-      const c = t[i];
-      if(esc){esc=false;continue;}
-      if(c==='\\' && inStr){esc=true;continue;}
-      if(c==='"' && !esc){inStr=!inStr;continue;}
-      if(!inStr){
-        if(c==='{' || c==='[') opens++;
-        else if(c==='}' || c===']') opens--;
+    const result = {};
+    // Extract simple string/number fields
+    const strFields = ['filename','call_date','overall_severity','court_summary'];
+    const numFields = ['total_duration_seconds'];
+    strFields.forEach(f=>{
+      const m = t.match(new RegExp('"'+f+'"\\s*:\\s*"([^"]*)"'));
+      if(m) result[f] = m[1];
+    });
+    numFields.forEach(f=>{
+      const m = t.match(new RegExp('"'+f+'"\\s*:\\s*(\\d+)'));
+      if(m) result[f] = parseInt(m[1]);
+    });
+    // Extract speakers array
+    const spk = t.match(/"speakers_detected"\s*:\s*\[([^\]]+)\]/);
+    if(spk) try{result.speakers_detected = JSON.parse('['+spk[1]+']');}catch(e){}
+    // Extract ethan_indicators object
+    const eth = t.match(/"ethan_indicators"\s*:\s*(\{[^}]+\})/);
+    if(eth) try{result.ethan_indicators = JSON.parse(eth[1]);}catch(e){}
+    // Try to extract partial segments/incidents arrays up to truncation
+    ['segments','background_incidents','interrogation_incidents','refusal_incidents','off_camera_incidents'].forEach(f=>{
+      const arrStart = t.indexOf('"'+f+'"');
+      if(arrStart < 0) return;
+      const bracketStart = t.indexOf('[', arrStart);
+      if(bracketStart < 0) return;
+      // Find complete objects within the array
+      let depth=0, inStr=false, esc=false, items=[], itemStart=-1;
+      for(let i=bracketStart;i<t.length;i++){
+        const c=t[i];
+        if(esc){esc=false;continue;}
+        if(c==='\\'&&inStr){esc=true;continue;}
+        if(c==='"'){inStr=!inStr;continue;}
+        if(inStr) continue;
+        if(c==='{'){ if(depth===0)itemStart=i; depth++; }
+        else if(c==='}'){ depth--; if(depth===0&&itemStart>=0){try{items.push(JSON.parse(t.slice(itemStart,i+1)));}catch(e){} itemStart=-1;} }
+        else if(c===']'&&depth===0) break;
       }
+      if(items.length) result[f] = items;
+    });
+    if(Object.keys(result).length > 2){
+      result._truncated = true;
+      console.log('Salvaged truncated video JSON:', Object.keys(result));
+      return result;
     }
-    // Close any open strings and structures
-    let closed = t;
-    if(inStr) closed += '"';
-    // Find last complete field and truncate there
-    const lastComma = closed.lastIndexOf(',');
-    if(lastComma > 0) closed = closed.slice(0, lastComma);
-    // Close open structures
-    for(let i=0;i<opens;i++) closed += '}';
-    const result = JSON.parse(closed);
-    result._truncated = true;
-    console.log('Parsed truncated JSON successfully');
-    return result;
-  } catch(e2){
-    console.log('pJ parse failed:', e2.message);
-    return null;
-  }
+  } catch(e2){console.log('pJ salvage failed:',e2.message);}
+  return null;
 }
+
 
 const MI=`You are analyzing OFW messages for a custody case. Petitioner (father, sends messages): Doug Rhodes. Respondent (mother, receives messages): Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke. CRITICAL: Doug Rhodes is ALWAYS the Petitioner. Chelsea Rhodes is ALWAYS the Respondent. In court_summary, refer to Doug Rhodes as Petitioner and Chelsea Rhodes as Respondent. Never reverse these roles regardless of who sent or received the message.\nExtract ALL messages. Return JSON array, each: sender,recipient,timestamp_sent,timestamp_viewed,subject,body(verbatim),tactics_clinical:[DARVO,Blame-shifting,False accusation,Control attempt,Gaslighting,Minimizing,Monitoring,Baiting,Excessive contact,Neutral],tactics_plain(plain descriptions for judge),court_summary(2-3 sentences third person factual no clinical labels - if Doug Rhodes sent: start "On [date] Petitioner..." if Chelsea Rhodes sent or attorney for Chelsea: start "On [date] Respondent..."),severity(high|medium|low|neutral),child_mentioned(array),requires_response(true if needed for child safety),is_call_related(true if about phone/video call).\nReply ONLY with valid JSON array.`;
 
