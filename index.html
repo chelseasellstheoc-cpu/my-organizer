@@ -260,7 +260,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div class="fbar" id="mFilters"></div>
       <div id="mList"></div>
-      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="bulkFixLabels()" style="background:#fff3cd;border-color:#f0c040;color:#856404">&#128295; Fix Petitioner/Respondent labels</button><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="showCoverageReport()">&#128197; Coverage gaps</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
+      <div class="es" id="mExp" style="display:none"><h3>Export</h3><div class="eo"><button class="btn btns" onclick="bulkFixLabels()" style="background:#fff3cd;border-color:#f0c040;color:#856404">&#128295; Fix Petitioner/Respondent labels</button><button class="btn btns" onclick="exportMsgs('plain')">&#128196; Court exhibit</button><button class="btn btns" onclick="exportMsgs('full')">&#128196; Attorney copy</button><button class="btn btns" onclick="showCoverageReport()">&#128197; Coverage gaps</button><button class="btn btns" onclick="scanMsgDuplicates()" style="border-color:#c0392b;color:#c0392b">&#128269; Scan duplicates</button><button class="btn btns" onclick="copySum()">&#128203; Copy summary</button></div></div>
     </div>
     <!-- VIDEOS -->
     <div id="p-videos" class="panel">
@@ -919,7 +919,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div id="billCatChart" style="margin-top:1rem"></div>
       <div id="billList" style="margin-top:1rem"></div>
       <div class="es" style="margin-top:1rem"><h3>Export</h3><div class="eo">
-        <button class="btn btns" onclick="exportBills('month')">&#128196; This month</button>
+        <button class="btn btns" onclick="scanBillDuplicates()" style="border-color:#c0392b;color:#c0392b">&#128269; Scan duplicates</button><button class="btn btns" onclick="exportBills('month')">&#128196; This month</button>
         <button class="btn btns" onclick="exportBills('all')">&#128196; All months summary</button>
         <button class="btn btns" onclick="exportBills('outstanding')">&#128196; Outstanding balances</button>
       </div></div>
@@ -1161,7 +1161,13 @@ Reply ONLY with valid JSON. No markdown, no explanation.`;
   const data=await resp.json();
   if(data.error)throw new Error(data.error.message);
   const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
-  return pJ(text);
+  console.log('Gemini raw response length:', text.length);
+  console.log('Gemini raw preview:', text.slice(0,200));
+  console.log('Gemini finish reason:', data.candidates?.[0]?.finishReason);
+  console.log('Gemini full data:', JSON.stringify(data).slice(0,500));
+  const parsed = pJ(text);
+  console.log('Parsed result:', parsed ? 'OK' : 'NULL - JSON parse failed');
+  return parsed;
 }
 function autoLog(v){(v.segments||[]).forEach(seg=>{if(!seg.duration_seconds||seg.duration_seconds<30)return;const isDad=seg.speaker_on_call?.toLowerCase().includes('doug');const isMom=seg.speaker_on_call?.toLowerCase().includes('chelsea');const isEt=seg.speaker_on_call?.toLowerCase().includes('ethan');const type=isDad?'dad':isMom?'mom':isEt?'ethan':null;if(!type)return;autoCallLog.push({date:v.call_date||'Unknown',type,mins:Math.round(seg.duration_seconds/60*10)/10,ender:'Unknown',source:v.filename||'',auto:true});});}
 
@@ -1257,7 +1263,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='msgdedup'){const dupes=editCtx.dupes;const toDelete=new Set();dupes.forEach((d,i)=>{const cb=document.getElementById('delDupe_'+i);if(cb&&cb.checked)toDelete.add(d.idx);});allMsgs=allMsgs.filter((_,i)=>!toDelete.has(i));save();renderMsgs();alert('Deleted '+toDelete.size+' duplicates. '+allMsgs.length+' messages remain.');}else if(editCtx.type==='billdedup'){const dupes=editCtx.dupes;const toDelete={};dupes.forEach((d,i)=>{const cb=document.getElementById('delBillDupe_'+i);if(cb&&cb.checked){if(!toDelete[d.month])toDelete[d.month]=new Set();toDelete[d.month].add(d.idx);}});Object.keys(toDelete).forEach(mk=>{if(billsData[mk])billsData[mk].bills=billsData[mk].bills.filter((_,i)=>!toDelete[mk].has(i));});billsSave();renderBills();alert('Duplicate bills removed.');}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -4263,6 +4269,69 @@ function openEditBill(monthKey, billId){
       <span>Recurring (auto-carries to next month)</span>
     </label>
   `;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function scanMsgDuplicates(){
+  if(!allMsgs.length){alert('No messages loaded.');return;}
+  const seen={};const dupes=[];
+  allMsgs.forEach((m,i)=>{
+    const key=(m.timestamp_sent||'')+'|'+(m.sender||'')+'|'+(m.body||'').slice(0,50).trim();
+    if(seen[key]!==undefined){dupes.push({idx:i,original:seen[key],msg:m});}
+    else{seen[key]=i;}
+  });
+  if(!dupes.length){alert('No duplicates found in '+allMsgs.length+' messages.');return;}
+  editCtx={type:'msgdedup',dupes};
+  document.getElementById('mTitle').textContent='Duplicate messages';
+  document.getElementById('mBody').innerHTML=
+    '<div style="font-size:13px;margin-bottom:12px;color:#c0392b">'+dupes.length+' duplicate(s) found. Check which to delete.</div>'+
+    dupes.map((d,i)=>{
+      const m=d.msg;
+      return '<div style="background:#fdf0f0;border:1px solid #e0c0c0;border-radius:8px;padding:10px;margin-bottom:8px">'+
+        '<div style="font-size:12px;font-weight:600;color:#c0392b">Duplicate #'+(i+1)+'</div>'+
+        '<div style="font-size:12px;color:#555">'+(m.timestamp_sent||'Unknown')+' - '+(m.sender||'Unknown')+'</div>'+
+        '<div style="font-size:12px;margin:4px 0">'+(m.body||'').slice(0,80)+(((m.body||'').length>80)?'...':'')+'</div>'+
+        '<div style="font-size:11px;color:#888">Original #'+(d.original+1)+', duplicate at #'+(d.idx+1)+'</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px;cursor:pointer">'+
+        '<input type="checkbox" id="delDupe_'+i+'" checked> Delete this duplicate</label>'+
+        '</div>';
+    }).join('')+
+    '<div style="font-size:12px;color:#666;margin-top:8px">Checked items deleted when you click Save.</div>';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function scanBillDuplicates(){
+  const months=Object.keys(billsData);
+  if(!months.length){alert('No bills loaded.');return;}
+  const dupes=[];
+  months.forEach(mk=>{
+    const bills=billsData[mk]?.bills||[];
+    const seen={};
+    bills.forEach((b,i)=>{
+      const key=b.day+'|'+(b.company||'').toLowerCase().trim()+'|'+b.amount;
+      if(seen[key]!==undefined){dupes.push({month:mk,idx:i,originalIdx:seen[key],bill:b});}
+      else{seen[key]=i;}
+    });
+  });
+  if(!dupes.length){
+    const total=months.reduce((s,mk)=>s+(billsData[mk]?.bills?.length||0),0);
+    alert('No duplicate bills found across '+total+' bills in '+months.length+' months.');
+    return;
+  }
+  editCtx={type:'billdedup',dupes};
+  document.getElementById('mTitle').textContent='Duplicate bills found';
+  document.getElementById('mBody').innerHTML=
+    '<div style="font-size:13px;margin-bottom:12px;color:#c0392b">'+dupes.length+' duplicate(s) found.</div>'+
+    dupes.map((d,i)=>{
+      const b=d.bill;
+      const ml=new Date(d.month+'-01').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      return '<div style="background:#fdf0f0;border:1px solid #e0c0c0;border-radius:8px;padding:10px;margin-bottom:8px">'+
+        '<div style="font-size:12px;font-weight:600;color:#c0392b">'+ml+'</div>'+
+        '<div style="font-size:12px">Day '+b.day+': '+b.company+' - $'+fmtAmt(b.amount)+'</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:6px;cursor:pointer">'+
+        '<input type="checkbox" id="delBillDupe_'+i+'" checked> Delete duplicate</label>'+
+        '</div>';
+    }).join('');
   document.getElementById('editModal').classList.add('open');
 }
 
