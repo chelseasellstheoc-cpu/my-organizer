@@ -279,7 +279,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <p class="cp">MP4 files. Gemini will watch each video and flag: background adults, kids looking off-camera, who ends the call, refusals to talk, coached language, signal behaviors, transition negativity, and all four of Dr. Kelley documented alienation behaviors. Durations auto-logged.</p>
         <div class="ib"><strong>Before uploading:</strong> Confirm with your attorney that OFW recording satisfies California two-party consent requirements.</div>
         <div class="uz" onclick="document.getElementById('vIn').click()" id="vDrop"><div class="uzi">&#127909;</div><p class="uzp">Drop MP4 recordings here</p><p style="font-size:11px;color:#999;margin-top:4px">Large files may take several minutes to upload to Gemini</p></div>
-        <input type="file" id="vIn" multiple accept="video/*" style="display:none" onchange="addQ(Array.from(this.files),vQ,'vQEl','vABar')">
+        <input type="file" id="vIn" multiple accept="video/*,.mov,.MOV,.mp4,.MP4,.m4v" style="display:none" onchange="addQ(Array.from(this.files),vQ,'vQEl','vABar')">
         <div id="vQEl"></div>
         <div class="abar" id="vABar" style="display:none">
           <button class="btn btnp" onclick="analyzeVids()" id="vBtn">&#10022; Analyze with Gemini</button>
@@ -578,7 +578,22 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div id="calEventList"></div>
     </div>
 
-    <!-- ETHAN DINNERS -->
+          <div class="card" style="margin-top:1rem">
+        <h3>&#128197; Key Dates Registry</h3>
+        <p class="cp">Log significant dates. Related messages and evidence within 3 days will be linked automatically.</p>
+        <div class="fr">
+          <div><label>Date</label><input type="date" id="kdDate"></div>
+          <div><label>Label</label><input type="text" id="kdLabel" placeholder="e.g. TDVRO expired"></div>
+        </div>
+        <label>Why it matters</label>
+        <input type="text" id="kdWhy" placeholder="e.g. All messages after this date lack TRO protection">
+        <label>Type</label>
+        <select id="kdType"><option value="court">Court order/hearing</option><option value="incident">Incident</option><option value="legal">Legal milestone</option><option value="medical">Medical/therapy</option><option value="other">Other</option></select>
+        <button class="btn btnp" style="margin-top:10px" onclick="addKeyDate()">+ Add key date</button>
+        <div id="keyDatesList" style="margin-top:10px"></div>
+      </div>
+    </div>
+<!-- ETHAN DINNERS -->
     <div id="p-ethan" class="panel">
       <div class="hhead" style="background:linear-gradient(135deg,#4a2080,#7F77DD)">
         <h2>&#127860; Ethan Court-Ordered Dinners</h2>
@@ -982,10 +997,10 @@ function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader(
 function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();renderExpenses();if(document.getElementById('p-bills'))renderBills();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();expLoad();billsLoad();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();expLoad();billsLoad();kdLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{const oc=t.getAttribute('onclick')||'';if(oc.includes("'"+n+"'")) t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar')setTimeout(renderCalendar,50);if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}if(n==='expenses')setTimeout(renderExpenses,50);if(n==='bills')setTimeout(renderBills,50);if(n==='contacts')setTimeout(renderContacts,50);if(n==='docs')setTimeout(function(){},50);}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{const oc=t.getAttribute('onclick')||'';if(oc.includes("'"+n+"'")) t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar'){setTimeout(renderCalendar,50);setTimeout(renderKeyDates,100);}if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}if(n==='expenses')setTimeout(renderExpenses,50);if(n==='bills')setTimeout(renderBills,50);if(n==='contacts')setTimeout(renderContacts,50);if(n==='docs')setTimeout(function(){},50);}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -1130,7 +1145,7 @@ async function analyzeVids(){
       const b64=await b64f(file);
       const uploadResp=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+GEMINI_KEY,{
         method:'POST',
-        headers:{'X-Goog-Upload-Protocol':'raw','X-Goog-Upload-Header-Content-Type':file.type||'video/mp4','Content-Type':'application/json'},
+        headers:{'X-Goog-Upload-Protocol':'raw','X-Goog-Upload-Header-Content-Type':(file.type||(file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4')),'Content-Type':'application/json'},
         body:JSON.stringify({file:{display_name:file.name}})
       });
       // Use resumable upload
@@ -1162,7 +1177,7 @@ async function analyzeVids(){
 async function initGeminiUpload(file){
   const resp=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files?key='+GEMINI_KEY,{
     method:'POST',
-    headers:{'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':file.size,'X-Goog-Upload-Header-Content-Type':file.type||'video/mp4','Content-Type':'application/json'},
+    headers:{'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':file.size,'X-Goog-Upload-Header-Content-Type':(file.type||(file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4')),'Content-Type':'application/json'},
     body:JSON.stringify({file:{display_name:file.name}})
   });
   return resp.headers.get('x-goog-upload-url');
@@ -1171,7 +1186,7 @@ async function initGeminiUpload(file){
 async function uploadToGemini(uploadUrl,file){
   const resp=await fetch(uploadUrl,{
     method:'POST',
-    headers:{'X-Goog-Upload-Command':'upload, finalize','X-Goog-Upload-Offset':'0','Content-Type':file.type||'video/mp4'},
+    headers:{'X-Goog-Upload-Command':'upload, finalize','X-Goog-Upload-Offset':'0','Content-Type':(file.type||(file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4'))},
     body:file
   });
   const data=await resp.json();
@@ -1209,7 +1224,7 @@ Return ONLY valid JSON, no markdown:
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      contents:[{parts:[{fileData:{mimeType:'video/mp4',fileUri:fileUri}},{text:prompt}]}],
+      contents:[{parts:[{fileData:{mimeType:(file&&file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4'),fileUri:fileUri}},{text:prompt}]}],
       generationConfig:{maxOutputTokens:8192,temperature:0.1}
     })
   });
@@ -1314,7 +1329,7 @@ function renderML(){
     const mode=mVM[origI]||'court';const tacts=m.tactics_clinical||['Neutral'];
     const wh=ex&&isDWH(m.timestamp_sent);const ln=ex&&isLN(m.timestamp_sent);const fl=ex&&tacts.some(t=>t!=='Neutral');
     const idx=allMsgs.indexOf(m);
-    html += `<div class="mc collapsed ${fl?'fl':wh?'wh':ln?'ln':''}" style="cursor:default"><div onclick="this.closest('.mc').classList.toggle('collapsed')" style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;cursor:pointer"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button class="btn btne" onclick="editMsg(${origI});event.stopPropagation()">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
+    html += `<div class="mc collapsed ${fl?'fl':wh?'wh':ln?'ln':''}" style="cursor:default"><div onclick="this.closest('.mc').classList.toggle('collapsed')" style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px;cursor:pointer"><div><div class="msn">${m.sender||'?'} to ${m.recipient||'?'}</div><div class="mts">${m.timestamp_sent||''}${m.subject?' - '+m.subject:''}</div>${m.timestamp_viewed?`<div class="mvw">Viewed: ${m.timestamp_viewed}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="bgs">${tacts.map(t=>`<span class="bg ${TC[t]||'bgr'}">${t}</span>`).join('')}</div><button onclick="toggleMsgStar(${origI});event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px" title="Star this message">${allMsgs[origI]?.starred?'&#11088;':'&#10025;'}</button><button class="btn btne" onclick="editMsg(${origI});event.stopPropagation()">Edit</button></div></div>${wh?`<div class="tf wk">Sent during your work hours - you have previously requested no contact during work hours</div>`:''} ${ln?`<div class="tf lt">Sent after 9pm or before 7am</div>`:''}<div class="mbody ${ex?'ex':''}">${m.body||''}</div>${m.notes?`<div style="background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:4px;font-size:12px">&#128221; Your note: ${m.notes}</div>`:''} ${m.driveLink?`<a href="${m.driveLink}" target="_blank" style="font-size:11px;color:#1a5fa8;display:block;margin-top:3px">&#128247; View screenshot</a>`:''} ${m.screenshotName?`<div style="font-size:11px;color:#1a7a52;margin-top:2px">&#128247; ${m.screenshotName}</div>`:''} ${!m.requires_response&&ex?`<div class="nrnote">This message may not require a response - log in Non-response tab.</div>`:''}<div class="atabs"><button class="atab ${mode==='court'?'active':''}" onclick="setMM(${idx},'court')">Court language</button><button class="atab ${mode==='clinical'?'active':''}" onclick="setMM(${idx},'clinical')">Clinical</button></div>${mode==='court'?`<div class="ctext">${m.court_summary||'No summary.'}</div>`:`<div class="atext">${(m.tactics_plain||[]).join(' ')}</div>`}</div>`;
   }).join(''); return html; })():"<div class='empty'>No messages match this filter.</div>";}
 function setMM(i,mode){mVM[i]=mode;renderML();}
 
@@ -1338,7 +1353,7 @@ function renderVids(){
   document.getElementById('vStats').style.display='grid';
   document.getElementById('vStats').innerHTML=`<div class="sc"><div class="sl">Recordings</div><div class="sv">${allVids.length}</div></div><div class="sc"><div class="sl">High flags</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">Background adults</div><div class="sv red">${bg}</div></div><div class="sc"><div class="sl">Distractions</div><div class="sv">${di}</div></div>`;
   const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};const FC={alienation:'high',background_adult:'bga',distraction:'dis',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
-  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div>${v._truncated?'<div style="font-size:10px;color:#e67e22">&#9888; Partial analysis (response truncated)</div>':''}</div><div style="display:flex;gap:6px;align-items:center"><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span><button class="btn btne" style="font-size:11px" onclick="openEditVid(${vi});event.stopPropagation()">Edit</button><button class="btn btnd" style="font-size:11px" onclick="if(confirm('Delete this video analysis?'){allVids.splice(${vi},1);save();renderVids();}event.stopPropagation()">Del</button></div></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map((f,fi)=>`<div class="fi ${FC[f.category]||f.severity}" style="position:relative"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div><div style="display:flex;gap:4px;margin-top:4px"><button onclick="editVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button><button onclick="deleteVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Delete</button></div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.interrogation_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128269; Information-gathering questions (${v.interrogation_incidents.length})${v.interrogation_incidents.some(i=>i.pre_tdvro)?' \u26a0\ufe0f includes pre-TDVRO':''}</strong>${v.interrogation_incidents.map(i=>`<div>[${i.timestamp_approx||'?'}] ${i.asked_by||'Adult'} asked ${i.child_targeted||'child'}: "${i.question_asked||''}" ${i.pre_tdvro?'<span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':''}</div>`).join('')}</div>`:''}
+  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div>${v._truncated?'<div style="font-size:10px;color:#e67e22">&#9888; Partial analysis (response truncated)</div>':''}</div><div style="display:flex;gap:6px;align-items:center"><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span><button onclick="allVids[${vi}].starred=!allVids[${vi}].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px" title="Star this video">${allVids[vi]?.starred?'&#11088;':'&#10025;'}</button><button class="btn btne" style="font-size:11px" onclick="openEditVid(${vi});event.stopPropagation()">Edit</button><button class="btn btnd" style="font-size:11px" onclick="if(confirm('Delete this video analysis?'){allVids.splice(${vi},1);save();renderVids();}event.stopPropagation()">Del</button></div></div>${(v.segments||[]).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map((f,fi)=>`<div class="fi ${FC[f.category]||f.severity}" style="position:relative"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div><div style="display:flex;gap:4px;margin-top:4px"><button onclick="editVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button><button onclick="deleteVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Delete</button></div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.interrogation_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128269; Information-gathering questions (${v.interrogation_incidents.length})${v.interrogation_incidents.some(i=>i.pre_tdvro)?' \u26a0\ufe0f includes pre-TDVRO':''}</strong>${v.interrogation_incidents.map(i=>`<div>[${i.timestamp_approx||'?'}] ${i.asked_by||'Adult'} asked ${i.child_targeted||'child'}: "${i.question_asked||''}" ${i.pre_tdvro?'<span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':''}</div>`).join('')}</div>`:''}
       ${v.refusal_incidents?.length?`<div class="fi high" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128683; Refusals to talk (${v.refusal_incidents.length})</strong>${v.refusal_incidents.map(r=>`<div>[${r.timestamp_approx||'?'}] <strong>${r.child||'Child'}</strong>: ${r.court_plain}</div>`).join('')}</div>`:''}
       ${v.off_camera_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128064; Off-camera incidents (${v.off_camera_incidents.length})</strong>${v.off_camera_incidents.map(o=>`<div>[${o.timestamp_approx||'?'}] <strong>${o.child||'Child'}</strong>: ${o.court_plain}</div>`).join('')}</div>`:''}
       ${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.notes?`<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:6px">&#128221; ${v.notes}</div>`:''}${v.driveLink?`<a href="${v.driveLink}" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View original video in Google Drive</a>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
@@ -3183,7 +3198,7 @@ function renderEthan(){
           <div style="font-size:12px;color:${s.color};font-weight:500">${s.icon} ${s.label}</div>
         </div>
         <div class="abtn">
-          <button class="btn btne" onclick="openEditEthan(${origIdx})">Edit</button>
+          <button onclick="ethanDinners[${origIdx}].starred=!ethanDinners[${origIdx}].starred;ethanSave();renderEthan();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px" title="Star this dinner">${ethanDinners[origIdx]?.starred?'&#11088;':'&#10025;'}</button><button class="btn btne" onclick="openEditEthan(${origIdx})">Edit</button>
           <button class="btn btnd" onclick="if(confirm('Delete?')){ethanDinners.splice(${origIdx},1);ethanSave();renderEthan()}">Del</button>
         </div>
       </div>
@@ -4469,6 +4484,110 @@ function deleteVidFlag(vi, si, fi){
     save();
     renderVids();
   }
+}
+
+function toggleMsgStar(i){
+  if(allMsgs[i]) allMsgs[i].starred = !allMsgs[i].starred;
+  save();
+  renderML();
+}
+
+// KEY DATES
+let keyDates = [];
+
+const KD_COLORS = {
+  court:'#c0392b', incident:'#e67e22', legal:'#8e44ad',
+  medical:'#1D9E75', other:'#666'
+};
+const KD_ICONS = {
+  court:'&#9878;', incident:'&#9888;', legal:'&#128196;',
+  medical:'&#129657;', other:'&#128197;'
+};
+
+function kdSave(){
+  try{localStorage.setItem('eo_kd', JSON.stringify(keyDates));}catch(e){}
+  showSave();
+}
+
+function kdLoad(){
+  try{
+    const raw = localStorage.getItem('eo_kd');
+    if(raw) keyDates = JSON.parse(raw);
+    // Pre-load significant case dates if empty
+    if(!keyDates.length){
+      keyDates = [
+        {id:'kd_sep',date:'2025-01-23',label:'Separation date',why:'Start of solo financial burden and custody dispute',type:'legal'},
+        {id:'kd_tdvro_end',date:'2025-05-19',label:'TDVRO expired',why:'TDVRO protection ended - communications after this date lack TRO coverage',type:'legal'},
+        {id:'kd_foah',date:'2026-04-14',label:'FOAH issued - Ethan dinners ordered',why:'Court ordered Ethan dinners. Any missed dinners after this date = contempt',type:'court'},
+        {id:'kd_hearing',date:'2026-07-30',label:'MAIN CUSTODY HEARING',why:'Judge Bell, Dept C-17. Dr. Kelley testifying.',type:'court'},
+      ];
+      kdSave();
+    }
+  }catch(e){}
+}
+
+function addKeyDate(){
+  const date = document.getElementById('kdDate').value;
+  const label = document.getElementById('kdLabel').value.trim();
+  const why = document.getElementById('kdWhy').value.trim();
+  const type = document.getElementById('kdType').value;
+  if(!date||!label){alert('Please enter date and label.');return;}
+  keyDates.push({id:'kd_'+Date.now(), date, label, why, type});
+  keyDates.sort((a,b)=>a.date.localeCompare(b.date));
+  ['kdDate','kdLabel','kdWhy'].forEach(id=>document.getElementById(id).value='');
+  kdSave();
+  renderKeyDates();
+}
+
+function renderKeyDates(){
+  const el = document.getElementById('keyDatesList');
+  if(!el) return;
+  if(!keyDates.length){el.innerHTML='<div class="empty">No key dates yet.</div>';return;}
+  el.innerHTML = keyDates.map((kd,i)=>{
+    const color = KD_COLORS[kd.type]||'#666';
+    const icon = KD_ICONS[kd.type]||'&#128197;';
+    const d = new Date(kd.date+'T12:00:00');
+    const label = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    // Find related messages within 3 days
+    const related = allMsgs.filter(m=>{
+      const mt = parsTS(m.timestamp_sent);
+      if(!mt) return false;
+      return Math.abs(mt.getTime()-d.getTime()) <= 3*24*60*60*1000;
+    }).length;
+    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0ea">'
+      +'<div style="width:4px;min-height:40px;background:'+color+';border-radius:2px;flex-shrink:0"></div>'
+      +'<div style="flex:1">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +'<span style="font-size:12px;font-weight:600">'+icon+' '+label+'</span>'
+      +'<span style="font-size:12px;font-weight:600;color:'+color+'">'+kd.label+'</span>'
+      +(related?'<button onclick="searchMsgsNearDate(this.dataset.date)" data-date="'+kd.date+'" style="font-size:10px;color:#1a5fa8;background:none;border:none;cursor:pointer;padding:0">&#128228; '+related+' related messages</button>':'')
+      +'</div>'
+      +(kd.why?'<div style="font-size:11px;color:#666;margin-top:2px">'+kd.why+'</div>':'')
+      +'</div>'
+      +'<button onclick="keyDates.splice('+i+',1);kdSave();renderKeyDates()" class="btn btnd" style="font-size:11px">Del</button>'
+      +'</div>';
+  }).join('');
+}
+
+function searchMsgsNearDate(btnOrDate){
+  const date = typeof btnOrDate==='string' ? btnOrDate : btnOrDate.getAttribute('data-date');
+  const parts = date.split('-');
+  const s = parts[1]+'/'+parts[2]+'/'+parts[0];
+  mSearch=s;
+  const el=document.getElementById('mSearchIn');
+  if(el)el.value=s;
+  sw('messages');
+  setTimeout(renderML,100);
+}
+
+function getKeyDateFlags(dateStr){
+  // Returns any key dates within 1 day of the given date
+  if(!keyDates.length) return [];
+  const d = new Date(dateStr+'T12:00:00').getTime();
+  return keyDates.filter(kd=>{
+    const kd_d = new Date(kd.date+'T12:00:00').getTime();
+    return Math.abs(d - kd_d) <= 24*60*60*1000;
+  });
 }
 
 </script>
