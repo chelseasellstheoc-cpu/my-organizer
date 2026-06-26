@@ -1196,7 +1196,7 @@ Return ONLY valid JSON with these fields:
 Flag interrogation_incidents for ANY questions about food, activities, schedule, or mother's home. Flag background_incidents for ANY adult visible or audible. Be concise in court_plain fields.`;
 
 
-  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{
+  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+GEMINI_KEY,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
