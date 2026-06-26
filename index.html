@@ -1026,7 +1026,42 @@ function logM(s){const el=document.getElementById('mLog');el.style.display='bloc
 
 // API
 async function callAPI(msgs,mt=1500){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:mt,messages:msgs})});const d=await r.json();if(d.error)throw new Error(d.error.message);return d.content?.map(c=>c.text||'').join('')||'';}
-function pJ(t){try{return JSON.parse(t.replace(/```json|```/g,'').trim());}catch(e){return null;}}
+function pJ(t){
+  if(!t) return null;
+  t = t.replace(/```json|```/g,'').trim();
+  // Try full parse first
+  try{return JSON.parse(t);} catch(e){}
+  // If truncated, try to close the JSON and parse partial data
+  try{
+    // Count open braces/brackets to figure out what's missing
+    let opens = 0, inStr = false, esc = false;
+    for(let i=0;i<t.length;i++){
+      const c = t[i];
+      if(esc){esc=false;continue;}
+      if(c==='\\' && inStr){esc=true;continue;}
+      if(c==='"' && !esc){inStr=!inStr;continue;}
+      if(!inStr){
+        if(c==='{' || c==='[') opens++;
+        else if(c==='}' || c===']') opens--;
+      }
+    }
+    // Close any open strings and structures
+    let closed = t;
+    if(inStr) closed += '"';
+    // Find last complete field and truncate there
+    const lastComma = closed.lastIndexOf(',');
+    if(lastComma > 0) closed = closed.slice(0, lastComma);
+    // Close open structures
+    for(let i=0;i<opens;i++) closed += '}';
+    const result = JSON.parse(closed);
+    result._truncated = true;
+    console.log('Parsed truncated JSON successfully');
+    return result;
+  } catch(e2){
+    console.log('pJ parse failed:', e2.message);
+    return null;
+  }
+}
 
 const MI=`You are analyzing OFW messages for a custody case. Petitioner (father, sends messages): Doug Rhodes. Respondent (mother, receives messages): Chelsea Rhodes. Children: Ethan (oldest, living with father after documented intimidation), Charlotte, Duke. CRITICAL: Doug Rhodes is ALWAYS the Petitioner. Chelsea Rhodes is ALWAYS the Respondent. In court_summary, refer to Doug Rhodes as Petitioner and Chelsea Rhodes as Respondent. Never reverse these roles regardless of who sent or received the message.\nExtract ALL messages. Return JSON array, each: sender,recipient,timestamp_sent,timestamp_viewed,subject,body(verbatim),tactics_clinical:[DARVO,Blame-shifting,False accusation,Control attempt,Gaslighting,Minimizing,Monitoring,Baiting,Excessive contact,Neutral],tactics_plain(plain descriptions for judge),court_summary(2-3 sentences third person factual no clinical labels - if Doug Rhodes sent: start "On [date] Petitioner..." if Chelsea Rhodes sent or attorney for Chelsea: start "On [date] Respondent..."),severity(high|medium|low|neutral),child_mentioned(array),requires_response(true if needed for child safety),is_call_related(true if about phone/video call).\nReply ONLY with valid JSON array.`;
 
@@ -1182,7 +1217,7 @@ Reply ONLY with valid JSON. No markdown, no explanation.`;
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       contents:[{parts:[{fileData:{mimeType:'video/mp4',fileUri:fileUri}},{text:prompt}]}],
-      generationConfig:{responseMimeType:'application/json',maxOutputTokens:4000}
+      generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192}
     })
   });
   const data=await resp.json();
