@@ -990,7 +990,29 @@ function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
 function addQ(files,q,elId,barId){files.forEach(f=>{if(!q.find(x=>x.name===f.name))q.push(f);});renderQ(q,elId,barId);}
-function renderQ(q,elId,barId){const ic={pdf:'📄',zip:'🗜',img:'🖼',vid:'🎥'};const cl={pdf:'fp',zip:'fz',img:'fi2',vid:'fv'};document.getElementById(elId).innerHTML=q.map((f,i)=>{const t=getFT(f);return`<div class="qi"><span>${ic[t]}</span><span class="ft ${cl[t]}">${t.toUpperCase()}</span><span class="fn">${f.name}</span><span class="fs2">${(f.size/1024).toFixed(0)}KB</span><button class="rmb" onclick="q.splice(${i},1);renderQ(q,'${elId}','${barId}')">&#x2715;</button></div>`;}).join('');document.getElementById(barId).style.display=q.length?'flex':'none';}
+function renderQ(q,elId,barId){
+  const ic={pdf:'📄',zip:'🗜',img:'🖼',vid:'🎥'};
+  const cl={pdf:'fp',zip:'fz',img:'fi2',vid:'fv'};
+  document.getElementById(elId).innerHTML=q.map((f,i)=>{
+    const t=getFT(f);
+    return '<div class="qi">'
+      +'<span>'+ic[t]+'</span>'
+      +'<span class="ft '+cl[t]+'">'+t.toUpperCase()+'</span>'
+      +'<span class="fn">'+f.name+'</span>'
+      +'<span class="fs2">'+(f.size/1024).toFixed(0)+'KB</span>'
+      +'<button class="rmb" data-qi="'+i+'" data-el="'+elId+'" data-bar="'+barId+'" onclick="rmQ(this)">&#x2715;</button>'
+      +'</div>';
+  }).join('');
+  document.getElementById(barId).style.display=q.length?'flex':'none';
+}
+function rmQ(btn){
+  const i=parseInt(btn.getAttribute('data-qi'));
+  const elId=btn.getAttribute('data-el');
+  const barId=btn.getAttribute('data-bar');
+  const q=elId==='mQEl'?mQ:vQ;
+  q.splice(i,1);
+  renderQ(q,elId,barId);
+}
 function sDrop(id,q,elId,barId){const z=document.getElementById(id);z.addEventListener('dragover',e=>{e.preventDefault();z.style.background='#f5f5f0';});z.addEventListener('dragleave',()=>z.style.background='');z.addEventListener('drop',e=>{e.preventDefault();z.style.background='';addQ(Array.from(e.dataTransfer.files),q,elId,barId);});}
 sDrop('mDrop',mQ,'mQEl','mABar');sDrop('vDrop',vQ,'vQEl','vABar');
 
@@ -1057,14 +1079,18 @@ async function analyzeVids(){
         body:JSON.stringify({file:{display_name:file.name}})
       });
       // Use resumable upload
+      console.log('Starting Gemini upload for:', file.name, 'size:', file.size);
       const uploadUrl=await initGeminiUpload(file);
+      console.log('Upload URL obtained:', uploadUrl ? 'YES' : 'NO');
       if(!uploadUrl){throw new Error('Failed to initialize upload');}
       document.getElementById('vPL').textContent='Uploading '+file.name+'...';
       const fileUri=await uploadToGemini(uploadUrl,file);
+      console.log('File URI:', fileUri ? fileUri.slice(0,50) : 'NULL');
       if(!fileUri){throw new Error('Failed to upload file');}
       document.getElementById('vPL').textContent='Analyzing '+file.name+' with Gemini...';
-      // Step 2: Analyze with Gemini
+      console.log('Starting analysis with fileUri:', fileUri ? fileUri.slice(0,50) : 'NULL');
       const result=await analyzeWithGemini(fileUri,file.name);
+      console.log('Analysis result:', result ? 'Got data' : 'NULL/failed');
       if(result){allVids.push(result);autoLog(result);}
     }catch(e){
       document.getElementById('vErr').innerHTML="<div class=\'err\'>Error with "+file.name+": "+e.message+"</div>";
@@ -1103,6 +1129,7 @@ async function uploadToGemini(uploadUrl,file){
     await new Promise(r=>setTimeout(r,3000));
     const status=await fetch('https://generativelanguage.googleapis.com/v1beta/'+name+'?key='+GEMINI_KEY);
     const sd=await status.json();
+    console.log('File state:', sd.state, 'attempt', i+1);
     if(sd.state==='ACTIVE')return fileUri;
     if(sd.state==='FAILED')throw new Error('File processing failed');
   }
