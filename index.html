@@ -1159,7 +1159,7 @@ async function analyzeVids(){
       if(!fileUri){throw new Error('Failed to upload file');}
       document.getElementById('vPL').textContent='Analyzing '+file.name+' with Gemini...';
       console.log('Starting analysis with fileUri:', fileUri ? fileUri.slice(0,50) : 'NULL');
-      const result=await analyzeWithGemini(fileUri,file.name);
+      const result=await analyzeWithGemini(fileUri,file.name,file);
       console.log('Analysis result:', result ? 'Got data' : 'NULL/failed');
       if(result){allVids.push(result);autoLog(result);}
     }catch(e){
@@ -1206,7 +1206,7 @@ async function uploadToGemini(uploadUrl,file){
   return fileUri;
 }
 
-async function analyzeWithGemini(fileUri,filename){
+async function analyzeWithGemini(fileUri,filename,file){
   const prompt=`Analyze this OFW custody case video call. Be EXTREMELY concise - max 1 sentence per field.
 CRITICAL ROLE DEFINITIONS - never reverse these:
 - Chelsea Rhodes = RESPONDENT = MOTHER = the person the children are calling / who appears on screen talking to children
@@ -1224,7 +1224,7 @@ Return ONLY valid JSON, no markdown:
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      contents:[{parts:[{fileData:{mimeType:(file&&file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':'video/mp4'),fileUri:fileUri}},{text:prompt}]}],
+      contents:[{parts:[{fileData:{mimeType:(file&&file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':(file&&file.type?file.type:'video/mp4')),fileUri:fileUri}},{text:prompt}]}],
       generationConfig:{maxOutputTokens:8192,temperature:0.1}
     })
   });
