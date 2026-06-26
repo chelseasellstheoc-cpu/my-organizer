@@ -1342,14 +1342,139 @@ document.getElementById('editModal').addEventListener('click',e=>{if(e.target===
 
 // RENDER VIDEOS
 function renderVids(){
-  const af=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));const hi=af.filter(f=>f.severity==='high').length;const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);const di=allVids.reduce((n,v)=>(v.distraction_incidents||[]).length+n,0);
+  const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};
+  const FC={alienation:'high',background_adult:'bga',distraction:'dis',
+    information_gathering:'medium',coaching:'high',transition_negativity:'medium',
+    self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
+  const SEV_ORDER={high:0,medium:1,low:2,neutral:3};
+
+  const af=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
+  const hi=af.filter(f=>f.severity==='high').length;
+  const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);
+  const off=allVids.reduce((n,v)=>(v.off_camera_incidents||[]).length+n,0);
+  const ref=allVids.reduce((n,v)=>(v.refusal_incidents||[]).length+n,0);
+
   document.getElementById('vStats').style.display='grid';
-  document.getElementById('vStats').innerHTML=`<div class="sc"><div class="sl">Recordings</div><div class="sv">${allVids.length}</div></div><div class="sc"><div class="sl">High flags</div><div class="sv red">${hi}</div></div><div class="sc"><div class="sl">Background adults</div><div class="sv red">${bg}</div></div><div class="sc"><div class="sl">Distractions</div><div class="sv">${di}</div></div>`;
-  const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};const FC={alienation:'high',background_adult:'bga',distraction:'dis',information_gathering:'medium',coaching:'high',transition_negativity:'medium',self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
-  document.getElementById('vList').innerHTML=allVids.map((v,vi)=>`<div class="vr"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:13px;font-weight:600">${v.filename}</div><div style="font-size:11px;color:#999">${v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':''} ${v.call_date?' - '+v.call_date:''}</div>${v._truncated?'<div style="font-size:10px;color:#e67e22">&#9888; Partial analysis (response truncated)</div>':''}</div><div style="display:flex;gap:6px;align-items:center"><span class="bg ${SC[v.overall_severity]||'bgr'}">${v.overall_severity||'?'}</span><button onclick="allVids[${vi}].starred=!allVids[${vi}].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px" title="Star this video">${allVids[vi]?.starred?'&#11088;':'&#10025;'}</button><button class="btn btne" style="font-size:11px" onclick="openEditVid(${vi});event.stopPropagation()">Edit</button><button class="btn btnd" style="font-size:11px" onclick="if(confirm('Delete this video analysis?'){allVids.splice(${vi},1);save();renderVids();}event.stopPropagation()">Del</button></div></div>${(v.segments||[]).filter(seg=>(seg.duration_seconds||0)>=5||(seg.flags&&seg.flags.length>0)).map((seg,si)=>`<div class="segb"><div class="segh"><span class="segl">${seg.speaker_on_call||'Segment'} ${seg.duration_seconds?'('+Math.round(seg.duration_seconds/60)+'min)':''}</span><span class="segt">${seg.start_approx||''}-${seg.end_approx||''}</span></div>${seg.handoff_note?`<div class="hn">Handoff: ${seg.handoff_note}</div>`:''}<div class="segbd">${(seg.flags||[]).map((f,fi)=>`<div class="fi ${FC[f.category]||f.severity}" style="position:relative"><span class="fts">${f.timestamp_approx||''}</span><div>${f.court_plain}</div><div style="display:flex;gap:4px;margin-top:4px"><button onclick="editVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button><button onclick="deleteVidFlag(${vi},${si},${fi});event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Delete</button></div></div>`).join('')}${seg.transcript_key?`<button class="tt" onclick="togVT(${vi},${si})">${vTr[vi+'-'+si]?'Hide':'Show'} key dialogue</button>${vTr[vi+'-'+si]?`<div class="ttxt">${seg.transcript_key}</div>`:''}`:''}  </div></div>`).join('')}${v.background_incidents?.length?`<div class="fi bga" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Background adults (${v.background_incidents.length})</strong>${v.background_incidents.map(b=>`<div>[${b.timestamp_approx}] ${b.court_plain}</div>`).join('')}</div>`:''}${v.distraction_incidents?.length?`<div class="fi dis" style="margin-top:7px;flex-direction:column;gap:3px"><strong>Distractions (${v.distraction_incidents.length})</strong>${v.distraction_incidents.map(d=>`<div>[${d.timestamp_approx}] ${d.court_plain}</div>`).join('')}</div>`:''}${v.interrogation_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128269; Information-gathering questions (${v.interrogation_incidents.length})${v.interrogation_incidents.some(i=>i.pre_tdvro)?' \u26a0\ufe0f includes pre-TDVRO':''}</strong>${v.interrogation_incidents.map(i=>`<div>[${i.timestamp_approx||'?'}] ${i.asked_by||'Adult'} asked ${i.child_targeted||'child'}: "${i.question_asked||''}" ${i.pre_tdvro?'<span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':''}</div>`).join('')}</div>`:''}
-      ${v.refusal_incidents?.length?`<div class="fi high" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128683; Refusals to talk (${v.refusal_incidents.length})</strong>${v.refusal_incidents.map(r=>`<div>[${r.timestamp_approx||'?'}] <strong>${r.child||'Child'}</strong>: ${r.court_plain}</div>`).join('')}</div>`:''}
-      ${v.off_camera_incidents?.length?`<div class="fi medium" style="margin-top:7px;flex-direction:column;gap:3px"><strong>&#128064; Off-camera incidents (${v.off_camera_incidents.length})</strong>${v.off_camera_incidents.map(o=>`<div>[${o.timestamp_approx||'?'}] <strong>${o.child||'Child'}</strong>: ${o.court_plain}</div>`).join('')}</div>`:''}
-      ${v.ethan_indicators?`<div class="etb"><strong>Ethan observations</strong><br>${v.ethan_indicators.self_censorship_moments?'Self-censorship: '+v.ethan_indicators.self_censorship_moments+'<br>':''}${v.ethan_indicators.affection_expressions?'Affection: '+v.ethan_indicators.affection_expressions+'<br>':''}${v.ethan_indicators.off_screen_presence?'Off-screen: '+v.ethan_indicators.off_screen_presence+'<br>':''}Affect: ${v.ethan_indicators.affect||'?'} - Eye contact: ${v.ethan_indicators.eye_contact||'?'} - Ended by: ${v.ethan_indicators.who_ended||'?'}</div>`:''}${v.notes?`<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:6px">&#128221; ${v.notes}</div>`:''}${v.driveLink?`<a href="${v.driveLink}" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View original video in Google Drive</a>`:''}${v.court_summary?`<div class="csb">${v.court_summary}</div>`:''}</div>`).join('');}
+  document.getElementById('vStats').innerHTML=
+    '<div class="sc"><div class="sl">Recordings</div><div class="sv">'+allVids.length+'</div></div>'+
+    '<div class="sc"><div class="sl">High flags</div><div class="sv red">'+hi+'</div></div>'+
+    '<div class="sc"><div class="sl">Background adults</div><div class="sv red">'+bg+'</div></div>'+
+    '<div class="sc"><div class="sl">Refusals</div><div class="sv red">'+ref+'</div></div>'+
+    '<div class="sc"><div class="sl">Off-camera</div><div class="sv">'+off+'</div></div>';
+
+  const sortVal=document.getElementById('vidSort')?.value||'date-desc';
+  const flaggedOnly=document.getElementById('vidShowFlagged')?.checked||false;
+
+  let vids=[...allVids].map((v,i)=>({...v,_origIdx:i}));
+
+  if(flaggedOnly) vids=vids.filter(v=>
+    (v.segments||[]).some(s=>(s.flags||[]).length>0)||
+    (v.background_incidents||[]).length||
+    (v.refusal_incidents||[]).length||
+    (v.off_camera_incidents||[]).length||
+    (v.interrogation_incidents||[]).length
+  );
+
+  if(sortVal==='date-asc') vids.sort((a,b)=>(a.call_date||'').localeCompare(b.call_date||''));
+  else if(sortVal==='date-desc') vids.sort((a,b)=>(b.call_date||'').localeCompare(a.call_date||''));
+  else if(sortVal==='severity') vids.sort((a,b)=>(SEV_ORDER[a.overall_severity]||9)-(SEV_ORDER[b.overall_severity]||9));
+  else if(sortVal==='starred') vids.sort((a,b)=>(b.starred?1:0)-(a.starred?1:0));
+  else if(sortVal==='flags') vids.sort((a,b)=>{
+    const fa=(a.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(a.background_incidents||[]).length+(a.refusal_incidents||[]).length;
+    const fb=(b.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(b.background_incidents||[]).length+(b.refusal_incidents||[]).length;
+    return fb-fa;
+  });
+
+  if(!vids.length){
+    document.getElementById('vList').innerHTML="<div class='empty'>No videos"+(flaggedOnly?' with flags':'')+". Upload MP4 or MOV files above.</div>";
+    return;
+  }
+
+  document.getElementById('vList').innerHTML=vids.map(v=>{
+    const vi=v._origIdx;
+    const totalFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+
+      (v.background_incidents||[]).length+(v.refusal_incidents||[]).length+
+      (v.interrogation_incidents||[]).length+(v.off_camera_incidents||[]).length;
+    const highFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).filter(f=>f.severity==='high').length,0);
+
+    const segHtml=(v.segments||[]).filter(seg=>(seg.duration_seconds||0)>=5||(seg.flags&&seg.flags.length>0)).map((seg,si)=>{
+      if(!(seg.flags&&seg.flags.length>0)) return '';
+      return '<div style="margin-bottom:6px">'+
+        '<div style="font-size:11px;color:#888;margin-bottom:3px">'+(seg.speaker_on_call||'Segment')+' '+(seg.start_approx||'')+'-'+(seg.end_approx||'')+'</div>'+
+        (seg.flags||[]).map((f,fi)=>
+          '<div class="fi '+(FC[f.category]||f.severity)+'" style="position:relative">'+
+          (f.timestamp_approx?'<span class="fts">'+f.timestamp_approx+'</span>':'')+
+          '<div>'+f.court_plain+'</div>'+
+          '<div style="display:flex;gap:4px;margin-top:4px">'+
+            '<button onclick="editVidFlag('+vi+','+si+','+fi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
+            '<button onclick="deleteVidFlag('+vi+','+si+','+fi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Delete</button>'+
+          '</div></div>'
+        ).join('')+'</div>';
+    }).join('');
+
+    const bgHtml=(v.background_incidents||[]).length?
+      '<div class="fi bga" style="margin-bottom:6px"><strong>Background adults ('+v.background_incidents.length+')</strong>'+
+      v.background_incidents.map(b=>'<div style="margin-top:3px">['+b.timestamp_approx+'] '+b.court_plain+'</div>').join('')+'</div>':'';
+
+    const intHtml=(v.interrogation_incidents||[]).length?
+      '<div class="fi medium" style="margin-bottom:6px"><strong>Interrogation questions ('+v.interrogation_incidents.length+')'+(v.interrogation_incidents.some(i=>i.pre_tdvro)?' WARNING pre-TDVRO':'')+
+      '</strong>'+v.interrogation_incidents.map(i=>
+        '<div style="margin-top:3px">'+(i.timestamp_approx||'?')+' - '+(i.asked_by||'Adult')+' asked '+(i.child_targeted||'child')+': "'+( i.question_asked||'')+'"'+
+        (i.pre_tdvro?' <span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':'')+
+        '</div>'
+      ).join('')+'</div>':'';
+
+    const refHtml=(v.refusal_incidents||[]).length?
+      '<div class="fi high" style="margin-bottom:6px"><strong>Refusals to talk ('+v.refusal_incidents.length+')</strong>'+
+      v.refusal_incidents.map(r=>'<div style="margin-top:3px">'+(r.timestamp_approx||'?')+' - '+(r.child||'Child')+': '+r.court_plain+'</div>').join('')+'</div>':'';
+
+    const offHtml=(v.off_camera_incidents||[]).length?
+      '<div class="fi medium" style="margin-bottom:6px"><strong>Off-camera incidents ('+v.off_camera_incidents.length+')</strong>'+
+      v.off_camera_incidents.map(o=>'<div style="margin-top:3px">'+(o.timestamp_approx||'?')+' - '+(o.child||'Child')+': '+o.court_plain+'</div>').join('')+'</div>':'';
+
+    const ethanHtml=v.ethan_indicators?
+      '<div class="etb">'+
+        '<strong>Ethan observations</strong>'+
+        (v.ethan_indicators.self_censorship_moments?'<div style="margin-top:3px">Self-censorship: '+v.ethan_indicators.self_censorship_moments+'</div>':'')+
+        (v.ethan_indicators.affection_toward_mother?'<div>Affection: '+v.ethan_indicators.affection_toward_mother+'</div>':'')+
+        '<div>Affect: '+(v.ethan_indicators.affect||'?')+' | Eye contact: '+(v.ethan_indicators.eye_contact||'?')+' | Ended by: '+(v.ethan_indicators.who_ended||'?')+'</div>'+
+      '</div>':'';
+
+    const hasContent=segHtml||bgHtml||intHtml||refHtml||offHtml;
+
+    return '<div class="vr">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:13px;font-weight:600">'+v.filename+'</div>'+
+          '<div style="font-size:11px;color:#888;margin-top:2px">'+
+            (v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'')+
+            (v.call_date?' — '+v.call_date:'')+
+          '</div>'+
+          (v._truncated?'<div style="font-size:10px;color:#e67e22;margin-top:2px">Partial analysis</div>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:5px;align-items:center;flex-shrink:0">'+
+          (highFlags?'<span style="font-size:10px;background:#fdf0f0;color:#c0392b;padding:2px 6px;border-radius:4px;font-weight:700">'+highFlags+' HIGH</span>':'')+
+          (totalFlags?'<span style="font-size:10px;color:#666;padding:2px 4px">'+totalFlags+' flags</span>':'')+
+          '<span class="bg '+(SC[v.overall_severity]||'bgr')+'">'+(v.overall_severity||'?')+'</span>'+
+          '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px" title="Star">'+(v.starred?'&#11088;':'&#10025;')+'</button>'+
+          '<button class="btn btne" style="font-size:11px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
+          '<button class="btn btnd" style="font-size:11px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
+        '</div>'+
+      '</div>'+
+      (v.court_summary?'<div class="csb" style="margin-bottom:8px">'+v.court_summary+'</div>':'')+
+      (hasContent?
+        '<details style="margin-top:4px"><summary style="font-size:12px;font-weight:600;cursor:pointer;color:#555;list-style:none;padding:6px 0;border-top:1px solid #f0f0ea">'+
+          (totalFlags?'&#9660; '+totalFlags+' flag'+(totalFlags!==1?'s':''):'&#9660; Details')+
+        '</summary><div style="margin-top:8px;padding-top:4px">'+
+          segHtml+bgHtml+intHtml+refHtml+offHtml+ethanHtml+
+        '</div></details>':'')+
+      (v.notes?'<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:6px">&#128221; '+v.notes+'</div>':'')+
+      (v.driveLink?'<a href="'+v.driveLink+'" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View in Google Drive</a>':'')+
+    '</div>';
+  }).join('');
+}
+function delVid(vi){if(confirm("Delete this video analysis?")){allVids.splice(vi,1);save();renderVids();}}
+
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
 
 // NON-RESPONSE
