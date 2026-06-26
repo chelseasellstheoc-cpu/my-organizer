@@ -1029,6 +1029,9 @@ async function callAPI(msgs,mt=1500){const r=await fetch('https://api.anthropic.
 function pJ(t){
   if(!t) return null;
   t = t.replace(/```json|```/g,'').trim();
+  // Extract JSON object even if truncated
+  const objStart = t.indexOf('{');
+  if(objStart > 0) t = t.slice(objStart);
   // Try full parse first
   try{return JSON.parse(t);} catch(e){}
   // If truncated, try to close the JSON and parse partial data
@@ -1193,12 +1196,12 @@ Return ONLY valid JSON with these fields:
 Flag interrogation_incidents for ANY questions about food, activities, schedule, or mother's home. Flag background_incidents for ANY adult visible or audible. Be concise in court_plain fields.`;
 
 
-  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY,{
+  const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+GEMINI_KEY,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       contents:[{parts:[{fileData:{mimeType:'video/mp4',fileUri:fileUri}},{text:prompt}]}],
-      generationConfig:{responseMimeType:'application/json',maxOutputTokens:8192}
+      generationConfig:{maxOutputTokens:8192,temperature:0.1}
     })
   });
   const data=await resp.json();
