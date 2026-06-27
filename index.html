@@ -1200,17 +1200,22 @@ async function uploadToGemini(uploadUrl,file){
 }
 
 async function analyzeWithGemini(fileUri,filename,file){
-  const prompt=`Analyze this OFW custody case video call. Be EXTREMELY concise - max 1 sentence per field.
-CRITICAL ROLE DEFINITIONS - never reverse these:
-- Chelsea Rhodes = RESPONDENT = MOTHER = the person the children are calling / who appears on screen talking to children
-- Doug Rhodes = PETITIONER = FATHER = may be heard in background or may appear
-- The camera/device is at PETITIONER's home. Chelsea (Respondent/mother) is on the other end of the call.
-- Any questions directed AT Chelsea during the call are being asked OF the Respondent (mother)
-- If Charlotte or any child asks Chelsea questions, log as child asking Respondent, NOT as Respondent asking child
-- interrogation_incidents = questions asked BY children or Doug TO gather info about Respondent's home/life
+  const prompt=`Analyze this entire OFW custody case video call from START TO FINISH. Pay special attention to the LAST HALF of the video.
+CRITICAL ROLE DEFINITIONS:
+- Chelsea Rhodes = RESPONDENT = MOTHER = on the other end of the call
+- Doug Rhodes = PETITIONER = FATHER = at home with children, may be heard in background
+- Camera is at PETITIONER's home. Chelsea is calling in.
+- Questions directed AT Chelsea = asked OF Respondent
+- interrogation_incidents = ANY question children or Doug ask Chelsea about her life/home/plans
 
-Return ONLY valid JSON, no markdown:
-{"filename":"${filename}","call_date":"extract YYYY-MM-DD from filename, convert to MM/DD/YYYY","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","court_summary":"2 sentences, identify who asked what of whom precisely","segments":[{"speaker_on_call":"","start_approx":"","end_approx":"","duration_seconds":0,"flags":[{"category":"alienation|background_adult|coaching|self_censorship|signal_behavior|distraction","severity":"high|medium|low","timestamp_approx":"","court_plain":"1 sentence identifying speaker and target precisely"}]}],"background_incidents":[{"timestamp_approx":"","who":"","what":"","court_plain":""}],"interrogation_incidents":[{"timestamp_approx":"","asked_by":"Charlotte|Ethan|Duke|Doug Rhodes","child_targeted":"or Respondent if asking Chelsea","question_asked":"exact words","court_plain":"[Child name] asked Respondent: [question]","pre_tdvro":false}],"refusal_incidents":[{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],"off_camera_incidents":[{"timestamp_approx":"","child":"","court_plain":""}],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""}}`;
+IMPORTANT OUTPUT RULES:
+1. Omit the "segments" array entirely if needed to save space - it is LEAST important
+2. NEVER omit interrogation_incidents, refusal_incidents, or off_camera_incidents - these are MOST important
+3. Watch the ENTIRE video before writing output - do not stop early
+4. Keep all text fields under 80 characters
+5. Return ONLY valid JSON, no markdown fences
+
+{"filename":"${filename}","call_date":"extract from filename YYYY-MM-DD convert to MM/DD/YYYY","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","court_summary":"2 sentences max covering entire call","background_incidents":[{"timestamp_approx":"","who":"","what":"","court_plain":""}],"interrogation_incidents":[{"timestamp_approx":"","asked_by":"child or Doug name","child_targeted":"Respondent or child name","question_asked":"exact words","court_plain":"X asked Respondent: question","pre_tdvro":false}],"refusal_incidents":[{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],"off_camera_incidents":[{"timestamp_approx":"","child":"","court_plain":""}],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""},"segments":[]}`;
 
 
   const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY,{
