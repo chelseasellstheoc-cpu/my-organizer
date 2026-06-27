@@ -4366,7 +4366,7 @@ function renderBillMonthSelect(){
   }
   if(!currentBillMonth || !months.includes(currentBillMonth)) currentBillMonth = months[0];
   sel.innerHTML = months.map(m=>{
-    const d = new Date(m+'-01');
+    const d = new Date(m+'-01T12:00:00');
     const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
     return `<option value="${m}" ${m===currentBillMonth?'selected':''}>${label}</option>`;
   }).join('');
@@ -4524,7 +4524,7 @@ function exportBills(mode){
     const m = currentBillMonth;
     const month = billsData[m];
     if(!month){alert('No data for this month.');return;}
-    const d = new Date(m+'-01');
+    const d = new Date(m+'-01T12:00:00');
     const label = d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
     lines.push('--- '+label.toUpperCase()+' ---');
     lines.push('Income: $'+(month.income||0).toFixed(2));
