@@ -223,6 +223,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <button class="tab" onclick="sw('master')">All evidence</button>
         <button class="tab" onclick="sw('calendar')">Calendar</button>
         <button class="tab" onclick="sw('ethan')">Ethan dinners</button>
+          <button class="tab" onclick="sw('inclog')">Incident log</button>
         <button class="tab" onclick="sw('contacts')">Contacts</button>
       </div>
       <div class="tabgroup">
@@ -524,6 +525,48 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="docList"></div>
     </div>
+    <!-- INCIDENT LOG -->
+    <div id="p-inclog" class="panel">
+      <div class="hhead" style="background:linear-gradient(135deg,#1a1a1a,#444)">
+        <h2>&#128221; Incident Log</h2>
+        <p>Your notes and incident log imported from Google Docs. Entries are preserved in your own words and cross-linked to other tabs.</p>
+      </div>
+      <!-- Import -->
+      <div class="card" style="border-color:#378ADD;background:#f0f4ff;margin-bottom:1rem">
+        <h3>&#128196; Import from Google Docs</h3>
+        <p class="cp">Paste your incident log directly here. Format: date on first line, optional day of week on second line, then your narrative. Separate entries with a blank line. Nothing leaves your browser.</p>
+        <textarea id="inclogPaste" style="min-height:120px;font-size:12px;font-family:monospace" placeholder="1/23/25&#10;Thursday&#10;Your narrative here...&#10;&#10;1/24/25&#10;Friday&#10;Next entry..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn btnp" onclick="importIncidentLog()">&#128196; Import entries</button>
+          <span id="inclogImportStatus" style="font-size:12px;color:#666;align-self:center"></span>
+        </div>
+      </div>
+      <!-- Filters -->
+      <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+        <input type="text" id="inclogSearch" placeholder="Search entries..." style="flex:1;min-width:150px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderInclog()">
+        <select id="inclogTagFilter" onchange="renderInclog()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
+          <option value="">All tags</option>
+          <option value="incident">Incident</option>
+          <option value="legal">Legal action</option>
+          <option value="witness">Witness</option>
+          <option value="physical">Physical/safety</option>
+          <option value="communication">Communication</option>
+          <option value="contempt">Contempt</option>
+          <option value="pattern">Pattern</option>
+          <option value="financial">Financial</option>
+        </select>
+        <select id="inclogSort" onchange="renderInclog()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+        </select>
+      </div>
+      <div id="inclogList"></div>
+      <div class="es" style="margin-top:1rem"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="exportInclog('full')">&#128196; Full incident log</button>
+        <button class="btn btns" onclick="exportInclog('attorney')">&#128196; Attorney summary</button>
+      </div></div>
+    </div>
+
     <!-- CALENDAR -->
     <div id="p-calendar" class="panel">
       
@@ -1012,13 +1055,13 @@ function load(){try{const r=localStorage.getItem('eo');if(!r)return;const d=JSON
 function showSave(){const el=document.getElementById('svi');el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
 function exportDB(){dl(JSON.stringify({allMsgs,allVids,nrE,rlE,durE,docE,autoCallLog,clState,onBreak,exported:new Date().toISOString()},null,2),'evidence_backup_'+new Date().toISOString().slice(0,10)+'.json');}
 function importDB(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);allMsgs=d.allMsgs||[];allVids=d.allVids||[];nrE=d.nrE||[];rlE=d.rlE||[];durE=d.durE||[];docE=d.docE||[];hubDocs=d.hubDocs||[];autoCallLog=d.autoCallLog||[];clState=d.clState||{};onBreak=d.onBreak||false;hideInv=d.hideInv||false;save();rAll();alert('Data restored.');}catch(err){alert('Could not read backup file.');}};r.readAsText(f);}
-function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();renderExpenses();if(document.getElementById('p-bills'))renderBills();}
+function rAll(){if(allMsgs.length){renderMsgs();document.getElementById('mExp').style.display='block';}if(allVids.length){renderVids();document.getElementById('vExp').style.display='block';}renderNR();renderRL();renderDurChart();renderDurList();renderAutoLog();renderPatterns();renderGaps();renderTiming();renderHearing();renderDocs();renderChecklist();renderLegal();if(document.getElementById('p-calendar'))renderCalendar();renderContacts();renderEvidence();renderMaster();renderEthan();renderExpenses();if(document.getElementById('p-bills'))renderBills();renderInclog();}
 
 // KEY
-function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();expLoad();billsLoad();kdLoad();rAll();renderHourGrid([]);}
+function setKey(){const k=document.getElementById('keyIn').value.trim();if(!k.startsWith('sk-ant-')){document.getElementById('keyErr').style.display='block';return;}API_KEY=k;document.getElementById('keyErr').style.display='none';document.getElementById('keyForm').style.display='none';document.getElementById('app').style.display='block';setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);document.getElementById('dot').classList.add('on');document.getElementById('atxt').textContent='API connected';load();calLoad();ctLoad();ethanLoad();expLoad();billsLoad();kdLoad();inclogLoad();rAll();renderHourGrid([]);}
 function setGemKey(){const k=document.getElementById('gemKeyIn').value.trim();if(k.length<10){document.getElementById('gemKeyStatus').textContent='Please enter your Gemini API key';document.getElementById('gemKeyStatus').style.color='#c0392b';return;}GEMINI_KEY=k;document.getElementById('gemKeyStatus').textContent='Gemini connected - ready to analyze videos';document.getElementById('gemKeyStatus').style.color='#1a7a52';}
 function resetKey(){API_KEY=null;document.getElementById('keyIn').value='';document.getElementById('keyForm').style.display='block';document.getElementById('app').style.display='none';document.getElementById('dot').classList.remove('on');document.getElementById('atxt').textContent='No API key';}
-function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{const oc=t.getAttribute('onclick')||'';if(oc.includes("'"+n+"'")) t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar'){setTimeout(renderCalendar,50);setTimeout(renderKeyDates,100);}if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}if(n==='expenses')setTimeout(renderExpenses,50);if(n==='bills')setTimeout(renderBills,50);if(n==='contacts')setTimeout(renderContacts,50);if(n==='docs')setTimeout(function(){},50);}
+function sw(n){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));var tabs=document.querySelectorAll('.tab');tabs.forEach(t=>{const oc=t.getAttribute('onclick')||'';if(oc.includes("'"+n+"'")) t.classList.add('active');});document.getElementById('p-'+n).classList.add('active');;if(n==='master')setTimeout(renderMaster,50);if(n==='evidence')setTimeout(renderEvidence,50);if(n==='calendar'){setTimeout(renderCalendar,50);setTimeout(renderKeyDates,100);}if(n==='ethan')setTimeout(renderEthan,50);if(n==='gaps')setTimeout(renderGaps,50);if(n==='duration')setTimeout(renderDurList,50);if(n==='patterns'){setTimeout(function(){renderPatterns();setPatView(patView);if(patView==='bar')renderPatternBar();if(patView==='timeline')renderPatternTimeline();},50);}if(n==='expenses')setTimeout(renderExpenses,50);if(n==='bills')setTimeout(renderBills,50);if(n==='contacts')setTimeout(renderContacts,50);if(n==='inclog')setTimeout(renderInclog,50);if(n==='docs')setTimeout(function(){},50);}
 
 // FILE HANDLING
 function getFT(f){if(f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'))return'pdf';if(f.type==='application/zip'||f.name.toLowerCase().endsWith('.zip'))return'zip';if(f.type.startsWith('video/'))return'vid';return'img';}
@@ -1366,7 +1409,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='msgdedup'){const dupes=editCtx.dupes;const toDelete=new Set();dupes.forEach((d,i)=>{const cb=document.getElementById('delDupe_'+i);if(cb&&cb.checked)toDelete.add(d.idx);});allMsgs=allMsgs.filter((_,i)=>!toDelete.has(i));save();renderMsgs();alert('Deleted '+toDelete.size+' duplicates. '+allMsgs.length+' messages remain.');}else if(editCtx.type==='billdedup'){const dupes=editCtx.dupes;const toDelete={};dupes.forEach((d,i)=>{const cb=document.getElementById('delBillDupe_'+i);if(cb&&cb.checked){if(!toDelete[d.month])toDelete[d.month]=new Set();toDelete[d.month].add(d.idx);}});Object.keys(toDelete).forEach(mk=>{if(billsData[mk])billsData[mk].bills=billsData[mk].bills.filter((_,i)=>!toDelete[mk].has(i));});billsSave();renderBills();alert('Duplicate bills removed.');}else if(editCtx.type==='vidincident'){const v=allVids[editCtx.vi];const inc=v[editCtx.incType]?.[editCtx.idx];if(inc){inc.timestamp_approx=document.getElementById('eiTs')?.value.trim()||inc.timestamp_approx;inc.court_plain=document.getElementById('eiCourt')?.value.trim()||inc.court_plain;const ab=document.getElementById('eiAskedBy');if(ab)inc.asked_by=ab.value.trim();const tg=document.getElementById('eiTarget');if(tg)inc.child_targeted=tg.value.trim();const qq=document.getElementById('eiQuestion');if(qq)inc.question_asked=qq.value.trim();const pt=document.getElementById('eiPreTdvro');if(pt)inc.pre_tdvro=pt.checked;const ch=document.getElementById('eiChild');if(ch)inc.child=ch.value.trim();const rt=document.getElementById('eiRefType');if(rt)inc.refusal_type=rt.value;save();renderVids();}}else if(editCtx.type==='vidflag'){const v=allVids[editCtx.vi];const flag=v?.segments?.[editCtx.si]?.flags?.[editCtx.fi];if(flag){flag.category=document.getElementById('efCat').value;flag.severity=document.getElementById('efSev').value;flag.timestamp_approx=document.getElementById('efTs').value.trim();flag.court_plain=document.getElementById('efDesc').value.trim();save();renderVids();}}else if(editCtx.type==='vid'){const v=allVids[editCtx.index];if(v){v.filename=document.getElementById('evFilename').value.trim();v.call_date=document.getElementById('evCallDate').value.trim();v.overall_severity=document.getElementById('evSeverity').value;v.court_summary=document.getElementById('evSummary').value.trim();v.driveLink=document.getElementById('evDriveLink')?.value.trim()||'';v.notes=document.getElementById('evNotes').value.trim();const bgLines=document.getElementById('evBackground').value.trim().split('\n').filter(Boolean);if(bgLines.length){v.background_incidents=(v.background_incidents||[]);bgLines.forEach(line=>{const dash=line.indexOf(' - ');v.background_incidents.push({timestamp_approx:dash>0?line.slice(0,dash):'',who:'Doug Rhodes',what:line,court_plain:line,manually_added:true});});}save();renderVids();}}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='msgdedup'){const dupes=editCtx.dupes;const toDelete=new Set();dupes.forEach((d,i)=>{const cb=document.getElementById('delDupe_'+i);if(cb&&cb.checked)toDelete.add(d.idx);});allMsgs=allMsgs.filter((_,i)=>!toDelete.has(i));save();renderMsgs();alert('Deleted '+toDelete.size+' duplicates. '+allMsgs.length+' messages remain.');}else if(editCtx.type==='billdedup'){const dupes=editCtx.dupes;const toDelete={};dupes.forEach((d,i)=>{const cb=document.getElementById('delBillDupe_'+i);if(cb&&cb.checked){if(!toDelete[d.month])toDelete[d.month]=new Set();toDelete[d.month].add(d.idx);}});Object.keys(toDelete).forEach(mk=>{if(billsData[mk])billsData[mk].bills=billsData[mk].bills.filter((_,i)=>!toDelete[mk].has(i));});billsSave();renderBills();alert('Duplicate bills removed.');}else if(editCtx.type==='vidincident'){const v=allVids[editCtx.vi];const inc=v[editCtx.incType]?.[editCtx.idx];if(inc){inc.timestamp_approx=document.getElementById('eiTs')?.value.trim()||inc.timestamp_approx;inc.court_plain=document.getElementById('eiCourt')?.value.trim()||inc.court_plain;const ab=document.getElementById('eiAskedBy');if(ab)inc.asked_by=ab.value.trim();const tg=document.getElementById('eiTarget');if(tg)inc.child_targeted=tg.value.trim();const qq=document.getElementById('eiQuestion');if(qq)inc.question_asked=qq.value.trim();const pt=document.getElementById('eiPreTdvro');if(pt)inc.pre_tdvro=pt.checked;const ch=document.getElementById('eiChild');if(ch)inc.child=ch.value.trim();const rt=document.getElementById('eiRefType');if(rt)inc.refusal_type=rt.value;save();renderVids();}}else if(editCtx.type==='vidflag'){const v=allVids[editCtx.vi];const flag=v?.segments?.[editCtx.si]?.flags?.[editCtx.fi];if(flag){flag.category=document.getElementById('efCat').value;flag.severity=document.getElementById('efSev').value;flag.timestamp_approx=document.getElementById('efTs').value.trim();flag.court_plain=document.getElementById('efDesc').value.trim();save();renderVids();}}else if(editCtx.type==='vid'){const v=allVids[editCtx.index];if(v){v.filename=document.getElementById('evFilename').value.trim();v.call_date=document.getElementById('evCallDate').value.trim();v.overall_severity=document.getElementById('evSeverity').value;v.court_summary=document.getElementById('evSummary').value.trim();v.driveLink=document.getElementById('evDriveLink')?.value.trim()||'';v.notes=document.getElementById('evNotes').value.trim();const bgLines=document.getElementById('evBackground').value.trim().split('\n').filter(Boolean);if(bgLines.length){v.background_incidents=(v.background_incidents||[]);bgLines.forEach(line=>{const dash=line.indexOf(' - ');v.background_incidents.push({timestamp_approx:dash>0?line.slice(0,dash):'',who:'Doug Rhodes',what:line,court_plain:line,manually_added:true});});}save();renderVids();}}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='inclog'){const e=inclogEntries[editCtx.index];if(e){e.date=document.getElementById('eilDate').value||e.date;e.narrative=document.getElementById('eilNarrative').value.trim();e.notes=document.getElementById('eilNotes').value.trim();e.tags=[...document.querySelectorAll('#mBody input[type=checkbox]:checked')].map(cb=>cb.value);if(!e.tags.length)e.tags=['incident'];inclogSave();renderInclog();}}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -4928,6 +4971,265 @@ function checkAndTagTdvro(){
     alert('No untagged TDVRO-period videos found.');
   }
 }
+
+// INCIDENT LOG
+let inclogEntries = [];
+
+const INCLOG_TAG_COLORS = {
+  incident:'#c0392b', legal:'#8e44ad', witness:'#27ae60',
+  physical:'#c0392b', communication:'#378ADD', contempt:'#e67e22',
+  pattern:'#7F77DD', financial:'#1D9E75', ethan:'#8e44ad',
+  'court-order':'#c0392b', dinner:'#7F77DD'
+};
+
+const INCLOG_KEYWORDS = {
+  physical: ['knife','chokehold','choke','grab','bruise','fingermark','push','shove','block','elevator','restrain'],
+  legal: ['attorney','restraining order','RO','TDVRO','court','filing','lamoreaux','judge','hearing','FOAH'],
+  witness: ['tescia','eric hartzheim','angela','monitor','nina','leonard','art morales','police'],
+  contempt: ['court-ordered','court ordered','refused','ignored','8 minutes late','behind schedule','without notifying','without asking'],
+  pattern: ['again','same thing','always','never','repeatedly','every time','pattern','history'],
+  communication: ['text','texted','message','called','email','OFW','said','told me'],
+  financial: ['money','pay','paid','cost','bill','expense','support','attorney fees'],
+  dinner: ['5:30','7:00','dinner','ethan dinner','court-ordered dinner'],
+  ethan: ['ethan']
+};
+
+function detectTags(text){
+  const lower = text.toLowerCase();
+  const tags = new Set();
+  Object.entries(INCLOG_KEYWORDS).forEach(([tag, words])=>{
+    if(words.some(w=>lower.includes(w))) tags.add(tag);
+  });
+  if(!tags.size) tags.add('incident');
+  return [...tags];
+}
+
+function parseDate(raw){
+  if(!raw) return null;
+  const s = raw.trim();
+  // M/D/YY or M/D/YYYY
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m1){
+    const yr = m1[3].length===2?(parseInt(m1[3])<50?'20':'19')+m1[3]:m1[3];
+    return yr+'-'+m1[1].padStart(2,'0')+'-'+m1[2].padStart(2,'0');
+  }
+  // Month D, YYYY
+  const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
+  const m2 = s.toLowerCase().match(/^([a-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if(m2&&months[m2[1]]) return m2[3]+'-'+String(months[m2[1]]).padStart(2,'0')+'-'+m2[2].padStart(2,'0');
+  return null;
+}
+
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+function importIncidentLog(){
+  const raw = document.getElementById('inclogPaste').value.trim();
+  if(!raw){alert('Please paste your incident log first.');return;}
+
+  const paragraphs = raw.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+  let imported = 0, skipped = 0;
+  const newEntries = [];
+
+  paragraphs.forEach(para=>{
+    const lines = para.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(!lines.length) return;
+
+    // Try to find date in first 2 lines
+    let date = null, dateLineIdx = -1;
+    for(let i=0;i<Math.min(2,lines.length);i++){
+      date = parseDate(lines[i]);
+      if(date){dateLineIdx=i;break;}
+    }
+    if(!date){skipped++;return;}
+
+    // Check if next line is day of week
+    let narrativeStart = dateLineIdx+1;
+    if(narrativeStart<lines.length && DAYS.includes(lines[narrativeStart].toLowerCase())){
+      narrativeStart++;
+    }
+
+    const narrative = lines.slice(narrativeStart).join('\n').trim();
+    if(!narrative){skipped++;return;}
+
+    // Check for duplicates
+    const isDupe = inclogEntries.some(e=>e.date===date&&e.narrative.slice(0,50)===narrative.slice(0,50));
+    if(isDupe){skipped++;return;}
+
+    const tags = detectTags(narrative);
+    newEntries.push({
+      id:'il_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      date, narrative, tags,
+      addedAt: new Date().toISOString(),
+      starred: false, notes: ''
+    });
+    imported++;
+  });
+
+  inclogEntries = [...inclogEntries, ...newEntries].sort((a,b)=>a.date.localeCompare(b.date));
+  inclogSave();
+
+  // Add calendar events for each entry
+  newEntries.forEach(e=>{
+    const exists = calEvents.some(c=>c.date===e.date&&c.type==='event-incident');
+    if(!exists){
+      calEvents.push({
+        id:'cal_il_'+e.id, date:e.date,
+        title:'Incident log entry',
+        type:'event-incident',
+        notes:e.narrative.slice(0,80),
+        link:'', ethan:false, charlotte:false, duke:false,
+        added:new Date().toISOString()
+      });
+    }
+  });
+  calSave();
+
+  document.getElementById('inclogPaste').value='';
+  document.getElementById('inclogImportStatus').textContent=imported+' entries imported'+(skipped?' ('+skipped+' skipped)':'')+'.';;
+  renderInclog();
+  if(document.getElementById('p-calendar')&&document.getElementById('p-calendar').classList.contains('active')) renderCalendar();
+}
+
+function inclogSave(){
+  try{localStorage.setItem('eo_inclog', JSON.stringify(inclogEntries));}catch(e){}
+  showSave();
+}
+
+function inclogLoad(){
+  try{
+    const raw = localStorage.getItem('eo_inclog');
+    if(raw) inclogEntries = JSON.parse(raw);
+  }catch(e){}
+}
+
+function renderInclog(){
+  const search = (document.getElementById('inclogSearch')?.value||'').toLowerCase();
+  const tagF = document.getElementById('inclogTagFilter')?.value||'';
+  const sort = document.getElementById('inclogSort')?.value||'date-desc';
+
+  let items = [...inclogEntries];
+  if(search) items = items.filter(e=>e.narrative.toLowerCase().includes(search)||e.date.includes(search)||(e.notes||'').toLowerCase().includes(search));
+  if(tagF) items = items.filter(e=>(e.tags||[]).includes(tagF));
+  if(sort==='date-desc') items.sort((a,b)=>b.date.localeCompare(a.date));
+  else items.sort((a,b)=>a.date.localeCompare(b.date));
+
+  const list = document.getElementById('inclogList');
+  if(!list) return;
+  if(!items.length){
+    list.innerHTML="<div class='empty'>No entries yet. Paste your incident log above and click Import.</div>";
+    return;
+  }
+
+  list.innerHTML = items.map(e=>{
+    const origIdx = inclogEntries.indexOf(e);
+    const d = new Date(e.date+'T12:00:00');
+    const dateLabel = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+    // Related messages
+    const relMsgs = allMsgs.filter(m=>{
+      const mt = parsTS(m.timestamp_sent);
+      if(!mt) return false;
+      return Math.abs(mt.getTime()-d.getTime()) <= 2*24*60*60*1000 && isEx(m.sender);
+    }).length;
+
+    // Related Ethan dinner
+    const relDinner = calEvents.find(c=>c.type==='event-ethan'&&c.date===e.date);
+
+    return '<div class="le" style="border-left:3px solid '+(INCLOG_TAG_COLORS[(e.tags||[])[0]]||'#888')+'">'+
+      '<div class="lh">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:13px;font-weight:600;color:#1a1a1a">'+dateLabel+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">'+
+            (e.tags||[]).map(t=>'<span style="font-size:10px;background:'+(INCLOG_TAG_COLORS[t]||'#888')+'22;color:'+(INCLOG_TAG_COLORS[t]||'#888')+';padding:2px 7px;border-radius:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">'+t+'</span>').join('')+
+            (e.starred?'<span style="font-size:14px">&#11088;</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<div class="abtn">'+
+          '<button onclick="inclogEntries['+origIdx+'].starred=!inclogEntries['+origIdx+'].starred;inclogSave();renderInclog()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px">'+(e.starred?'&#11088;':'&#10025;')+'</button>'+
+          '<button class="btn btne" onclick="openEditInclog('+origIdx+')">Edit</button>'+
+          '<button class="btn btnd" onclick="delInclog('+origIdx+')"' + '>Del</button>'+
+        '</div>'+
+      '</div>'+
+      // Narrative - expandable
+      '<details style="margin-top:8px"><summary style="font-size:12px;cursor:pointer;color:#555">&#9660; Your notes</summary>'+
+        '<div style="font-size:13px;line-height:1.7;color:#2a2a2a;margin-top:8px;white-space:pre-wrap">'+e.narrative+'</div>'+
+      '</details>'+
+      // Your added notes
+      (e.notes?'<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:6px">&#128221; '+e.notes+'</div>':'')+
+      // Cross-links
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+
+        (relMsgs?'<button onclick="searchMsgsNearDate(this.dataset.d)" data-d="'+e.date+'" style="font-size:11px;color:#1a5fa8;background:none;border:none;cursor:pointer;padding:0">&#128228; '+relMsgs+' related messages</button>':'')+
+        (relDinner?'<button onclick="sw(\'ethan\')" style="font-size:11px;color:#7F77DD;background:none;border:none;cursor:pointer;padding:0">&#127860; Court-ordered dinner this day</button>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openEditInclog(i){
+  const e = inclogEntries[i];
+  editCtx = {type:'inclog', index:i};
+  document.getElementById('mTitle').textContent = 'Edit incident log entry';
+  document.getElementById('mBody').innerHTML = `
+    <label>Date</label>
+    <input type="date" id="eilDate" value="${e.date||''}">
+    <label>Tags</label>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+      ${['incident','legal','witness','physical','communication','contempt','pattern','financial','ethan','dinner'].map(t=>
+        `<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+          <input type="checkbox" value="${t}" ${(e.tags||[]).includes(t)?'checked':''}> ${t}
+        </label>`
+      ).join('')}
+    </div>
+    <label>Your notes (add context, links to evidence)</label>
+    <textarea id="eilNotes" style="min-height:60px">${e.notes||''}</textarea>
+    <label>Narrative (your original text)</label>
+    <textarea id="eilNarrative" style="min-height:120px;font-size:12px">${e.narrative||''}</textarea>
+  `;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function exportInclog(mode){
+  if(!inclogEntries.length){alert('No entries to export.');return;}
+  const sorted = [...inclogEntries].sort((a,b)=>a.date.localeCompare(b.date));
+  const lines = [
+    'INCIDENT LOG - CHELSEA RHODES',
+    'Generated: '+new Date().toLocaleDateString(),
+    'Case: 25D000590',
+    'Entries: '+sorted.length,
+    ''
+  ];
+
+  if(mode==='attorney'){
+    // Group by tag
+    const byTag = {};
+    sorted.forEach(e=>(e.tags||['incident']).forEach(t=>{
+      if(!byTag[t]) byTag[t]=[];
+      byTag[t].push(e);
+    }));
+    Object.entries(byTag).sort().forEach(([tag,entries])=>{
+      lines.push('\n=== '+tag.toUpperCase()+' ('+entries.length+' entries) ===');
+      entries.forEach(e=>{
+        const d=new Date(e.date+'T12:00:00');
+        lines.push('\n'+d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
+        lines.push(e.narrative.slice(0,200)+(e.narrative.length>200?'...':''));
+        if(e.notes) lines.push('Note: '+e.notes);
+      });
+    });
+  } else {
+    sorted.forEach(e=>{
+      const d=new Date(e.date+'T12:00:00');
+      lines.push('\n'+d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
+      lines.push('Tags: '+(e.tags||[]).join(', '));
+      lines.push(e.narrative);
+      if(e.notes) lines.push('\nNote: '+e.notes);
+      lines.push('---');
+    });
+  }
+
+  dl(lines.join('\n'), mode==='attorney'?'Incident_Log_Attorney.txt':'Incident_Log_Full.txt');
+}
+
+
 
 </script>
 </body>
