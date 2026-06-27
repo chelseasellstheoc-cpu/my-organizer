@@ -5043,6 +5043,8 @@ function parseDate(raw, lastYearSeen){
   return null;
 }
 
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
 function importIncidentLog(){
   const raw = document.getElementById('inclogPaste').value.trim();
   if(!raw){alert('Please paste your incident log first.');return;}
