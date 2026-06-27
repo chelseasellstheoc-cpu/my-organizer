@@ -291,6 +291,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div class="sg" id="vStats" style="display:none"></div>
       <div id="vList"></div>
       <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo">
+        <button class="btn btns" onclick="checkAndTagTdvro()" style="border-color:#c0392b;color:#c0392b">&#9888; Tag TDVRO videos</button>
         <button class="btn btns" onclick="exportVids('plain')">&#128196; Court exhibit</button>
         <button class="btn btns" onclick="exportVids('full')">&#128196; Attorney copy</button>
         <button class="btn btns" onclick="exportRefusals()">&#128196; Refusal log</button>
@@ -1200,22 +1201,31 @@ async function uploadToGemini(uploadUrl,file){
 }
 
 async function analyzeWithGemini(fileUri,filename,file){
+  // Detect if this video falls within TDVRO period (1/27/2025 - 5/19/2025)
+  const dateMatch = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
+  const vidDate = dateMatch ? new Date(dateMatch[1]+'-'+dateMatch[2]+'-'+dateMatch[3]) : null;
+  const tdvroStart = new Date('2025-01-27');
+  const tdvroEnd = new Date('2025-05-19');
+  const inTdvro = vidDate && vidDate >= tdvroStart && vidDate <= tdvroEnd;
+
   const prompt=`Analyze this entire OFW custody case video call from START TO FINISH. Pay special attention to the LAST HALF of the video.
 CRITICAL ROLE DEFINITIONS:
 - Chelsea Rhodes = RESPONDENT = MOTHER = on the other end of the call
 - Doug Rhodes = PETITIONER = FATHER = at home with children, may be heard in background
 - Camera is at PETITIONER's home. Chelsea is calling in.
 - Questions directed AT Chelsea = asked OF Respondent
-- interrogation_incidents = ANY question children or Doug ask Chelsea about her life/home/plans
+- interrogation_incidents = ANY question children or Doug ask Chelsea about her life/home/plans/whereabouts/companions${inTdvro?`
+
+TDVRO PERIOD: This call occurred during the active TDVRO (1/27/2025-5/19/2025). Doug Rhodes was legally prohibited from direct or indirect contact with Chelsea beyond child-related communication. ANY question asked of Chelsea about: who she is with, where she is, what she is doing, her home, her schedule, her relationships, or her plans = potential TDVRO violation through the children. Tag ALL such questions as pre_tdvro:true.`:''}
 
 IMPORTANT OUTPUT RULES:
-1. Omit the "segments" array entirely if needed to save space - it is LEAST important
-2. NEVER omit interrogation_incidents, refusal_incidents, or off_camera_incidents - these are MOST important
+1. Omit the "segments" array if needed to save space - it is LEAST important
+2. NEVER omit interrogation_incidents, refusal_incidents, or off_camera_incidents
 3. Watch the ENTIRE video before writing output - do not stop early
 4. Keep all text fields under 80 characters
 5. Return ONLY valid JSON, no markdown fences
 
-{"filename":"${filename}","call_date":"extract from filename YYYY-MM-DD convert to MM/DD/YYYY","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","court_summary":"2 sentences max covering entire call","background_incidents":[{"timestamp_approx":"","who":"","what":"","court_plain":""}],"interrogation_incidents":[{"timestamp_approx":"","asked_by":"child or Doug name","child_targeted":"Respondent or child name","question_asked":"exact words","court_plain":"X asked Respondent: question","pre_tdvro":false}],"refusal_incidents":[{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],"off_camera_incidents":[{"timestamp_approx":"","child":"","court_plain":""}],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""},"segments":[]}`;
+{"filename":"${filename}","call_date":"extract from filename YYYY-MM-DD convert to MM/DD/YYYY","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","court_summary":"2 sentences covering entire call","in_tdvro_period":${inTdvro},"background_incidents":[{"timestamp_approx":"","who":"","what":"","court_plain":""}],"interrogation_incidents":[{"timestamp_approx":"","asked_by":"child or Doug name","child_targeted":"Respondent or child name","question_asked":"exact words","court_plain":"X asked Respondent: question","pre_tdvro":${inTdvro}}],"refusal_incidents":[{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],"off_camera_incidents":[{"timestamp_approx":"","child":"","court_plain":""}],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""},"segments":[]}`;
 
 
   const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY,{
@@ -1422,9 +1432,9 @@ function renderVids(){
       v.background_incidents.map(b=>'<div style="margin-top:3px">['+b.timestamp_approx+'] '+b.court_plain+'</div>').join('')+'</div>':'';
 
     const intHtml=(v.interrogation_incidents||[]).length?
-      '<div class="fi medium" style="margin-bottom:6px"><strong>Interrogation questions ('+v.interrogation_incidents.length+')'+(v.interrogation_incidents.some(i=>i.pre_tdvro)?' WARNING pre-TDVRO':'')+
+      '<div class="fi medium" style="margin-bottom:6px"><strong>Interrogation questions ('+v.interrogation_incidents.length+')'+(v.in_tdvro_period?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px">TDVRO PERIOD</span>':'')+(v.interrogation_incidents.some(i=>i.pre_tdvro)&&!v.in_tdvro_period?' <span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:1px 6px;border-radius:3px">includes TDVRO</span>':'')+
       '</strong>'+v.interrogation_incidents.map((i,ii)=>
-        '<div style="margin-top:3px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'+'<div>'+(i.timestamp_approx||'?')+' - <strong>'+(i.asked_by||'Adult')+'</strong> asked <strong>'+(i.child_targeted||'child')+'</strong>: "'+( i.question_asked||'')+'"'   (i.pre_tdvro?' <span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':'')+
+        '<div style="margin-top:3px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'+'<div>'+(i.timestamp_approx||'?')+' - <strong>'+(i.asked_by||'Adult')+'</strong> asked <strong>'+(i.child_targeted||'child')+'</strong>: "'+( i.question_asked||'')+'"'+(i.pre_tdvro?' <span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':'')+
         '</div><div style="display:flex;gap:3px;flex-shrink:0">'+'<button onclick="editVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+'<button onclick="delVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+'</div></div>'
       ).join('')+'</div>':'';
 
@@ -1453,6 +1463,7 @@ function renderVids(){
           '<div style="font-size:11px;color:#888;margin-top:2px">'+
             (v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'')+
             (v.call_date?' — '+v.call_date:'')+
+          (v.in_tdvro_period?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px">TDVRO period</span>':'')+
           '</div>'+
           (v._truncated?'<div style="font-size:10px;color:#e67e22;margin-top:2px">Partial analysis</div>':'')+
         '</div>'+
@@ -4768,6 +4779,34 @@ function delVidIncident(vi, type, idx){
   if(v[type]) v[type].splice(idx,1);
   save();
   renderVids();
+}
+
+function checkAndTagTdvro(){
+  // Auto-tag existing videos that fall within TDVRO period
+  const start = new Date('2025-01-27');
+  const end = new Date('2025-05-19');
+  let tagged = 0;
+  allVids.forEach(v => {
+    if(!v.call_date) return;
+    // Parse MM/DD/YYYY
+    const parts = v.call_date.split('/');
+    if(parts.length !== 3) return;
+    const d = new Date(parts[2]+'-'+parts[0].padStart(2,'0')+'-'+parts[1].padStart(2,'0'));
+    const inTdvro = d >= start && d <= end;
+    if(inTdvro && !v.in_tdvro_period) {
+      v.in_tdvro_period = true;
+      // Tag all interrogation incidents as pre_tdvro
+      (v.interrogation_incidents||[]).forEach(i => { i.pre_tdvro = true; });
+      tagged++;
+    }
+  });
+  if(tagged > 0) {
+    save();
+    renderVids();
+    alert(tagged + ' video(s) tagged as TDVRO period. All interrogation questions in those videos marked as potential TDVRO violations.');
+  } else {
+    alert('No untagged TDVRO-period videos found.');
+  }
 }
 
 </script>
