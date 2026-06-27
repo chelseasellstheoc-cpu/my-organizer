@@ -289,6 +289,23 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <div id="vErr"></div>
       </div>
       <div class="sg" id="vStats" style="display:none"></div>
+      <!-- Video controls -->
+      <div style="display:flex;gap:8px;margin:1rem 0;flex-wrap:wrap;align-items:center">
+        <input type="text" id="vidSearch" placeholder="Search by tag, speaker, description..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderVids()">
+        <select id="vidSort" onchange="renderVids()" style="font-size:12px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
+          <option value="date-desc">Newest first</option>
+          <option value="date-asc">Oldest first</option>
+          <option value="severity">Severity (high first)</option>
+          <option value="starred">Starred first</option>
+          <option value="flags">Most flags first</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="vidShowFlagged" onchange="renderVids()"> Flagged only
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="vidStarredOnly" onchange="renderVids()"> Starred only
+        </label>
+      </div>
       <div id="vList"></div>
       <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo">
         <button class="btn btns" onclick="checkAndTagTdvro()" style="border-color:#c0392b;color:#c0392b">&#9888; Tag TDVRO videos</button>
@@ -1358,10 +1375,8 @@ document.getElementById('editModal').addEventListener('click',e=>{if(e.target===
 // RENDER VIDEOS
 function renderVids(){
   const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};
-  const FC={alienation:'high',background_adult:'bga',distraction:'dis',
-    information_gathering:'medium',coaching:'high',transition_negativity:'medium',
-    self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
   const SEV_ORDER={high:0,medium:1,low:2,neutral:3};
+  const SEV_COLOR={high:'#c0392b',medium:'#e67e22',low:'#1D9E75',neutral:'#888'};
 
   const af=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
   const hi=af.filter(f=>f.severity==='high').length;
@@ -1378,9 +1393,28 @@ function renderVids(){
     '<div class="sc"><div class="sl">Off-camera</div><div class="sv">'+off+'</div></div>';
 
   const sortVal=document.getElementById('vidSort')?.value||'date-desc';
+  const search=(document.getElementById('vidSearch')?.value||'').toLowerCase();
   const flaggedOnly=document.getElementById('vidShowFlagged')?.checked||false;
+  const starredOnly=document.getElementById('vidStarredOnly')?.checked||false;
 
   let vids=[...allVids].map((v,i)=>({...v,_origIdx:i}));
+
+  // Search filter
+  if(search){
+    vids=vids.filter(v=>{
+      const text=[
+        v.filename, v.call_date, v.court_summary, v.overall_severity,
+        ...(v.speakers_detected||[]),
+        ...(v.interrogation_incidents||[]).map(i=>i.asked_by+' '+i.question_asked+' '+i.court_plain),
+        ...(v.refusal_incidents||[]).map(r=>r.child+' '+r.court_plain),
+        ...(v.background_incidents||[]).map(b=>b.who+' '+b.court_plain),
+        ...(v.off_camera_incidents||[]).map(o=>o.child+' '+o.court_plain),
+        ...(v.segments||[]).flatMap(s=>(s.flags||[]).map(f=>f.category+' '+f.court_plain)),
+        v.notes||''
+      ].join(' ').toLowerCase();
+      return text.includes(search);
+    });
+  }
 
   if(flaggedOnly) vids=vids.filter(v=>
     (v.segments||[]).some(s=>(s.flags||[]).length>0)||
@@ -1389,6 +1423,7 @@ function renderVids(){
     (v.off_camera_incidents||[]).length||
     (v.interrogation_incidents||[]).length
   );
+  if(starredOnly) vids=vids.filter(v=>v.starred);
 
   if(sortVal==='date-asc') vids.sort((a,b)=>(a.call_date||'').localeCompare(b.call_date||''));
   else if(sortVal==='date-desc') vids.sort((a,b)=>(b.call_date||'').localeCompare(a.call_date||''));
@@ -1401,93 +1436,178 @@ function renderVids(){
   });
 
   if(!vids.length){
-    document.getElementById('vList').innerHTML="<div class='empty'>No videos"+(flaggedOnly?' with flags':'')+". Upload MP4 or MOV files above.</div>";
+    document.getElementById('vList').innerHTML="<div class='empty'>No videos match"+(search?' your search':'')+".</div>";
     return;
   }
 
-  document.getElementById('vList').innerHTML=vids.map(v=>{
-    const vi=v._origIdx;
-    const totalFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+
-      (v.background_incidents||[]).length+(v.refusal_incidents||[]).length+
-      (v.interrogation_incidents||[]).length+(v.off_camera_incidents||[]).length;
-    const highFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).filter(f=>f.severity==='high').length,0);
+  // TILE LAYOUT
+  document.getElementById('vList').innerHTML=
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:4px">'+
+    vids.map(v=>{
+      const vi=v._origIdx;
+      const totalFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+
+        (v.background_incidents||[]).length+(v.refusal_incidents||[]).length+
+        (v.interrogation_incidents||[]).length+(v.off_camera_incidents||[]).length;
+      const highFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).filter(f=>f.severity==='high').length,0);
+      const sevColor=SEV_COLOR[v.overall_severity]||'#888';
 
-    const segHtml=(v.segments||[]).filter(seg=>(seg.duration_seconds||0)>=5||(seg.flags&&seg.flags.length>0)).map((seg,si)=>{
-      if(!(seg.flags&&seg.flags.length>0)) return '';
-      return '<div style="margin-bottom:6px">'+
-        '<div style="font-size:11px;color:#888;margin-bottom:3px">'+(seg.speaker_on_call||'Segment')+' '+(seg.start_approx||'')+'-'+(seg.end_approx||'')+'</div>'+
-        (seg.flags||[]).map((f,fi)=>
-          '<div class="fi '+(FC[f.category]||f.severity)+'" style="position:relative">'+
+      // Build compact flag pills
+      const pills=[];
+      if((v.interrogation_incidents||[]).length) pills.push('<span style="background:#fff3cd;color:#856404;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.interrogation_incidents.length+' questions</span>');
+      if((v.refusal_incidents||[]).length) pills.push('<span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.refusal_incidents.length+' refusals</span>');
+      if((v.background_incidents||[]).length) pills.push('<span style="background:#f0f0fe;color:#7F77DD;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.background_incidents.length+' background</span>');
+      if((v.off_camera_incidents||[]).length) pills.push('<span style="background:#f0faf5;color:#1D9E75;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.off_camera_incidents.length+' off-camera</span>');
+      if(highFlags) pills.push('<span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700">'+highFlags+' HIGH</span>');
+
+      return '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;overflow:hidden;border-top:3px solid '+sevColor+'">'+
+        // Tile header
+        '<div style="padding:12px 14px 10px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:6px">'+
+            '<div style="flex:1;min-width:0">'+
+              '<div style="font-size:12px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+v.filename+'">'+
+                (v.call_date||v.filename.match(/\d{4}-\d{2}-\d{2}/)?.[0]||v.filename)+
+              '</div>'+
+              '<div style="font-size:11px;color:#888;margin-top:1px">'+
+                (v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'')+
+                (v.speakers_detected&&v.speakers_detected.length?' \u2014 '+(v.speakers_detected.slice(0,2).join(', '))+(v.speakers_detected.length>2?'...':''): '')+
+              '</div>'+
+            '</div>'+
+            '<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">'+
+              (v.in_tdvro_period?'<span style="background:#c0392b;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">TDVRO</span>':'')+
+              '<span style="font-size:10px;font-weight:600;color:'+sevColor+';background:'+sevColor+'22;padding:2px 6px;border-radius:10px">'+(v.overall_severity||'?')+'</span>'+
+              '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:15px;padding:1px" title="Star">'+
+              (v.starred?'&#11088;':'&#10025;')+'</button>'+
+            '</div>'+
+          '</div>'+
+          // Flag pills
+          (pills.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+pills.join('')+'</div>':'')+
+          // Court summary - truncated
+          (v.court_summary?'<div style="font-size:12px;color:#444;line-height:1.5;border-left:2px solid '+sevColor+'22;padding-left:8px;margin-bottom:8px">'+
+            v.court_summary.slice(0,120)+(v.court_summary.length>120?'...':'')+
+          '</div>':'')+
+          (v._truncated?'<div style="font-size:10px;color:#e67e22;margin-bottom:4px">&#9888; Partial analysis</div>':'')+
+        '</div>'+
+        // Tile footer - actions
+        '<div style="border-top:1px solid #f0f0ea;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:#fafaf8">'+
+          '<button onclick="toggleVidDetail('+vi+')" style="font-size:11px;color:#1a5fa8;background:none;border:none;cursor:pointer;padding:0">'+
+            (totalFlags?'&#9660; '+totalFlags+' flags':'&#9660; Details')+
+          '</button>'+
+          '<div style="display:flex;gap:5px">'+
+            '<button class="btn btne" style="font-size:11px;padding:3px 8px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
+            '<button class="btn btnd" style="font-size:11px;padding:3px 8px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
+          '</div>'+
+        '</div>'+
+        // Expandable detail panel
+        '<div id="vdet_'+vi+'" style="display:none;padding:12px 14px;border-top:1px solid #f0f0ea;background:#fafaf8">'+
+          buildVidDetail(v,vi)+
+        '</div>'+
+      '</div>';
+    }).join('')+
+    '</div>';
+}
+
+function toggleVidDetail(vi){
+  const el=document.getElementById('vdet_'+vi);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function buildVidDetail(v,vi){
+  const FC={alienation:'high',background_adult:'bga',distraction:'dis',
+    information_gathering:'medium',coaching:'high',transition_negativity:'medium',
+    self_censorship:'high',bribery:'medium',signal_behavior:'high',positive:'low'};
+
+  let html='';
+
+  const segs=(v.segments||[]).filter(s=>(s.flags||[]).length>0);
+  if(segs.length){
+    html+='<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Segment flags</div>';
+    segs.forEach((seg,si)=>{
+      (seg.flags||[]).forEach((f,fi)=>{
+        html+='<div class="fi '+(FC[f.category]||f.severity)+'" style="margin-bottom:4px">'+
           (f.timestamp_approx?'<span class="fts">'+f.timestamp_approx+'</span>':'')+
           '<div>'+f.court_plain+'</div>'+
-          '<div style="display:flex;gap:4px;margin-top:4px">'+
+          '<div style="display:flex;gap:3px;margin-top:3px">'+
             '<button onclick="editVidFlag('+vi+','+si+','+fi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
-            '<button onclick="deleteVidFlag('+vi+','+si+','+fi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Delete</button>'+
-          '</div></div>'
-        ).join('')+'</div>';
-    }).join('');
+            '<button onclick="deleteVidFlag('+vi+','+si+','+fi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+
+          '</div></div>';
+      });
+    });
+  }
 
-    const bgHtml=(v.background_incidents||[]).length?
-      '<div class="fi bga" style="margin-bottom:6px"><strong>Background adults ('+v.background_incidents.length+')</strong>'+
-      v.background_incidents.map(b=>'<div style="margin-top:3px">['+b.timestamp_approx+'] '+b.court_plain+'</div>').join('')+'</div>':'';
+  if((v.background_incidents||[]).length){
+    html+='<div style="font-size:11px;font-weight:700;color:#7F77DD;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Background adults</div>';
+    v.background_incidents.forEach((b,bi)=>{
+      html+='<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0ea;display:flex;justify-content:space-between;gap:4px">'+
+        '<div>['+b.timestamp_approx+'] '+b.court_plain+'</div>'+
+        '<div style="display:flex;gap:3px;flex-shrink:0">'+
+          '<button onclick="editVidIncident('+vi+',\'background_incidents\','+bi+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
+          '<button onclick="delVidIncident('+vi+',\'background_incidents\','+bi+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+
+        '</div></div>';
+    });
+  }
 
-    const intHtml=(v.interrogation_incidents||[]).length?
-      '<div class="fi medium" style="margin-bottom:6px"><strong>Interrogation questions ('+v.interrogation_incidents.length+')'+(v.in_tdvro_period?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px">TDVRO PERIOD</span>':'')+(v.interrogation_incidents.some(i=>i.pre_tdvro)&&!v.in_tdvro_period?' <span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:1px 6px;border-radius:3px">includes TDVRO</span>':'')+
-      '</strong>'+v.interrogation_incidents.map((i,ii)=>
-        '<div style="margin-top:3px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px">'+'<div>'+(i.timestamp_approx||'?')+' - <strong>'+(i.asked_by||'Adult')+'</strong> asked <strong>'+(i.child_targeted||'child')+'</strong>: "'+( i.question_asked||'')+'"'+(i.pre_tdvro?' <span style="background:#fdf0f0;color:#c0392b;padding:1px 5px;border-radius:4px;font-size:10px">PRE-TDVRO</span>':'')+
-        '</div><div style="display:flex;gap:3px;flex-shrink:0">'+'<button onclick="editVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+'<button onclick="delVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+'</div></div>'
-      ).join('')+'</div>':'';
-
-    const refHtml=(v.refusal_incidents||[]).length?
-      '<div class="fi high" style="margin-bottom:6px"><strong>Refusals to talk ('+v.refusal_incidents.length+')</strong>'+
-      v.refusal_incidents.map((r,ri)=>'<div style="margin-top:3px;display:flex;justify-content:space-between;gap:6px"><div>'+(r.timestamp_approx||'?')+' - <strong>'+(r.child||'Child')+'</strong>: '+r.court_plain+'</div>'+'<div style="display:flex;gap:3px;flex-shrink:0">'+'<button onclick="editVidIncident('+vi+',\'refusal_incidents\','+ri+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+'<button onclick="delVidIncident('+vi+',\'refusal_incidents\','+ri+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+'</div></div>').join('')+'</div>':'';
-
-    const offHtml=(v.off_camera_incidents||[]).length?
-      '<div class="fi medium" style="margin-bottom:6px"><strong>Off-camera incidents ('+v.off_camera_incidents.length+')</strong>'+
-      v.off_camera_incidents.map((o,oi)=>'<div style="margin-top:3px;display:flex;justify-content:space-between;gap:6px"><div>'+(o.timestamp_approx||'?')+' - <strong>'+(o.child||'Child')+'</strong>: '+o.court_plain+'</div>'+'<div style="display:flex;gap:3px;flex-shrink:0">'+'<button onclick="editVidIncident('+vi+',\'off_camera_incidents\','+oi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+'<button onclick="delVidIncident('+vi+',\'off_camera_incidents\','+oi+');event.stopPropagation()" style="font-size:10px;background:rgba(255,255,255,0.8);border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+'</div></div>').join('')+'</div>':'';
-
-    const ethanHtml=v.ethan_indicators?
-      '<div class="etb">'+
-        '<strong>Ethan observations</strong>'+
-        (v.ethan_indicators.self_censorship_moments?'<div style="margin-top:3px">Self-censorship: '+v.ethan_indicators.self_censorship_moments+'</div>':'')+
-        (v.ethan_indicators.affection_toward_mother?'<div>Affection: '+v.ethan_indicators.affection_toward_mother+'</div>':'')+
-        '<div>Affect: '+(v.ethan_indicators.affect||'?')+' | Eye contact: '+(v.ethan_indicators.eye_contact||'?')+' | Ended by: '+(v.ethan_indicators.who_ended||'?')+'</div>'+
-      '</div>':'';
-
-    const hasContent=segHtml||bgHtml||intHtml||refHtml||offHtml;
-
-    return '<div class="vr">'+
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">'+
-        '<div style="flex:1">'+
-          '<div style="font-size:13px;font-weight:600">'+v.filename+'</div>'+
-          '<div style="font-size:11px;color:#888;margin-top:2px">'+
-            (v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'')+
-            (v.call_date?' — '+v.call_date:'')+
-          (v.in_tdvro_period?' <span style="background:#c0392b;color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px">TDVRO period</span>':'')+
+  if((v.interrogation_incidents||[]).length){
+    html+='<div style="font-size:11px;font-weight:700;color:#856404;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Interrogation questions'+(v.in_tdvro_period?' <span style="background:#c0392b;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">TDVRO</span>':'')+'</div>';
+    v.interrogation_incidents.forEach((i,ii)=>{
+      html+='<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0ea">'+
+        '<div style="display:flex;justify-content:space-between;gap:4px">'+
+          '<div><strong>'+i.asked_by+'</strong> asked <strong>'+(i.child_targeted||'Respondent')+'</strong>: "'+i.question_asked+'"'+
+            (i.pre_tdvro?' <span style="background:#fdf0f0;color:#c0392b;font-size:9px;padding:1px 4px;border-radius:3px">TDVRO</span>':'')+
           '</div>'+
-          (v._truncated?'<div style="font-size:10px;color:#e67e22;margin-top:2px">Partial analysis</div>':'')+
+          '<div style="display:flex;gap:3px;flex-shrink:0">'+
+            '<button onclick="editVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
+            '<button onclick="delVidIncident('+vi+',\'interrogation_incidents\','+ii+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+
+          '</div>'+
         '</div>'+
-        '<div style="display:flex;gap:5px;align-items:center;flex-shrink:0">'+
-          (highFlags?'<span style="font-size:10px;background:#fdf0f0;color:#c0392b;padding:2px 6px;border-radius:4px;font-weight:700">'+highFlags+' HIGH</span>':'')+
-          (totalFlags?'<span style="font-size:10px;color:#666;padding:2px 4px">'+totalFlags+' flags</span>':'')+
-          '<span class="bg '+(SC[v.overall_severity]||'bgr')+'">'+(v.overall_severity||'?')+'</span>'+
-          '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px" title="Star">'+(v.starred?'&#11088;':'&#10025;')+'</button>'+
-          '<button class="btn btne" style="font-size:11px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
-          '<button class="btn btnd" style="font-size:11px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
-        '</div>'+
-      '</div>'+
-      (v.court_summary?'<div class="csb" style="margin-bottom:8px">'+v.court_summary+'</div>':'')+
-      (hasContent?
-        '<details style="margin-top:4px"><summary style="font-size:12px;font-weight:600;cursor:pointer;color:#555;list-style:none;padding:6px 0;border-top:1px solid #f0f0ea">'+
-          (totalFlags?'&#9660; '+totalFlags+' flag'+(totalFlags!==1?'s':''):'&#9660; Details')+
-        '</summary><div style="margin-top:8px;padding-top:4px">'+
-          segHtml+bgHtml+intHtml+refHtml+offHtml+ethanHtml+
-        '</div></details>':'')+
-      (v.notes?'<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:6px">&#128221; '+v.notes+'</div>':'')+
-      (v.driveLink?'<a href="'+v.driveLink+'" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View in Google Drive</a>':'')+
-    '</div>';
-  }).join('');
+        '<div style="font-size:11px;color:#888;margin-top:1px">['+( i.timestamp_approx||'?')+']</div>'+
+      '</div>';
+    });
+  }
+
+  if((v.refusal_incidents||[]).length){
+    html+='<div style="font-size:11px;font-weight:700;color:#c0392b;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Refusals</div>';
+    v.refusal_incidents.forEach((r,ri)=>{
+      html+='<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0ea;display:flex;justify-content:space-between;gap:4px">'+
+        '<div>['+( r.timestamp_approx||'?')+'] <strong>'+(r.child||'Child')+'</strong>: '+r.court_plain+'</div>'+
+        '<div style="display:flex;gap:3px;flex-shrink:0">'+
+          '<button onclick="editVidIncident('+vi+',\'refusal_incidents\','+ri+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
+          '<button onclick="delVidIncident('+vi+',\'refusal_incidents\','+ri+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+
+        '</div></div>';
+    });
+  }
+
+  if((v.off_camera_incidents||[]).length){
+    html+='<div style="font-size:11px;font-weight:700;color:#1D9E75;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Off-camera</div>';
+    v.off_camera_incidents.forEach((o,oi)=>{
+      html+='<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #f0f0ea;display:flex;justify-content:space-between;gap:4px">'+
+        '<div>['+( o.timestamp_approx||'?')+'] <strong>'+(o.child||'Child')+'</strong>: '+o.court_plain+'</div>'+
+        '<div style="display:flex;gap:3px;flex-shrink:0">'+
+          '<button onclick="editVidIncident('+vi+',\'off_camera_incidents\','+oi+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer">Edit</button>'+
+          '<button onclick="delVidIncident('+vi+',\'off_camera_incidents\','+oi+');event.stopPropagation()" style="font-size:10px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;padding:1px 5px;cursor:pointer;color:#c0392b">Del</button>'+
+        '</div></div>';
+    });
+  }
+
+  if(v.ethan_indicators){
+    const e=v.ethan_indicators;
+    html+='<div style="font-size:11px;font-weight:700;color:#8e44ad;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.5px">Ethan observations</div>'+
+      '<div style="font-size:12px;color:#555;line-height:1.6">'+
+        (e.self_censorship_moments?'<div>Self-censorship: '+e.self_censorship_moments+'</div>':'')+
+        (e.affection_toward_mother?'<div>Affection: '+e.affection_toward_mother+'</div>':'')+
+        '<div>Affect: '+(e.affect||'?')+' | Eye contact: '+(e.eye_contact||'?')+' | Ended by: '+(e.who_ended||'?')+'</div>'+
+      '</div>';
+  }
+
+  if(v.notes){
+    html+='<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:8px">&#128221; '+v.notes+'</div>';
+  }
+  if(v.driveLink){
+    html+='<a href="'+v.driveLink+'" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View in Google Drive</a>';
+  }
+
+  return html||'<div style="font-size:12px;color:#888">No flags detected.</div>';
 }
+
 function delVid(vi){if(confirm("Delete this video analysis?")){allVids.splice(vi,1);save();renderVids();}}
 
 function togVT(vi,si){const k=vi+'-'+si;vTr[k]=!vTr[k];renderVids();}
