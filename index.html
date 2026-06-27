@@ -5046,72 +5046,109 @@ function parseDate(raw, lastYearSeen){
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 function importIncidentLog(){
-  const raw = document.getElementById('inclogPaste').value.trim();
-  if(!raw){alert('Please paste your incident log first.');return;}
+  const raw = document.getElementById('inclogPaste').value;
+  if(!raw.trim()){alert('Please paste your incident log first.');return;}
 
-  const paragraphs = raw.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
-  let imported = 0, skipped = 0;
-  let lastYearSeen = '2025'; // default to separation year
-  const newEntries = [];
+  // Split into lines
+  const lines = raw.split('\n');
+  let lastYearSeen = '2025';
+  const entries = [];
+  let currentEntry = null;
 
-  paragraphs.forEach(para=>{
-    const lines = para.split('\n').map(l=>l.trim()).filter(Boolean);
-    if(!lines.length) return;
+  function isDateLine(line){
+    const s = line.trim();
+    // Check for date at START of line (possibly followed by day name)
+    // Formats: 1/23/25, 1/23/2025, 2/17, 2/19/2025, 6/21/2026
+    const dateMatch = s.match(/^(\d{1,2})\/( \d{1,2})(?:\/(\d{2,4}))?/);
+    if(dateMatch) return true;
+    // Month name formats
+    if(s.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d/i)) return true;
+    return false;
+  }
 
-    // Try to find date in first 2 lines
-    let date = null, dateLineIdx = -1;
-    for(let i=0;i<Math.min(2,lines.length);i++){
-      date = parseDate(lines[i], lastYearSeen);
-      if(date){dateLineIdx=i;lastYearSeen=date.slice(0,4);break;}
+  function extractDate(line){
+    const s = line.trim();
+    // M/D/YY or M/D/YYYY (possibly followed by day name like "Saturday")
+    const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(m1){
+      const yr = m1[3].length===2?(parseInt(m1[3])<50?'20':'19')+m1[3]:m1[3];
+      lastYearSeen = yr;
+      return yr+'-'+m1[1].padStart(2,'0')+'-'+m1[2].padStart(2,'0');
     }
-    if(!date){skipped++;return;}
-
-    // Check if next line is day of week
-    let narrativeStart = dateLineIdx+1;
-    if(narrativeStart<lines.length && DAYS.includes(lines[narrativeStart].toLowerCase())){
-      narrativeStart++;
+    // M/D no year
+    const m0 = s.match(/^(\d{1,2})\/(\d{1,2})(?:\s|$)/);
+    if(m0){
+      return lastYearSeen+'-'+m0[1].padStart(2,'0')+'-'+m0[2].padStart(2,'0');
     }
+    // Month name
+    const months = {january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'};
+    const m2 = s.toLowerCase().match(/^([a-z]+)\s+(\d{1,2}),?\s*(\d{4})?/);
+    if(m2&&months[m2[1]]){
+      const yr = m2[3]||lastYearSeen;
+      lastYearSeen = yr;
+      return yr+'-'+months[m2[1]]+'-'+m2[2].padStart(2,'0');
+    }
+    return null;
+  }
 
-    const narrative = lines.slice(narrativeStart).join('\n').trim();
-    if(!narrative){skipped++;return;}
-
-    // Check for duplicates
-    const isDupe = inclogEntries.some(e=>e.date===date&&e.narrative.slice(0,50)===narrative.slice(0,50));
-    if(isDupe){skipped++;return;}
-
-    const tags = detectTags(narrative);
-    newEntries.push({
+  function saveCurrent(){
+    if(!currentEntry) return;
+    const narrative = currentEntry.narrativeLines.join('\n').trim();
+    if(!narrative) return;
+    // Check duplicate
+    const isDupe = inclogEntries.some(e=>e.date===currentEntry.date&&e.narrative.slice(0,50)===narrative.slice(0,50));
+    if(isDupe) return;
+    entries.push({
       id:'il_'+Date.now()+'_'+Math.random().toString(36).slice(2),
-      date, narrative, tags,
+      date: currentEntry.date,
+      narrative,
+      tags: detectTags(narrative),
       addedAt: new Date().toISOString(),
       starred: false, notes: ''
     });
-    imported++;
-  });
+  }
 
-  inclogEntries = [...inclogEntries, ...newEntries].sort((a,b)=>a.date.localeCompare(b.date));
+  lines.forEach(line=>{
+    const trimmed = line.trim();
+    if(isDateLine(trimmed)){
+      // Save previous entry
+      saveCurrent();
+      const date = extractDate(trimmed);
+      if(date){
+        currentEntry = {date, narrativeLines:[]};
+        // Check if there's content after the date on the same line
+        const afterDate = trimmed.replace(/^\d{1,2}\/\d{1,2}(\/\d{2,4})?/, '').replace(/^\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)?\s*/i,'').trim();
+        if(afterDate) currentEntry.narrativeLines.push(afterDate);
+      }
+    } else if(currentEntry){
+      // Skip pure day-of-week lines
+      if(DAYS.includes(trimmed.toLowerCase())) return;
+      // Skip lines that look like section headers (all caps, short)
+      if(trimmed.length < 50 && trimmed === trimmed.toUpperCase() && trimmed.length > 0 && /^[A-Z\s-]+$/.test(trimmed)) return;
+      currentEntry.narrativeLines.push(line);
+    }
+  });
+  saveCurrent();
+
+  const imported = entries.length;
+  inclogEntries = [...inclogEntries, ...entries].sort((a,b)=>a.date.localeCompare(b.date));
   inclogSave();
 
-  // Add calendar events for each entry
-  newEntries.forEach(e=>{
+  // Add calendar events
+  entries.forEach(e=>{
     const exists = calEvents.some(c=>c.date===e.date&&c.type==='event-incident');
-    if(!exists){
-      calEvents.push({
-        id:'cal_il_'+e.id, date:e.date,
-        title:'Incident log entry',
-        type:'event-incident',
-        notes:e.narrative.slice(0,80),
-        link:'', ethan:false, charlotte:false, duke:false,
-        added:new Date().toISOString()
-      });
-    }
+    if(!exists) calEvents.push({
+      id:'cal_il_'+e.id, date:e.date,
+      title:'Incident log entry', type:'event-incident',
+      notes:e.narrative.slice(0,80), link:'', ethan:false, charlotte:false, duke:false,
+      added:new Date().toISOString()
+    });
   });
   calSave();
 
   document.getElementById('inclogPaste').value='';
-  document.getElementById('inclogImportStatus').textContent=imported+' entries imported'+(skipped?' ('+skipped+' skipped)':'')+'.';;
+  document.getElementById('inclogImportStatus').textContent = imported+' entries imported. Total: '+inclogEntries.length+'.';
   renderInclog();
-  if(document.getElementById('p-calendar')&&document.getElementById('p-calendar').classList.contains('active')) renderCalendar();
 }
 
 function inclogSave(){
