@@ -1292,6 +1292,7 @@ IMPORTANT OUTPUT RULES:
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
+      system_instruction:{parts:[{text:'You are a concise legal analyst. Keep ALL text fields under 80 characters. Never write more than 1 sentence per field. Prioritize listing all incidents over describing any single incident in detail. If you must stop early, stop after completing interrogation_incidents.'}]},
       contents:[{parts:[{fileData:{mimeType:(file&&file.name&&file.name.toLowerCase().endsWith('.mov')?'video/quicktime':(file&&file.type?file.type:'video/mp4')),fileUri:fileUri}},{text:prompt}]}],
       generationConfig:{maxOutputTokens:8192,temperature:0.1}
     })
@@ -4952,9 +4953,15 @@ function checkAndTagTdvro(){
   allVids.forEach(v => {
     if(!v.call_date) return;
     // Parse MM/DD/YYYY
-    const parts = v.call_date.split('/');
-    if(parts.length !== 3) return;
-    const d = new Date(parts[2]+'-'+parts[0].padStart(2,'0')+'-'+parts[1].padStart(2,'0'));
+    // Handle both MM/DD/YYYY and YYYY-MM-DD formats
+    let d;
+    if(v.call_date.includes('-')){
+      d = new Date(v.call_date+'T12:00:00');
+    } else {
+      const parts = v.call_date.split('/');
+      if(parts.length !== 3) return;
+      d = new Date(parts[2]+'-'+parts[0].padStart(2,'0')+'-'+parts[1].padStart(2,'0')+'T12:00:00');
+    }
     const inTdvro = d >= start && d <= end;
     if(inTdvro && !v.in_tdvro_period) {
       v.in_tdvro_period = true;
@@ -4983,6 +4990,8 @@ const INCLOG_TAG_COLORS = {
 };
 
 const INCLOG_KEYWORDS = {
+  'behavioral-change': ['stopped saying','no longer','won\'t say','refuses to say','used to','doesn\'t say','changed','miss you','i love you','stopped reciprocating','alienation'],
+  alienation: ['miss you','i love you','coaching','coached','scripted','prompted','thumb','signal','didn\'t want to come','doesn\'t want to talk'],
   physical: ['knife','chokehold','choke','grab','bruise','fingermark','push','shove','block','elevator','restrain'],
   legal: ['attorney','restraining order','RO','TDVRO','court','filing','lamoreaux','judge','hearing','FOAH'],
   witness: ['tescia','eric hartzheim','angela','monitor','nina','leonard','art morales','police'],
@@ -5004,7 +5013,7 @@ function detectTags(text){
   return [...tags];
 }
 
-function parseDate(raw){
+function parseDate(raw, lastYearSeen){
   if(!raw) return null;
   const s = raw.trim();
   // M/D/YY or M/D/YYYY
@@ -5013,14 +5022,26 @@ function parseDate(raw){
     const yr = m1[3].length===2?(parseInt(m1[3])<50?'20':'19')+m1[3]:m1[3];
     return yr+'-'+m1[1].padStart(2,'0')+'-'+m1[2].padStart(2,'0');
   }
+  // M/D with no year - use lastYearSeen
+  const m0 = s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if(m0){
+    const yr = lastYearSeen || '2025';
+    return yr+'-'+m0[1].padStart(2,'0')+'-'+m0[2].padStart(2,'0');
+  }
   // Month D, YYYY
   const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
   const m2 = s.toLowerCase().match(/^([a-z]+)\s+(\d{1,2}),?\s+(\d{4})$/);
   if(m2&&months[m2[1]]) return m2[3]+'-'+String(months[m2[1]]).padStart(2,'0')+'-'+m2[2].padStart(2,'0');
+  // Month D (no year)
+  const m3 = s.toLowerCase().match(/^([a-z]+)\s+(\d{1,2})$/);
+  if(m3&&months[m3[1]]){
+    const yr = lastYearSeen || '2025';
+    return yr+'-'+String(months[m3[1]]).padStart(2,'0')+'-'+m3[2].padStart(2,'0');
+  }
+  // YYYY-MM-DD
+  if(s.match(/^\d{4}-\d{2}-\d{2}$/)) return s;
   return null;
 }
-
-const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 function importIncidentLog(){
   const raw = document.getElementById('inclogPaste').value.trim();
@@ -5028,6 +5049,7 @@ function importIncidentLog(){
 
   const paragraphs = raw.split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
   let imported = 0, skipped = 0;
+  let lastYearSeen = '2025'; // default to separation year
   const newEntries = [];
 
   paragraphs.forEach(para=>{
@@ -5037,8 +5059,8 @@ function importIncidentLog(){
     // Try to find date in first 2 lines
     let date = null, dateLineIdx = -1;
     for(let i=0;i<Math.min(2,lines.length);i++){
-      date = parseDate(lines[i]);
-      if(date){dateLineIdx=i;break;}
+      date = parseDate(lines[i], lastYearSeen);
+      if(date){dateLineIdx=i;lastYearSeen=date.slice(0,4);break;}
     }
     if(!date){skipped++;return;}
 
