@@ -1267,31 +1267,28 @@ async function uploadToGemini(uploadUrl,file){
 }
 
 async function analyzeWithGemini(fileUri,filename,file){
-  // Detect if this video falls within TDVRO period (1/27/2025 - 5/19/2025)
   const dateMatch = filename.match(/(\d{4})-(\d{2})-(\d{2})/);
   const vidDate = dateMatch ? new Date(dateMatch[1]+'-'+dateMatch[2]+'-'+dateMatch[3]) : null;
   const tdvroStart = new Date('2025-01-27');
   const tdvroEnd = new Date('2025-05-19');
   const inTdvro = vidDate && vidDate >= tdvroStart && vidDate <= tdvroEnd;
 
-  const prompt=`Analyze this entire OFW custody case video call from START TO FINISH. Pay special attention to the LAST HALF of the video.
-CRITICAL ROLE DEFINITIONS:
-- Chelsea Rhodes = RESPONDENT = MOTHER = on the other end of the call
-- Doug Rhodes = PETITIONER = FATHER = at home with children, may be heard in background
-- Camera is at PETITIONER's home. Chelsea is calling in.
-- Questions directed AT Chelsea = asked OF Respondent
-- interrogation_incidents = ANY question children or Doug ask Chelsea about her life/home/plans/whereabouts/companions${inTdvro?`
+  const prompt=`Analyze this entire OFW custody case video call. Watch every minute before writing output.
+ROLES: Chelsea Rhodes=RESPONDENT/MOTHER (on screen). Doug Rhodes=PETITIONER/FATHER (at home with kids, may be heard).
+Camera is at PETITIONER home. Questions asked OF Chelsea = asked of Respondent.
+interrogation_incidents = ANY question children or Doug ask Chelsea about her life/home/plans/whereabouts.${inTdvro?' TDVRO PERIOD: all such questions are potential violations, set pre_tdvro:true.':''}
 
-TDVRO PERIOD: This call occurred during the active TDVRO (1/27/2025-5/19/2025). Doug Rhodes was legally prohibited from direct or indirect contact with Chelsea beyond child-related communication. ANY question asked of Chelsea about: who she is with, where she is, what she is doing, her home, her schedule, her relationships, or her plans = potential TDVRO violation through the children. Tag ALL such questions as pre_tdvro:true.`:''}
+WRITE IN THIS ORDER (do not skip steps, do not truncate early):
+1. background_incidents
+2. interrogation_incidents - NEVER truncate, log every question
+3. refusal_incidents
+4. off_camera_incidents
+5. ethan_indicators
+6. segments - ONLY if space remains, otherwise leave empty array
+7. court_summary - write LAST, 2 sentences covering everything above
 
-IMPORTANT OUTPUT RULES:
-1. Omit the "segments" array if needed to save space - it is LEAST important
-2. NEVER omit interrogation_incidents, refusal_incidents, or off_camera_incidents
-3. Watch the ENTIRE video before writing output - do not stop early
-4. Keep all text fields under 80 characters
-5. Return ONLY valid JSON, no markdown fences
-
-{"filename":"${filename}","call_date":"extract from filename YYYY-MM-DD convert to MM/DD/YYYY","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","court_summary":"2 sentences covering entire call","in_tdvro_period":${inTdvro},"background_incidents":[{"timestamp_approx":"","who":"","what":"","court_plain":""}],"interrogation_incidents":[{"timestamp_approx":"","asked_by":"child or Doug name","child_targeted":"Respondent or child name","question_asked":"exact words","court_plain":"X asked Respondent: question","pre_tdvro":${inTdvro}}],"refusal_incidents":[{"timestamp_approx":"","child":"","court_plain":"","refusal_type":"refuses_to_talk|ends_call|one_word_answers|silence|redirected_by_adult"}],"off_camera_incidents":[{"timestamp_approx":"","child":"","court_plain":""}],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""},"segments":[]}`;
+Keep all text under 80 chars. Return ONLY valid JSON no markdown:
+{"filename":"${filename}","call_date":"MM/DD/YYYY from filename","total_duration_seconds":0,"speakers_detected":[],"overall_severity":"medium","in_tdvro_period":${inTdvro},"background_incidents":[],"interrogation_incidents":[],"refusal_incidents":[],"off_camera_incidents":[],"ethan_indicators":{"eye_contact":"","self_censorship_moments":"","affection_toward_mother":"","affect":"","who_ended":""},"segments":[],"court_summary":""}`;
 
 
   const resp=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY,{
@@ -4745,8 +4742,10 @@ function openEditVid(vi){
     <textarea id="evSummary" style="min-height:80px">${v.court_summary||''}</textarea>
     <label>Google Drive link (original video file)</label>
     <input type="text" id="evDriveLink" value="${v.driveLink||''}" placeholder="https://drive.google.com/...">
-    <label>Transcript (paste full transcript here)</label>
-    <textarea id="evTranscript" style="min-height:100px;font-size:11px;font-family:monospace" placeholder="Paste transcript text here - will be searchable and cross-referenced with analysis">${v.transcript||''}</textarea>
+    <label>Transcript</label>
+    <div style="display:flex;gap:6px;margin-bottom:4px;align-items:center"><input type="file" id="evTranscriptPDF" accept=".pdf" style="font-size:11px;flex:1"><button type="button" class="btn btns" style="font-size:11px" onclick="loadTranscriptPDF()">Upload PDF</button></div>
+    <div id="evTranscriptStatus" style="font-size:11px;color:#1D9E75;margin-bottom:4px"></div>
+    <textarea id="evTranscript" style="min-height:100px;font-size:11px;font-family:monospace" placeholder="Or paste transcript text here">${v.transcript||''}</textarea>
     <label>Your notes (add context the AI missed - e.g. exact words heard in background)</label>
     <textarea id="evNotes" style="min-height:60px" placeholder="e.g. At 1:23, Doug said 'just hang up' audibly. Charlotte's reluctance appeared coached - she used Doug's exact phrase from his messages.">${v.notes||''}</textarea>
     <label>Additional background incidents (one per line)</label>
@@ -5338,6 +5337,33 @@ function openManualVidEntry(){
   `;
   // Auto-check TDVRO if relevant date entered
   document.getElementById('editModal').classList.add('open');
+}
+
+function loadTranscriptPDF(){
+  const fi=document.getElementById('evTranscriptPDF');
+  const st=document.getElementById('evTranscriptStatus');
+  if(!fi||!fi.files||!fi.files[0]){alert('Select a PDF first.');return;}
+  const file=fi.files[0];
+  if(st)st.textContent='Reading PDF...';
+  const fr=new FileReader();
+  fr.onload=async function(e){
+    try{
+      const ab=e.target.result;
+      const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+      let text='';
+      for(let i=1;i<=pdf.numPages;i++){
+        const page=await pdf.getPage(i);
+        const ct=await page.getTextContent();
+        text+=ct.items.map(it=>it.str).join(' ')+'\n';
+      }
+      const ta=document.getElementById('evTranscript');
+      if(ta)ta.value=text.trim();
+      if(st)st.textContent='Extracted: '+pdf.numPages+' pages, '+text.length+' chars.';
+    }catch(err){
+      if(st)st.textContent='Error: '+err.message;
+    }
+  };
+  fr.readAsArrayBuffer(file);
 }
 
 </script>
