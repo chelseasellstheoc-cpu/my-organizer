@@ -293,6 +293,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div class="sg" id="vStats" style="display:none"></div>
       <!-- Video controls -->
       <div style="display:flex;gap:8px;margin:1rem 0;flex-wrap:wrap;align-items:center">
+        <button class="btn btns" onclick="mergeSelected()" style="white-space:nowrap;border-color:#1D9E75;color:#1D9E75">&#128279; Merge selected</button>
         <input type="text" id="vidSearch" placeholder="Search by tag, speaker, description..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderVids()">
         <select id="vidSort" onchange="renderVids()" style="font-size:12px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
           <option value="date-asc" selected>Oldest first (chronological)</option>
@@ -1508,7 +1509,7 @@ function renderVids(){
     // Parse date and time from filename
     const fnMatch=v.filename.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})/);
     const dateDisplay=v.call_date||'Unknown';
-    const timeDisplay=fnMatch?fnMatch[4]+':'+fnMatch[5]:'—';
+    let timeDisplay='—';if(fnMatch){const hr=parseInt(fnMatch[4]),mn=fnMatch[5],ampm=hr>=12?'PM':'AM',hr12=hr===0?12:hr>12?hr-12:hr;timeDisplay=hr12+':'+mn+' '+ampm;}
     const durMins=v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'—';
 
     // Flag pills - compact
@@ -1541,6 +1542,7 @@ function renderVids(){
     html+='<td style="padding:8px 10px;text-align:center;white-space:nowrap">'+
       '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:14px" title="Star">'+(v.starred?'&#11088;':'&#10025;')+'</button>'+
       '<button onclick="toggleVidDetail('+vi+')" style="background:none;border:none;cursor:pointer;font-size:12px;color:#1a5fa8;padding:0 4px" title="Expand">&#9660;</button>'+
+      '<input type="checkbox" class="merge-cb" data-vi="'+vi+'" title="Select to merge" style="margin:0 3px;cursor:pointer">'+
       '<button class="btn btne" style="font-size:10px;padding:2px 6px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
       '<button class="btn btnd" style="font-size:10px;padding:2px 6px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
     '</td>';
@@ -5364,6 +5366,76 @@ function loadTranscriptPDF(){
     }
   };
   fr.readAsArrayBuffer(file);
+}
+
+function mergeSelected(){
+  const cbs = [...document.querySelectorAll('.merge-cb:checked')];
+  if(cbs.length < 2){alert('Select at least 2 recordings to merge.');return;}
+  const indices = cbs.map(cb=>parseInt(cb.getAttribute('data-vi'))).sort((a,b)=>a-b);
+  const vids = indices.map(i=>allVids[i]);
+
+  // Use earliest date, combined duration
+  const dates = vids.map(v=>v.call_date||'').filter(Boolean).sort();
+  const mergedDate = dates[0]||'';
+  const mergedDur = vids.reduce((s,v)=>s+(v.total_duration_seconds||0),0);
+
+  // Merge all incident arrays
+  const mergedBg = vids.flatMap(v=>v.background_incidents||[]);
+  const mergedInt = vids.flatMap(v=>v.interrogation_incidents||[]);
+  const mergedRef = vids.flatMap(v=>v.refusal_incidents||[]);
+  const mergedOff = vids.flatMap(v=>v.off_camera_incidents||[]);
+  const mergedSegs = vids.flatMap(v=>v.segments||[]);
+
+  // Merge flags - take highest severity
+  const sevOrder = {high:0,medium:1,low:2,neutral:3};
+  const mergedSev = vids.reduce((best,v)=>{
+    return (sevOrder[v.overall_severity]||9) < (sevOrder[best]||9) ? v.overall_severity : best;
+  },'neutral');
+
+  // Combine summaries and notes
+  const summaries = vids.map((v,i)=>'Part '+(i+1)+': '+(v.court_summary||'')).filter(s=>s.length>8);
+  const notes = vids.map((v,i)=>v.notes?'Part '+(i+1)+': '+v.notes:'').filter(Boolean);
+  const transcripts = vids.map((v,i)=>v.transcript?('=== Part '+(i+1)+' ===\n'+v.transcript):'').filter(Boolean);
+
+  // Pick best ethan_indicators (from whichever part has most data)
+  const ethan = vids.find(v=>v.ethan_indicators&&v.ethan_indicators.affect)||vids[0];
+
+  const mergedFilename = vids.map(v=>v.filename).join(' + ');
+  const inTdvro = vids.some(v=>v.in_tdvro_period);
+  const starred = vids.some(v=>v.starred);
+  const driveLink = vids.map(v=>v.driveLink).filter(Boolean).join(', ');
+
+  if(!confirm('Merge '+vids.length+' recordings into one entry?\nDate: '+mergedDate+'\nTotal duration: '+Math.round(mergedDur/60)+'min\n\nThe original entries will be replaced.')){return;}
+
+  // Build merged entry
+  const merged = {
+    filename: mergedFilename,
+    call_date: mergedDate,
+    total_duration_seconds: mergedDur,
+    overall_severity: mergedSev,
+    in_tdvro_period: inTdvro,
+    starred, driveLink,
+    speakers_detected: [...new Set(vids.flatMap(v=>v.speakers_detected||[]))],
+    background_incidents: mergedBg,
+    interrogation_incidents: mergedInt,
+    refusal_incidents: mergedRef,
+    off_camera_incidents: mergedOff,
+    segments: mergedSegs,
+    ethan_indicators: ethan.ethan_indicators||null,
+    court_summary: summaries.join(' | '),
+    notes: notes.join('\n'),
+    transcript: transcripts.join('\n\n'),
+    _merged: true,
+    _mergedCount: vids.length
+  };
+
+  // Remove originals (highest index first to preserve positions)
+  [...indices].reverse().forEach(i=>allVids.splice(i,1));
+  // Insert merged at position of first original
+  allVids.splice(indices[0],0,merged);
+  save();
+  renderVids();
+  alert('Merged successfully. '+merged.interrogation_incidents.length+' total questions, '+merged.refusal_incidents.length+' refusals.');
 }
 
 </script>
