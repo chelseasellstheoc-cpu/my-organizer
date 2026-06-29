@@ -1656,7 +1656,7 @@ function buildVidDetail(v,vi){
     html+='<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:8px">&#128221; '+v.notes+'</div>';
   }
   if(v.transcript){
-    html+='<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Transcript</div>'+'<div style="font-size:12px;color:#333;background:#f8f8f6;border:1px solid #e0e0e0;border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:monospace">'+v.transcript+'</div></div>';
+    html+='<div style="margin-top:10px">'+'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+'<div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px">Transcript</div>'+'<button onclick="analyzeTranscript('+vi+')" class="btn btns" style="font-size:10px;padding:2px 8px;border-color:#7F77DD;color:#7F77DD">&#129302; Analyze with Claude</button>'+'</div>'+'<div style="font-size:12px;color:#333;background:#f8f8f6;border:1px solid #e0e0e0;border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:monospace">'+v.transcript+'</div></div>';
   }
   if(v.driveLink){
     html+='<a href="'+v.driveLink+'" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View in Google Drive</a>';
@@ -5436,6 +5436,68 @@ function mergeSelected(){
   save();
   renderVids();
   alert('Merged successfully. '+merged.interrogation_incidents.length+' total questions, '+merged.refusal_incidents.length+' refusals.');
+}
+
+async function analyzeTranscript(vi){
+  const v = allVids[vi];
+  if(!v||!v.transcript){alert('No transcript found. Upload one via Edit first.');return;}
+  if(!API_KEY){alert('Anthropic API key required. Connect it in the Messages tab.');return;}
+
+  const statusEl = document.getElementById('vdet_row_'+vi);
+  const btn = statusEl ? statusEl.querySelector('button[onclick*="analyzeTranscript"]') : null;
+  if(btn){btn.textContent='Analyzing...';btn.disabled=true;}
+
+  const existingAnalysis = [
+    ...(v.interrogation_incidents||[]).map(i=>'EXISTING - '+i.asked_by+' asked '+i.child_targeted+': "'+i.question_asked+'"'),
+    ...(v.refusal_incidents||[]).map(r=>'EXISTING REFUSAL - '+r.child+': '+r.court_plain),
+    ...(v.background_incidents||[]).map(b=>'EXISTING BACKGROUND - '+b.who+': '+b.court_plain),
+  ].join('\n')||'None';
+
+  const prompt = [
+    {role:'user', content:`You are analyzing a transcript from an OFW (Our Family Wizard) video call for a custody case.
+CASE: Chelsea Rhodes (Respondent/Mother) vs Doug Rhodes (Petitioner/Father). Children: Ethan (oldest), Charlotte, Duke.
+The camera is at Doug's home. Chelsea is calling in from the other end.
+
+EXISTING AI ANALYSIS flagged these incidents:
+${existingAnalysis}
+
+Now read this transcript carefully and identify:
+1. INTERROGATION QUESTIONS - ANY question asked OF Chelsea about her life, location, plans, companions, home, schedule, finances, relationships. Note who asked (child name or Doug) and the exact words.
+2. REFUSALS - Any child refusing to talk, going silent, giving one-word answers, or being redirected away from the call
+3. BACKGROUND ADULTS - Any adult voice other than Chelsea audible (Doug coaching, prompting, or speaking near the children)
+4. COACHING INDICATORS - Children using adult vocabulary, scripted phrases, or repeating exact phrases from messages
+5. MISSED FLAGS - Anything the existing AI analysis got wrong or missed
+
+For each finding include: timestamp if visible, who said it, exact quote, and why it matters legally.
+
+TRANSCRIPT:
+${v.transcript.slice(0,8000)}`}
+  ];
+
+  try{
+    const result = await callAPI(prompt, 2000);
+    // Store analysis result
+    v.transcriptAnalysis = result;
+    v.transcriptAnalyzedAt = new Date().toISOString();
+    save();
+
+    // Parse and add any new incidents found
+    // Show result in the detail panel
+    const detDiv = document.getElementById('vdet_row_'+vi)?.querySelector('div');
+    if(detDiv){
+      const analysisDiv = document.createElement('div');
+      analysisDiv.style.cssText = 'margin-top:12px;padding:12px;background:#f0f0fe;border:1px solid #c0b8f8;border-radius:8px';
+      analysisDiv.innerHTML =
+        '<div style="font-size:11px;font-weight:700;color:#7F77DD;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Claude Transcript Analysis</div>'+
+        '<div style="font-size:12px;color:#333;white-space:pre-wrap;line-height:1.6">'+result+'</div>'+
+        '<div style="font-size:10px;color:#888;margin-top:6px">Analyzed '+new Date().toLocaleString()+' - Click Edit to manually add any new incidents found above</div>';
+      detDiv.appendChild(analysisDiv);
+    }
+    if(btn){btn.textContent='&#129302; Re-analyze';btn.disabled=false;}
+  }catch(e){
+    alert('Analysis failed: '+e.message);
+    if(btn){btn.textContent='&#129302; Analyze with Claude';btn.disabled=false;}
+  }
 }
 
 </script>
