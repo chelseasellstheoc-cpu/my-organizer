@@ -252,6 +252,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
         <input type="text" id="mSearchIn" placeholder="Search messages..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="mSearch=this.value;renderML()">
         <select id="mSortSel" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="mSort=this.value;renderML()">
+          <option value="date-asc" selected>Oldest first (chronological)</option>
           <option value="date-desc">Newest first</option>
           <option value="date-asc">Oldest first</option>
           <option value="severity">Severity</option>
@@ -294,6 +295,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       <div style="display:flex;gap:8px;margin:1rem 0;flex-wrap:wrap;align-items:center">
         <input type="text" id="vidSearch" placeholder="Search by tag, speaker, description..." style="flex:1;min-width:180px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderVids()">
         <select id="vidSort" onchange="renderVids()" style="font-size:12px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
+          <option value="date-asc" selected>Oldest first (chronological)</option>
           <option value="date-desc">Newest first</option>
           <option value="date-asc">Oldest first</option>
           <option value="severity">Severity (high first)</option>
@@ -309,7 +311,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
       </div>
       <div id="vList"></div>
       <div class="es" id="vExp" style="display:none"><h3>Export</h3><div class="eo">
-        <button class="btn btns" onclick="checkAndTagTdvro()" style="border-color:#c0392b;color:#c0392b">&#9888; Tag TDVRO videos</button>
+        <button class="btn btns" onclick="openManualVidEntry()" style="border-color:#1D9E75;color:#1D9E75">+ Manual entry</button><button class="btn btns" onclick="checkAndTagTdvro()" style="border-color:#c0392b;color:#c0392b">&#9888; Tag TDVRO videos</button>
         <button class="btn btns" onclick="exportVids('plain')">&#128196; Court exhibit</button>
         <button class="btn btns" onclick="exportVids('full')">&#128196; Attorney copy</button>
         <button class="btn btns" onclick="exportRefusals()">&#128196; Refusal log</button>
@@ -556,6 +558,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
           <option value="financial">Financial</option>
         </select>
         <select id="inclogSort" onchange="renderInclog()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0">
+          <option value="date-asc" selected>Oldest first (chronological)</option>
           <option value="date-desc">Newest first</option>
           <option value="date-asc">Oldest first</option>
         </select>
@@ -761,6 +764,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         </select>
         <select id="evSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderEvidence()">
           <option value="date-asc">Oldest first</option>
+          <option value="date-asc" selected>Oldest first (chronological)</option>
           <option value="date-desc">Newest first</option>
           <option value="added">Recently added</option>
           <option value="type">By type</option>
@@ -851,6 +855,7 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         </select>
         <select id="masterSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderMaster()">
           <option value="date-asc">Oldest first</option>
+          <option value="date-asc" selected>Oldest first (chronological)</option>
           <option value="date-desc">Newest first</option>
         </select>
         <button class="btn btns" id="masterStarFilter" onclick="masterShowStarred=!masterShowStarred;this.style.background=masterShowStarred?'#fff3c0':'#fff';this.style.borderColor=masterShowStarred?'#f0c040':'#e0e0e0';renderMaster()" title="Show starred only">&#11088; Starred</button>
@@ -884,7 +889,8 @@ textarea{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-r
         <input type="text" id="expSearch" placeholder="Search expenses..." style="flex:1;min-width:150px;font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:0" oninput="renderExpenses()">
         <select id="expCatFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All categories</option><option>Medical</option><option>Orthodontic</option><option>Therapy</option><option>Sports/activities</option><option>School</option><option>Before/after school care</option><option>Ethan dinners</option><option>Clothing/shoes</option><option>Haircuts</option><option>Dental</option><option>Prescription/pharmacy</option><option>Childcare</option><option>Transportation</option><option>Other</option></select>
         <select id="expMonthFilter" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="">All months</option></select>
-        <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-asc">Oldest first</option><option value="date-desc">Newest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
+        <select id="expSort" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;margin-bottom:0" onchange="renderExpenses()"><option value="date-asc">Oldest first</option><option value="date-asc" selected>Oldest first (chronological)</option>
+          <option value="date-desc">Newest first</option><option value="amount-desc">Highest amount</option><option value="cat">By category</option></select>
         <button class="btn btns" id="expLateToggle" onclick="expShowLate=!expShowLate;this.style.background=expShowLate?'#fdf0f0':'#fff';this.style.borderColor=expShowLate?'#c0392b':'#e0e0e0';renderExpenses()" style="font-size:12px">&#9888; Late/unpaid</button>
       </div>
       <div class="card" style="border-color:#378ADD;background:#f0f4ff">
@@ -1299,6 +1305,7 @@ IMPORTANT OUTPUT RULES:
   });
   const data=await resp.json();
   if(data.error)throw new Error(data.error.message);
+  if(data.promptFeedback?.blockReason)throw new Error('Gemini blocked this video ('+data.promptFeedback.blockReason+'). Try a shorter clip or add manually using the + Manual Entry button.');
   const text=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
   console.log('Gemini raw response length:', text.length);
   console.log('Gemini raw preview:', text.slice(0,200));
@@ -1410,7 +1417,7 @@ function saveEdit(){
   else if(editCtx.type==='nr'){const e=nrE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.msg=document.getElementById('em').value.trim();e.notes=document.getElementById('en').value.trim();}
   else if(editCtx.type==='rl'){const e=rlE[editCtx.index];e.date=document.getElementById('ed').value;e.time=document.getElementById('et').value;e.words=document.getElementById('ew').value.trim();e.context=document.getElementById('ectx').value.trim();}
   else if(editCtx.type==='dur'){const e=durE[editCtx.index];e.date=document.getElementById('ed').value;e.mins=parseFloat(document.getElementById('emins').value);e.notes=document.getElementById('en').value.trim();}
-  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='msgdedup'){const dupes=editCtx.dupes;const toDelete=new Set();dupes.forEach((d,i)=>{const cb=document.getElementById('delDupe_'+i);if(cb&&cb.checked)toDelete.add(d.idx);});allMsgs=allMsgs.filter((_,i)=>!toDelete.has(i));save();renderMsgs();alert('Deleted '+toDelete.size+' duplicates. '+allMsgs.length+' messages remain.');}else if(editCtx.type==='billdedup'){const dupes=editCtx.dupes;const toDelete={};dupes.forEach((d,i)=>{const cb=document.getElementById('delBillDupe_'+i);if(cb&&cb.checked){if(!toDelete[d.month])toDelete[d.month]=new Set();toDelete[d.month].add(d.idx);}});Object.keys(toDelete).forEach(mk=>{if(billsData[mk])billsData[mk].bills=billsData[mk].bills.filter((_,i)=>!toDelete[mk].has(i));});billsSave();renderBills();alert('Duplicate bills removed.');}else if(editCtx.type==='vidincident'){const v=allVids[editCtx.vi];const inc=v[editCtx.incType]?.[editCtx.idx];if(inc){inc.timestamp_approx=document.getElementById('eiTs')?.value.trim()||inc.timestamp_approx;inc.court_plain=document.getElementById('eiCourt')?.value.trim()||inc.court_plain;const ab=document.getElementById('eiAskedBy');if(ab)inc.asked_by=ab.value.trim();const tg=document.getElementById('eiTarget');if(tg)inc.child_targeted=tg.value.trim();const qq=document.getElementById('eiQuestion');if(qq)inc.question_asked=qq.value.trim();const pt=document.getElementById('eiPreTdvro');if(pt)inc.pre_tdvro=pt.checked;const ch=document.getElementById('eiChild');if(ch)inc.child=ch.value.trim();const rt=document.getElementById('eiRefType');if(rt)inc.refusal_type=rt.value;save();renderVids();}}else if(editCtx.type==='vidflag'){const v=allVids[editCtx.vi];const flag=v?.segments?.[editCtx.si]?.flags?.[editCtx.fi];if(flag){flag.category=document.getElementById('efCat').value;flag.severity=document.getElementById('efSev').value;flag.timestamp_approx=document.getElementById('efTs').value.trim();flag.court_plain=document.getElementById('efDesc').value.trim();save();renderVids();}}else if(editCtx.type==='vid'){const v=allVids[editCtx.index];if(v){v.filename=document.getElementById('evFilename').value.trim();v.call_date=document.getElementById('evCallDate').value.trim();v.overall_severity=document.getElementById('evSeverity').value;v.court_summary=document.getElementById('evSummary').value.trim();v.driveLink=document.getElementById('evDriveLink')?.value.trim()||'';v.notes=document.getElementById('evNotes').value.trim();const bgLines=document.getElementById('evBackground').value.trim().split('\n').filter(Boolean);if(bgLines.length){v.background_incidents=(v.background_incidents||[]);bgLines.forEach(line=>{const dash=line.indexOf(' - ');v.background_incidents.push({timestamp_approx:dash>0?line.slice(0,dash):'',who:'Doug Rhodes',what:line,court_plain:line,manually_added:true});});}save();renderVids();}}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='inclog'){const e=inclogEntries[editCtx.index];if(e){e.date=document.getElementById('eilDate').value||e.date;e.narrative=document.getElementById('eilNarrative').value.trim();e.notes=document.getElementById('eilNotes').value.trim();e.tags=[...document.querySelectorAll('#mBody input[type=checkbox]:checked')].map(cb=>cb.value);if(!e.tags.length)e.tags=['incident'];inclogSave();renderInclog();}}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
+  else if(editCtx.type==='doc'){const e=docE[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.notes=document.getElementById('enotes').value.trim();e.link=document.getElementById('elink').value.trim();}else if(editCtx.type==='hub'){const e=hubDocs[editCtx.index];e.title=document.getElementById('etitle').value.trim();e.category=document.getElementById('ecat').value;e.date=document.getElementById('ed').value;e.notes=document.getElementById('enotes').value.trim();}else if(editCtx.type==='contact'){const c=contacts[editCtx.index];c.role=document.getElementById('ectRole').value;c.name=document.getElementById('ectName').value.trim();c.firm=document.getElementById('ectFirm').value.trim();c.phone=document.getElementById('ectPhone').value.trim();c.email=document.getElementById('ectEmail').value.trim();c.address=document.getElementById('ectAddress').value.trim();c.notes=document.getElementById('ectNotes').value.trim();ctSave();renderContacts();}else if(editCtx.type==='msgdedup'){const dupes=editCtx.dupes;const toDelete=new Set();dupes.forEach((d,i)=>{const cb=document.getElementById('delDupe_'+i);if(cb&&cb.checked)toDelete.add(d.idx);});allMsgs=allMsgs.filter((_,i)=>!toDelete.has(i));save();renderMsgs();alert('Deleted '+toDelete.size+' duplicates. '+allMsgs.length+' messages remain.');}else if(editCtx.type==='billdedup'){const dupes=editCtx.dupes;const toDelete={};dupes.forEach((d,i)=>{const cb=document.getElementById('delBillDupe_'+i);if(cb&&cb.checked){if(!toDelete[d.month])toDelete[d.month]=new Set();toDelete[d.month].add(d.idx);}});Object.keys(toDelete).forEach(mk=>{if(billsData[mk])billsData[mk].bills=billsData[mk].bills.filter((_,i)=>!toDelete[mk].has(i));});billsSave();renderBills();alert('Duplicate bills removed.');}else if(editCtx.type==='vidincident'){const v=allVids[editCtx.vi];const inc=v[editCtx.incType]?.[editCtx.idx];if(inc){inc.timestamp_approx=document.getElementById('eiTs')?.value.trim()||inc.timestamp_approx;inc.court_plain=document.getElementById('eiCourt')?.value.trim()||inc.court_plain;const ab=document.getElementById('eiAskedBy');if(ab)inc.asked_by=ab.value.trim();const tg=document.getElementById('eiTarget');if(tg)inc.child_targeted=tg.value.trim();const qq=document.getElementById('eiQuestion');if(qq)inc.question_asked=qq.value.trim();const pt=document.getElementById('eiPreTdvro');if(pt)inc.pre_tdvro=pt.checked;const ch=document.getElementById('eiChild');if(ch)inc.child=ch.value.trim();const rt=document.getElementById('eiRefType');if(rt)inc.refusal_type=rt.value;save();renderVids();}}else if(editCtx.type==='vidflag'){const v=allVids[editCtx.vi];const flag=v?.segments?.[editCtx.si]?.flags?.[editCtx.fi];if(flag){flag.category=document.getElementById('efCat').value;flag.severity=document.getElementById('efSev').value;flag.timestamp_approx=document.getElementById('efTs').value.trim();flag.court_plain=document.getElementById('efDesc').value.trim();save();renderVids();}}else if(editCtx.type==='vid'){const v=allVids[editCtx.index];if(v){v.filename=document.getElementById('evFilename').value.trim();v.call_date=document.getElementById('evCallDate').value.trim();v.overall_severity=document.getElementById('evSeverity').value;v.court_summary=document.getElementById('evSummary').value.trim();v.driveLink=document.getElementById('evDriveLink')?.value.trim()||'';v.notes=document.getElementById('evNotes').value.trim();v.transcript=document.getElementById('evTranscript')?.value.trim()||v.transcript||'';const bgLines=document.getElementById('evBackground').value.trim().split('\n').filter(Boolean);if(bgLines.length){v.background_incidents=(v.background_incidents||[]);bgLines.forEach(line=>{const dash=line.indexOf(' - ');v.background_incidents.push({timestamp_approx:dash>0?line.slice(0,dash):'',who:'Doug Rhodes',what:line,court_plain:line,manually_added:true});});}save();renderVids();}}else if(editCtx.type==='ethan'){const e=ethanDinners[editCtx.index];e.date=document.getElementById('eetDate').value;e.status=document.getElementById('eetStatus').value;e.notes=document.getElementById('eetNotes').value.trim();e.driveLink=document.getElementById('eetLink').value.trim();ethanSave();renderEthan();}else if(editCtx.type==='manualvid'){const filename=document.getElementById('mvFilename').value.trim()||'Manual entry';const callDate=document.getElementById('mvDate').value.trim();const dur=parseInt(document.getElementById('mvDuration').value)||0;const sev=document.getElementById('mvSeverity').value;const summary=document.getElementById('mvSummary').value.trim();const drive=document.getElementById('mvDrive').value.trim();const notes=document.getElementById('mvNotes').value.trim();const tdvro=document.getElementById('mvTdvro').checked;allVids.push({filename,call_date:callDate,total_duration_seconds:dur*60,overall_severity:sev,court_summary:summary,driveLink:drive,notes:notes,in_tdvro_period:tdvro,manually_entered:true,starred:false,segments:[],background_incidents:[],interrogation_incidents:[],refusal_incidents:[],off_camera_incidents:[],ethan_indicators:null,speakers_detected:[]});save();renderVids();}else if(editCtx.type==='inclog'){const e=inclogEntries[editCtx.index];if(e){e.date=document.getElementById('eilDate').value||e.date;e.narrative=document.getElementById('eilNarrative').value.trim();e.notes=document.getElementById('eilNotes').value.trim();e.tags=[...document.querySelectorAll('#mBody input[type=checkbox]:checked')].map(cb=>cb.value);if(!e.tags.length)e.tags=['incident'];inclogSave();renderInclog();}}else if(editCtx.type==='bill'){const mk=editCtx.monthKey,bid=editCtx.billId;const bill=(billsData[mk]?.bills||[]).find(b=>b.id===bid);if(bill){bill.day=parseInt(document.getElementById('ebDay').value)||1;bill.company=document.getElementById('ebCompany').value.trim();bill.amount=parseFloat(document.getElementById('ebAmt').value)||0;bill.outstandingBalance=parseFloat(document.getElementById('ebBalance').value)||0;bill.category=document.getElementById('ebCat').value;bill.status=document.getElementById('ebStatus').value;bill.lastPay=document.getElementById('ebLastPay').value.trim();bill.notes=document.getElementById('ebNotes').value.trim();bill.recurring=document.getElementById('ebRecurring').checked;if(billsData[mk])billsData[mk].bills.sort((a,c)=>a.day-c.day);billsSave();renderBills();}}else if(editCtx.type==='expense'){const e=expenses[editCtx.index];e.date=document.getElementById('eexpDate').value;e.category=document.getElementById('eexpCat').value;e.amount=parseFloat(document.getElementById('eexpAmount').value)||0;e.status=document.getElementById('eexpStatus').value;e.desc=document.getElementById('eexpDesc').value.trim();e.notes=document.getElementById('eexpNotes').value.trim();e.driveLink=document.getElementById('eexpLink').value.trim();expSave();renderExpenses();}else if(editCtx.type==='evidence'){const e=evidenceItems[editCtx.index];e.type=document.getElementById('eevType').value;e.date=document.getElementById('eevDate').value;e.title=document.getElementById('eevTitle').value.trim();e.desc=document.getElementById('eevDesc').value.trim();e.driveLink=document.getElementById('eevLink').value.trim();const notes=document.getElementById('eevNotes').value.trim();if(notes){e.notes=notes;if(e.analysis)e.analysis=e.analysis+'\n\nAdditional notes: '+notes;else e.analysis=notes;}ctSave();renderEvidence();renderMaster();}
   save();closeModal();rAll();
 }
 function closeModal(){document.getElementById('editModal').classList.remove('open');editCtx=null;}
@@ -1418,54 +1425,51 @@ document.getElementById('editModal').addEventListener('click',e=>{if(e.target===
 
 // RENDER VIDEOS
 function renderVids(){
-  const SC={high:'br',medium:'ba',low:'bb',neutral:'bgr'};
+  const SC={high:'#c0392b',medium:'#e67e22',low:'#1D9E75',neutral:'#888'};
   const SEV_ORDER={high:0,medium:1,low:2,neutral:3};
-  const SEV_COLOR={high:'#c0392b',medium:'#e67e22',low:'#1D9E75',neutral:'#888'};
 
+  // Stats
   const af=allVids.flatMap(v=>(v.segments||[]).flatMap(s=>s.flags||[]));
   const hi=af.filter(f=>f.severity==='high').length;
   const bg=allVids.reduce((n,v)=>(v.background_incidents||[]).length+n,0);
   const off=allVids.reduce((n,v)=>(v.off_camera_incidents||[]).length+n,0);
   const ref=allVids.reduce((n,v)=>(v.refusal_incidents||[]).length+n,0);
+  const iq=allVids.reduce((n,v)=>(v.interrogation_incidents||[]).length+n,0);
 
   document.getElementById('vStats').style.display='grid';
   document.getElementById('vStats').innerHTML=
     '<div class="sc"><div class="sl">Recordings</div><div class="sv">'+allVids.length+'</div></div>'+
-    '<div class="sc"><div class="sl">High flags</div><div class="sv red">'+hi+'</div></div>'+
-    '<div class="sc"><div class="sl">Background adults</div><div class="sv red">'+bg+'</div></div>'+
+    '<div class="sc"><div class="sl">Questions asked of you</div><div class="sv red">'+iq+'</div></div>'+
     '<div class="sc"><div class="sl">Refusals</div><div class="sv red">'+ref+'</div></div>'+
-    '<div class="sc"><div class="sl">Off-camera</div><div class="sv">'+off+'</div></div>';
+    '<div class="sc"><div class="sl">Background adults</div><div class="sv red">'+bg+'</div></div>'+
+    '<div class="sc"><div class="sl">Off-camera</div><div class="sv">'+off+'</div></div>'+
+    '<div class="sc"><div class="sl">High flags</div><div class="sv red">'+hi+'</div></div>';
 
-  const sortVal=document.getElementById('vidSort')?.value||'date-desc';
+  const sortVal=document.getElementById('vidSort')?.value||'date-asc';
   const search=(document.getElementById('vidSearch')?.value||'').toLowerCase();
   const flaggedOnly=document.getElementById('vidShowFlagged')?.checked||false;
   const starredOnly=document.getElementById('vidStarredOnly')?.checked||false;
 
   let vids=[...allVids].map((v,i)=>({...v,_origIdx:i}));
 
-  // Search filter
-  if(search){
-    vids=vids.filter(v=>{
-      const text=[
-        v.filename, v.call_date, v.court_summary, v.overall_severity,
-        ...(v.speakers_detected||[]),
-        ...(v.interrogation_incidents||[]).map(i=>i.asked_by+' '+i.question_asked+' '+i.court_plain),
-        ...(v.refusal_incidents||[]).map(r=>r.child+' '+r.court_plain),
-        ...(v.background_incidents||[]).map(b=>b.who+' '+b.court_plain),
-        ...(v.off_camera_incidents||[]).map(o=>o.child+' '+o.court_plain),
-        ...(v.segments||[]).flatMap(s=>(s.flags||[]).map(f=>f.category+' '+f.court_plain)),
-        v.notes||''
-      ].join(' ').toLowerCase();
-      return text.includes(search);
-    });
-  }
+  if(search) vids=vids.filter(v=>{
+    const text=[
+      v.filename,v.call_date,v.court_summary,v.overall_severity,
+      ...(v.speakers_detected||[]),
+      ...(v.interrogation_incidents||[]).map(i=>i.asked_by+' '+i.question_asked),
+      ...(v.refusal_incidents||[]).map(r=>r.child+' '+r.court_plain),
+      ...(v.background_incidents||[]).map(b=>b.court_plain),
+      ...(v.off_camera_incidents||[]).map(o=>o.court_plain),
+      ...(v.segments||[]).flatMap(s=>(s.flags||[]).map(f=>f.court_plain)),
+      v.notes||'',v.transcript||''
+    ].join(' ').toLowerCase();
+    return text.includes(search);
+  });
 
   if(flaggedOnly) vids=vids.filter(v=>
     (v.segments||[]).some(s=>(s.flags||[]).length>0)||
-    (v.background_incidents||[]).length||
-    (v.refusal_incidents||[]).length||
-    (v.off_camera_incidents||[]).length||
-    (v.interrogation_incidents||[]).length
+    (v.background_incidents||[]).length||(v.refusal_incidents||[]).length||
+    (v.off_camera_incidents||[]).length||(v.interrogation_incidents||[]).length
   );
   if(starredOnly) vids=vids.filter(v=>v.starred);
 
@@ -1474,85 +1478,92 @@ function renderVids(){
   else if(sortVal==='severity') vids.sort((a,b)=>(SEV_ORDER[a.overall_severity]||9)-(SEV_ORDER[b.overall_severity]||9));
   else if(sortVal==='starred') vids.sort((a,b)=>(b.starred?1:0)-(a.starred?1:0));
   else if(sortVal==='flags') vids.sort((a,b)=>{
-    const fa=(a.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(a.background_incidents||[]).length+(a.refusal_incidents||[]).length;
-    const fb=(b.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(b.background_incidents||[]).length+(b.refusal_incidents||[]).length;
+    const fa=(a.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(a.background_incidents||[]).length+(a.refusal_incidents||[]).length+(a.interrogation_incidents||[]).length;
+    const fb=(b.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+(b.background_incidents||[]).length+(b.refusal_incidents||[]).length+(b.interrogation_incidents||[]).length;
     return fb-fa;
   });
 
   if(!vids.length){
-    document.getElementById('vList').innerHTML="<div class='empty'>No videos match"+(search?' your search':'')+".</div>";
+    document.getElementById('vList').innerHTML="<div class='empty'>No videos match.</div>";
     return;
   }
 
-  // TILE LAYOUT
-  document.getElementById('vList').innerHTML=
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:4px">'+
-    vids.map(v=>{
-      const vi=v._origIdx;
-      const totalFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+
-        (v.background_incidents||[]).length+(v.refusal_incidents||[]).length+
-        (v.interrogation_incidents||[]).length+(v.off_camera_incidents||[]).length;
-      const highFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).filter(f=>f.severity==='high').length,0);
-      const sevColor=SEV_COLOR[v.overall_severity]||'#888';
+  // TABLE VIEW
+  let html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+  html+='<thead><tr style="background:#f5f5f2;border-bottom:2px solid #e0e0e0">';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap">Date</th>';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap">Time</th>';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap">Length</th>';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600">Flags</th>';
+  html+='<th style="padding:8px 10px;text-align:left;font-weight:600">Summary</th>';
+  html+='<th style="padding:8px 10px;text-align:center;font-weight:600">Sev</th>';
+  html+='<th style="padding:8px 10px;text-align:center;font-weight:600">Actions</th>';
+  html+='</tr></thead><tbody>';
 
-      // Build compact flag pills
-      const pills=[];
-      if((v.interrogation_incidents||[]).length) pills.push('<span style="background:#fff3cd;color:#856404;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.interrogation_incidents.length+' questions</span>');
-      if((v.refusal_incidents||[]).length) pills.push('<span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.refusal_incidents.length+' refusals</span>');
-      if((v.background_incidents||[]).length) pills.push('<span style="background:#f0f0fe;color:#7F77DD;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.background_incidents.length+' background</span>');
-      if((v.off_camera_incidents||[]).length) pills.push('<span style="background:#f0faf5;color:#1D9E75;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500">'+v.off_camera_incidents.length+' off-camera</span>');
-      if(highFlags) pills.push('<span style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700">'+highFlags+' HIGH</span>');
+  vids.forEach((v,rowIdx)=>{
+    const vi=v._origIdx;
+    const totalFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).length,0)+
+      (v.background_incidents||[]).length+(v.refusal_incidents||[]).length+
+      (v.interrogation_incidents||[]).length+(v.off_camera_incidents||[]).length;
+    const highFlags=(v.segments||[]).reduce((n,s)=>n+(s.flags||[]).filter(f=>f.severity==='high').length,0);
+    const sevColor=SC[v.overall_severity]||'#888';
 
-      return '<div style="background:#fff;border:1px solid #e5e5e0;border-radius:12px;overflow:hidden;border-top:3px solid '+sevColor+'">'+
-        // Tile header
-        '<div style="padding:12px 14px 10px">'+
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:6px">'+
-            '<div style="flex:1;min-width:0">'+
-              '<div style="font-size:12px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+v.filename+'">'+
-                (v.call_date||v.filename.match(/\d{4}-\d{2}-\d{2}/)?.[0]||v.filename)+
-              '</div>'+
-              '<div style="font-size:11px;color:#888;margin-top:1px">'+
-                (v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'')+
-                (v.speakers_detected&&v.speakers_detected.length?' \u2014 '+(v.speakers_detected.slice(0,2).join(', '))+(v.speakers_detected.length>2?'...':''): '')+
-              '</div>'+
-            '</div>'+
-            '<div style="display:flex;gap:4px;align-items:center;flex-shrink:0">'+
-              (v.in_tdvro_period?'<span style="background:#c0392b;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">TDVRO</span>':'')+
-              '<span style="font-size:10px;font-weight:600;color:'+sevColor+';background:'+sevColor+'22;padding:2px 6px;border-radius:10px">'+(v.overall_severity||'?')+'</span>'+
-              '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:15px;padding:1px" title="Star">'+
-              (v.starred?'&#11088;':'&#10025;')+'</button>'+
-            '</div>'+
-          '</div>'+
-          // Flag pills
-          (pills.length?'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+pills.join('')+'</div>':'')+
-          // Court summary - truncated
-          (v.court_summary?'<div style="font-size:12px;color:#444;line-height:1.5;border-left:2px solid '+sevColor+'22;padding-left:8px;margin-bottom:8px">'+
-            v.court_summary.slice(0,120)+(v.court_summary.length>120?'...':'')+
-          '</div>':'')+
-          (v._truncated?'<div style="font-size:10px;color:#e67e22;margin-bottom:4px">&#9888; Partial analysis</div>':'')+
-        '</div>'+
-        // Tile footer - actions
-        '<div style="border-top:1px solid #f0f0ea;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;background:#fafaf8">'+
-          '<button onclick="toggleVidDetail('+vi+')" style="font-size:11px;color:#1a5fa8;background:none;border:none;cursor:pointer;padding:0">'+
-            (totalFlags?'&#9660; '+totalFlags+' flags':'&#9660; Details')+
-          '</button>'+
-          '<div style="display:flex;gap:5px">'+
-            '<button class="btn btne" style="font-size:11px;padding:3px 8px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
-            '<button class="btn btnd" style="font-size:11px;padding:3px 8px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
-          '</div>'+
-        '</div>'+
-        // Expandable detail panel
-        '<div id="vdet_'+vi+'" style="display:none;padding:12px 14px;border-top:1px solid #f0f0ea;background:#fafaf8">'+
-          buildVidDetail(v,vi)+
-        '</div>'+
-      '</div>';
-    }).join('')+
-    '</div>';
+    // Parse date and time from filename
+    const fnMatch=v.filename.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})/);
+    const dateDisplay=v.call_date||'Unknown';
+    const timeDisplay=fnMatch?fnMatch[4]+':'+fnMatch[5]:'—';
+    const durMins=v.total_duration_seconds?Math.round(v.total_duration_seconds/60)+'min':'—';
+
+    // Flag pills - compact
+    const pills=[];
+    if((v.interrogation_incidents||[]).length) pills.push('<span title="Questions asked of you" style="background:#fff3cd;color:#856404;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">'+v.interrogation_incidents.length+' Q</span>');
+    if((v.refusal_incidents||[]).length) pills.push('<span title="Refusals" style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">'+v.refusal_incidents.length+' R</span>');
+    if((v.background_incidents||[]).length) pills.push('<span title="Background adults" style="background:#f0f0fe;color:#7F77DD;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">'+v.background_incidents.length+' B</span>');
+    if((v.off_camera_incidents||[]).length) pills.push('<span title="Off-camera" style="background:#f0faf5;color:#1D9E75;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">'+v.off_camera_incidents.length+' O</span>');
+    if(highFlags) pills.push('<span title="High severity flags" style="background:#fdf0f0;color:#c0392b;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:700;white-space:nowrap">'+highFlags+' !</span>');
+    if(v.in_tdvro_period) pills.push('<span title="TDVRO period" style="background:#c0392b;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;font-weight:700;white-space:nowrap">TDVRO</span>');
+    if(v.manually_entered) pills.push('<span title="Manually entered" style="background:#f0f0f0;color:#666;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">manual</span>');
+    if(v._truncated) pills.push('<span title="Partial analysis" style="background:#fff3e0;color:#e67e22;font-size:10px;padding:1px 5px;border-radius:8px;white-space:nowrap">partial</span>');
+
+    const rowBg=rowIdx%2===0?'#fff':'#fafaf8';
+    html+='<tr style="background:'+rowBg+';border-bottom:1px solid #f0f0ea;border-left:3px solid '+sevColor+'" id="vrow_'+vi+'">';
+
+    // Date
+    html+='<td style="padding:8px 10px;white-space:nowrap;font-weight:500">'+dateDisplay+'</td>';
+    // Time
+    html+='<td style="padding:8px 10px;color:#888;white-space:nowrap">'+timeDisplay+'</td>';
+    // Duration
+    html+='<td style="padding:8px 10px;color:#888;white-space:nowrap">'+durMins+'</td>';
+    // Flags
+    html+='<td style="padding:8px 10px"><div style="display:flex;flex-wrap:wrap;gap:3px">'+pills.join('')+'</div></td>';
+    // Summary - truncated
+    html+='<td style="padding:8px 10px;max-width:280px"><div style="font-size:12px;color:#444;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+(v.court_summary||'<span style="color:#aaa">No summary</span>')+'</div></td>';
+    // Severity dot
+    html+='<td style="padding:8px 10px;text-align:center"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+sevColor+'" title="'+( v.overall_severity||'?')+'"></span></td>';
+    // Actions
+    html+='<td style="padding:8px 10px;text-align:center;white-space:nowrap">'+
+      '<button onclick="allVids['+vi+'].starred=!allVids['+vi+'].starred;save();renderVids();event.stopPropagation()" style="background:none;border:none;cursor:pointer;font-size:14px" title="Star">'+(v.starred?'&#11088;':'&#10025;')+'</button>'+
+      '<button onclick="toggleVidDetail('+vi+')" style="background:none;border:none;cursor:pointer;font-size:12px;color:#1a5fa8;padding:0 4px" title="Expand">&#9660;</button>'+
+      '<button class="btn btne" style="font-size:10px;padding:2px 6px" onclick="openEditVid('+vi+');event.stopPropagation()">Edit</button>'+
+      '<button class="btn btnd" style="font-size:10px;padding:2px 6px" onclick="delVid('+vi+');event.stopPropagation()">Del</button>'+
+    '</td>';
+    html+='</tr>';
+
+    // Expandable detail row
+    html+='<tr id="vdet_row_'+vi+'" style="display:none;background:#f8f8f6"><td colspan="7" style="padding:0">';
+    html+='<div style="padding:12px 16px;border-left:3px solid '+sevColor+'">'+buildVidDetail(v,vi)+'</div>';
+    html+='</td></tr>';
+  });
+
+  html+='</tbody></table></div>';
+  html+='<div style="font-size:11px;color:#888;margin-top:8px;padding:0 4px">Q=Questions asked of you &nbsp; R=Refusals &nbsp; B=Background adults &nbsp; O=Off-camera &nbsp; !=High severity</div>';
+
+  document.getElementById('vList').innerHTML=html;
 }
 
 function toggleVidDetail(vi){
-  const el=document.getElementById('vdet_'+vi);
-  if(el) el.style.display=el.style.display==='none'?'block':'none';
+  const row=document.getElementById('vdet_row_'+vi);
+  if(row) row.style.display=row.style.display==='none'?'table-row':'none';
 }
 
 function buildVidDetail(v,vi){
@@ -1644,6 +1655,9 @@ function buildVidDetail(v,vi){
 
   if(v.notes){
     html+='<div style="font-size:12px;background:#fff9e6;border:1px solid #f0e0a0;border-radius:6px;padding:6px 10px;margin-top:8px">&#128221; '+v.notes+'</div>';
+  }
+  if(v.transcript){
+    html+='<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Transcript</div>'+'<div style="font-size:12px;color:#333;background:#f8f8f6;border:1px solid #e0e0e0;border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;white-space:pre-wrap;font-family:monospace">'+v.transcript+'</div></div>';
   }
   if(v.driveLink){
     html+='<a href="'+v.driveLink+'" target="_blank" style="font-size:12px;color:#1a5fa8;display:block;margin-top:6px">&#128190; View in Google Drive</a>';
@@ -4731,6 +4745,8 @@ function openEditVid(vi){
     <textarea id="evSummary" style="min-height:80px">${v.court_summary||''}</textarea>
     <label>Google Drive link (original video file)</label>
     <input type="text" id="evDriveLink" value="${v.driveLink||''}" placeholder="https://drive.google.com/...">
+    <label>Transcript (paste full transcript here)</label>
+    <textarea id="evTranscript" style="min-height:100px;font-size:11px;font-family:monospace" placeholder="Paste transcript text here - will be searchable and cross-referenced with analysis">${v.transcript||''}</textarea>
     <label>Your notes (add context the AI missed - e.g. exact words heard in background)</label>
     <textarea id="evNotes" style="min-height:60px" placeholder="e.g. At 1:23, Doug said 'just hang up' audibly. Charlotte's reluctance appeared coached - she used Doug's exact phrase from his messages.">${v.notes||''}</textarea>
     <label>Additional background incidents (one per line)</label>
@@ -5291,6 +5307,38 @@ function exportInclog(mode){
 }
 
 
+
+function openManualVidEntry(){
+  editCtx = {type:'manualvid'};
+  document.getElementById('mTitle').textContent = 'Add video manually';
+  document.getElementById('mBody').innerHTML = `
+    <p style="font-size:12px;color:#888;margin-bottom:12px">Use this when Gemini blocks a video or you want to document a call without uploading. Fill in what you remember.</p>
+    <label>Filename / Recording name</label>
+    <input type="text" id="mvFilename" placeholder="e.g. OFW_Call_Recording_2025-03-25.mp4">
+    <label>Call date (MM/DD/YYYY)</label>
+    <input type="text" id="mvDate" placeholder="e.g. 03/25/2025">
+    <label>Duration (minutes)</label>
+    <input type="number" id="mvDuration" placeholder="e.g. 45" min="0">
+    <label>Overall severity</label>
+    <select id="mvSeverity">
+      <option value="high">High</option>
+      <option value="medium" selected>Medium</option>
+      <option value="low">Low</option>
+      <option value="neutral">Neutral</option>
+    </select>
+    <label>Court summary (what happened in your own words)</label>
+    <textarea id="mvSummary" style="min-height:80px" placeholder="e.g. Doug was audible in background throughout call. Ethan appeared coached and would not reciprocate affection."></textarea>
+    <label>Google Drive link (if you have the recording saved)</label>
+    <input type="text" id="mvDrive" placeholder="https://drive.google.com/...">
+    <label>Your notes</label>
+    <textarea id="mvNotes" style="min-height:60px" placeholder="Add any additional context, specific timestamps, or what was said"></textarea>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:4px">
+      <input type="checkbox" id="mvTdvro"> This call was during the TDVRO period (1/27/2025 - 5/19/2025)
+    </label>
+  `;
+  // Auto-check TDVRO if relevant date entered
+  document.getElementById('editModal').classList.add('open');
+}
 
 </script>
 </body>
