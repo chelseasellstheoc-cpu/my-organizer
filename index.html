@@ -1471,8 +1471,15 @@ function renderVids(){
   );
   if(starredOnly) vids=vids.filter(v=>v.starred);
 
-  if(sortVal==='date-asc') vids.sort((a,b)=>(a.call_date||'').localeCompare(b.call_date||''));
-  else if(sortVal==='date-desc') vids.sort((a,b)=>(b.call_date||'').localeCompare(a.call_date||''));
+  function toSortable(d){
+    if(!d) return '';
+    // Convert MM/DD/YYYY to YYYY-MM-DD for proper sorting
+    const m=d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
+    return d; // already YYYY-MM-DD
+  }
+  if(sortVal==='date-asc') vids.sort((a,b)=>toSortable(a.call_date).localeCompare(toSortable(b.call_date)));
+  else if(sortVal==='date-desc') vids.sort((a,b)=>toSortable(b.call_date).localeCompare(toSortable(a.call_date)));
   else if(sortVal==='severity') vids.sort((a,b)=>(SEV_ORDER[a.overall_severity]||9)-(SEV_ORDER[b.overall_severity]||9));
   else if(sortVal==='starred') vids.sort((a,b)=>(b.starred?1:0)-(a.starred?1:0));
   else if(sortVal==='flags') vids.sort((a,b)=>{
